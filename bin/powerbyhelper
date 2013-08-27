@@ -1,0 +1,109 @@
+#!/usr/bin/env ruby
+# 1.9 adds realpath to resolve symlinks; 1.8 doesn't
+# have this method, so we add it so we get resolved symlinks
+# and compatibility
+unless File.respond_to? :realpath
+  class File #:nodoc:
+    def self.realpath path
+      return realpath(File.readlink(path)) if symlink?(path)
+      path
+    end
+  end
+end
+$: << File.expand_path(File.dirname(File.realpath(__FILE__)) + '/../lib')
+require 'rubygems'
+require 'bundler/setup'
+require 'gooddata'
+require 'logger'
+require 'pry'
+require 'gli'
+require 'powerbyhelper'
+
+include GLI::App
+
+program_desc 'GoodData PowerBy provisioning app'
+
+
+pre do |global_options,command,options,args|
+  next true if command.nil?
+  @@log = Logger.new(STDOUT)
+end
+
+command :provision do |c|
+
+  c.desc 'Do only test run with debug output'
+  c.switch [:t,:test]
+
+  c.desc 'Config file path'
+  c.flag [:config]
+
+  c.action do |global_options,options,args|
+
+    config_file = options[:config]
+    fail "Please provide link to config file" unless (File.exist?(config_file))
+    helper = PowerByHelper::Pwb.new(config_file,options[:test])
+    helper.gooddata_login
+    helper.init_persistent_storage
+    #helper.project_provisioning
+    #helper.etl_provisioning
+
+  end
+end
+
+command :delete_all do |c|
+
+  c.desc 'Config file path'
+  c.flag [:config]
+
+  c.action do |global_options,options,args|
+
+    config_file = options[:config]
+    fail "Please provide link to config file" unless (File.exist?(config_file))
+    helper = PowerByHelper::Pwb.new(config_file,options[:test])
+    helper.gooddata_login
+    helper.init_persistent_storage
+    helper.delete_all_projects
+  end
+
+
+end
+
+command :update_schedules do |c|
+
+  c.desc 'Config file path'
+  c.flag [:config]
+
+  c.action do |global_options,options,args|
+
+    config_file = options[:config]
+    fail "Please provide link to config file" unless (File.exist?(config_file))
+    helper = PowerByHelper::Pwb.new(config_file,options[:test])
+    helper.gooddata_login
+    helper.init_persistent_storage
+    helper.update_schedules
+  end
+
+
+end
+
+
+
+
+
+
+
+on_error do |exception|
+  pp exception.backtrace
+  if exception.is_a?(SystemExit) && exception.status == 0
+    false
+  else
+    pp exception.inspect
+    false
+  end
+end
+
+
+
+exit run(ARGV)
+
+
