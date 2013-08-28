@@ -46,6 +46,7 @@ command :provision do |c|
     helper.init_persistent_storage
     #helper.project_provisioning
     #helper.etl_provisioning
+    helper.user_synchronization
 
   end
 end
@@ -67,6 +68,38 @@ command :delete_all do |c|
 
 
 end
+
+
+command :delete_users do |c|
+
+  c.desc 'Config file path'
+  c.flag [:config]
+
+  c.action do |global_options,options,args|
+
+    config_file = options[:config]
+    fail "Please provide link to config file" unless (File.exist?(config_file))
+    helper = PowerByHelper::Pwb.new(config_file,options[:test])
+    helper.gooddata_login
+
+    response = GoodData.get("gdc/account/domains/gooddata-adrian-toman/users")
+    response["accountSettings"]["items"].each do |user|
+      if (user["accountSetting"]["login"] != "adrian.toman+deploy_test@gooddata.com")
+        GoodData.delete(user["accountSetting"]["links"]["self"])
+      end
+    end
+  end
+
+
+end
+
+
+
+
+
+
+
+
 
 command :update_schedules do |c|
 

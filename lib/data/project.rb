@@ -57,9 +57,9 @@ module PowerByHelper
           Persistent.update_project(p)
         end
 
-        while (Persistent.get_project_by_status(ProjectData.CREATED).count >= creation_window)
+        while (Persistent.get_projects_by_status(ProjectData.CREATED).count >= creation_window)
           @@log.info "Checking provisioned projects"
-          Persistent.get_project_by_status(ProjectData.CREATED).each do |for_check|
+          Persistent.get_projects_by_status(ProjectData.CREATED).each do |for_check|
             project_status = GoodData::Project[for_check.project_pid]
             if !(project_status.to_json['content']['state'] =~ /^(PREPARING|PREPARED|LOADING)$/)
               for_check.status = ProjectData.LOAD_FINISHED
@@ -67,7 +67,7 @@ module PowerByHelper
             end
           end
 
-          if (Persistent.get_project_by_status(ProjectData.CREATED).count >= creation_window)
+          if (Persistent.get_projects_by_status(ProjectData.CREATED).count >= creation_window)
             @@log.info "Sleeping"
             sleep(10)
             @@log.info "Waking up"

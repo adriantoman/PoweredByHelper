@@ -6,7 +6,8 @@ require "awesome_print"
 require 'fileutils'
 
 
-%w(settings helper persistent).each {|a| require "lib/#{a}"}
+
+%w(settings helper persistent userhelper).each {|a| require "lib/#{a}"}
 %w(project etl user).each {|a| require "lib/data/#{a}"}
 
 module PowerByHelper
@@ -56,6 +57,9 @@ module PowerByHelper
 
     def user_synchronization
       fail "Persistent storage not initialized" if @user.nil?
+
+      @user.create_new_users
+      @user.invite_users
 
       #Helper.retryable do
       #  @

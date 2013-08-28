@@ -15,7 +15,6 @@ module PowerByHelper
       ["adminRole","dashboardOnlyRole","readOnlyUserRole","editorRole","connectorsSystemRole"]
     end
 
-
     def self.retryable
       begin
         tries ||= 3
@@ -32,6 +31,10 @@ module PowerByHelper
         @@log.info "Operation finished"
       end
     end
+
+
+
+
 
 
   end

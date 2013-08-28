@@ -1,23 +1,6 @@
-GIT
-  remote: git://github.com/fluke777/gd.git
-  revision: 6d3ba82218dcfbf49ca158941193381ec32d55d5
-  specs:
-    gd (0.0.1)
-      activesupport (~> 3.1.0)
-      gli
-      gooddata
-      highline
-      i18n
-      pony
-      rainbow
-      rake
-      salesforce
-
 GEM
   remote: https://rubygems.org/
   specs:
-    activesupport (3.1.12)
-      multi_json (~> 1.0)
     awesome_print (1.1.0)
     coderay (1.0.9)
     fastercsv (1.5.5)
@@ -28,34 +11,19 @@ GEM
       parseconfig
       rest-client
       rubyzip
-    highline (1.6.19)
-    i18n (0.6.5)
     json (1.8.0)
     json_pure (1.8.0)
-    mail (2.5.4)
-      mime-types (~> 1.16)
-      treetop (~> 1.4.8)
     method_source (0.8.2)
     mime-types (1.24)
-    multi_json (1.7.9)
     parseconfig (1.0.2)
-    polyglot (0.3.3)
-    pony (1.5)
-      mail (> 2.0)
     pry (0.9.12.2)
       coderay (~> 1.0.5)
       method_source (~> 0.8)
       slop (~> 3.4)
-    rainbow (1.1.4)
-    rake (10.1.0)
     rest-client (1.6.7)
       mime-types (>= 1.16)
     rubyzip (0.9.9)
-    salesforce (0.0.1)
     slop (3.4.6)
-    treetop (1.4.15)
-      polyglot
-      polyglot (>= 0.3.1)
 
 PLATFORMS
   ruby
@@ -63,7 +31,6 @@ PLATFORMS
 DEPENDENCIES
   awesome_print (~> 1.1.0)
   fastercsv (~> 1.5.5)
-  gd!
   gli (~> 2.7.0)
   gooddata (= 0.5.14)
   pry
