@@ -10,25 +10,33 @@ module PowerByHelper
     def load_data_structure()
       fail "ETL process source directory don't exist" unless File.directory?(Settings.deployment_etl_process["source"])
       Persistent.init_etl
+      @@log.info "Persistent storage for etl provisioning initialized"
     end
 
     def deploy_process()
+
       Persistent.project_data.each do |p|
+
         etl = Persistent.get_etl_by_project_pid(p.project_pid)
         if (etl.nil? or etl.status == EtlData.NEW )
+          @@log.info "Deploying process for #{p.project_name} - #{p.project_pid}"
           etl = EtlData.new({"project_pid" => p.project_pid,"status" => EtlData.NEW})
           response = deploy_update_graph(Settings.deployment_etl_process["source"],p.project_name,p.project_pid)
           etl.process_id = response["process"]["links"]["self"].split("/").last
           etl.status = EtlData.PROCESS_CREATED
           Persistent.update_etl(etl)
+          @@log.info "Deploy completed"
         end
+
       end
+
     end
 
     def create_schedules()
       schedule_settings = Settings.deployment_etl_schedule
       Persistent.etl_data.each do |etl|
         if (Integer(etl.status) < Integer(EtlData.SCHEDULE_CREATED))
+          @@log.info "Creating schedule for #{etl.project_pid}"
           project = Persistent.get_project_by_project_pid(etl.project_pid)
           response = create_update_schedule(schedule_settings,etl.project_pid,etl.process_id,"#{project.ident}")
 
@@ -36,8 +44,10 @@ module PowerByHelper
           etl.schedule_id = schedule_id
           etl.status = EtlData.SCHEDULE_CREATED
           Persistent.update_etl(etl)
+          @@log.info "Schedule created"
         end
       end
+
     end
 
 
@@ -55,18 +65,19 @@ module PowerByHelper
 
 
     def create_notifications
-      Settings.deployment_etl_notifications.each do |notification_settings|
-        Persistent.etl_data.each do |etl|
-          if (Integer(etl.status) < Integer(EtlData.NOTIFICATION_CREATED))
-            response = create_notification(notification_settings,etl.project_pid,etl.process_id)
-            etl.status = EtlData.NOTIFICATION_CREATED
-            Persistent.update_etl(etl)
+      if (!Settings.deployment_etl_notifications.nil? && Settings.deployment_etl_notifications.count > 0)
+        Settings.deployment_etl_notifications.each do |notification_settings|
+          Persistent.etl_data.each do |etl|
+            if (Integer(etl.status) < Integer(EtlData.NOTIFICATION_CREATED))
+              @@log.info "Creating notification for #{p.project_name} - #{p.project_pid}"
+              response = create_notification(notification_settings,etl.project_pid,etl.process_id)
+              etl.status = EtlData.NOTIFICATION_CREATED
+              Persistent.update_etl(etl)
+              @@log.info "Notification created #{p.project_name} - #{p.project_pid}"
+            end
           end
         end
-
       end
-
-
     end
 
 

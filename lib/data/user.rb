@@ -25,7 +25,7 @@ module PowerByHelper
       password_mapping = user_creation_mapping["password"] || "password"
       admin_mapping = user_creation_mapping["admin"] || "admin"
 
-
+      # Load info about users - domain file - representing users which should be in domain and merge it with info in Persistent storage
       FasterCSV.foreach(Settings.deployment_user_creation["source"], :headers => true) do |csv_obj|
 
         user_data = UserData.new({"login" => csv_obj[user_creation_mapping["login"]], "first_name" => csv_obj[user_creation_mapping["first_name"]], "last_name" => csv_obj[user_creation_mapping["last_name"]], "status" => UserData.NEW})
@@ -41,7 +41,7 @@ module PowerByHelper
       end
       Persistent.store_user
 
-
+      # Load info about user-project mapping and merge it with information from Persistent Storage
       FasterCSV.foreach(Settings.deployment_user_project_synchronization["source"], :headers => true) do |csv_obj|
 
         ident = csv_obj[user_synchronization_mapping["ident"]]
@@ -58,30 +58,48 @@ module PowerByHelper
 
         login = csv_obj[user_synchronization_mapping["login"]].downcase
         notification = csv_obj[user_synchronization_mapping["notification"]].downcase == "1" ? true : false
-
-        user_project_data = UserProjectData.new({"project_pid" => project_pid,"role" => role, "notification" => notification})
-
+        internal_role = "external"
+        if (!user_synchronization_mapping["internal_role"].nil?)
+          internal_role = csv_obj[user_synchronization_mapping["internal_role"]].downcase
+        end
+        user_project_data = UserProjectData.new({"project_pid" => project_pid,"role" => role, "notification" => notification,"internal_role" => internal_role,status => UserProjectData.NEW})
         Persistent.merge_user_project(login,user_project_data)
       end
       Persistent.store_user
 
+      # Find all admin users and make them admin in all of the projects - merge this information with persistent storage
       admin_users = Persistent.get_users_by_admin
       projects = Persistent.get_projects
+
       admin_users.each do |admin|
         admin_data = admin.values.first
         projects.each do |p|
-          user_project_data = UserProjectData.new({"project_pid" => p.project_pid,"role" => "adminRole", "notification" => false})
+          user_project_data = UserProjectData.new({"project_pid" => p.project_pid,"role" => "adminRole", "notification" => false, "internal_role" => "internal",status => UserProjectData.NEW})
+          Persistent.merge_user_project(admin_data.login,user_project_data)
         end
+      end
+      Persistent.store_user
 
 
+      # We are supporting disable feature on projects
+      # DISABLED project for us is project, in which all users (except of users with role_internal == internal) are disabled
+      projects_to_disable = Persistent.get_projects_by_status(ProjectData.DISABLED)
 
-
+      Persistent.user_data.each do |u|
+        user_data = u.values.first
+        user_data.user_project_mapping.each do |user_project|
+          is_disabled = !(projects_to_disable.find{|p| p.project_pid = user_project.pid}.nil?)
+          if (is_disabled and user_project.internal_role != "internal")
+            user_project.status = UserProjectData.TO_DISABLE_BY_PROJECT
+            Persistent.merge_user_project(user_data.login,user_project)
+          end
+        end
       end
 
+      @log.info "Persistent storage for user provisioning initialized"
 
 
-
-    end
+  end
 
 
     def create_new_users
@@ -99,19 +117,32 @@ module PowerByHelper
           user_data = v.values.first
           UserHelper.invite_user(user_data)
       end
-      Persistent.store_user
+
     end
 
     def add_users
-
+      Persistent.user_data.each do |v|
+        user_data = v.values.first
+        UserHelper.add_user(user_data)
+      end
+      Persistent.store_user
     end
 
 
-    def disable_users_in_project(pid)
-
+    def disable_users
+      Persistent.user_data.each do |v|
+        user_data = v.values.first
+        UserHelper.disable_user(user_data)
+      end
+      Persistent.store_user
     end
 
-    def update_user_role(pid)
+    def update_users
+      Persistent.user_data.each do |v|
+        user_data = v.values.first
+        UserHelper.update_user(user_data)
+      end
+      Persistent.store_user
 
     end
 
@@ -159,40 +190,36 @@ module PowerByHelper
     def add_or_update_user_project_mapping(user_project)
       user_check = @user_project_mapping.find{|up| up.project_pid == user_project.project_pid }
       if (user_check.nil?)
-        user_project.status = UserProjectData.NEW
         @user_project_mapping.push(user_project)
       else
         @user_project_mapping.collect! do |up|
           if (up.project_pid == user_project.project_pid)
-
-            if (up.role != user_project.role)
-              up.role = user_project.role
+            if (up.status == UserProjectData.TO_DISABLE and user_project.status == UserProjectData.NEW)
+              @@log.debug "status OK"
+              up.status = UserProjectData.OK
+            elsif (up.status == UserProjectData.DISABLED and user_project.status == UserProjectData.NEW)
+              @@log.debug "Project again in source file - status CHANGED"
               up.status = UserProjectData.CHANGED
-            end
-            # This will happen in case that tool will fall in middle of operation and new status will be loaded from PersistentFile
-            if (user_project.status == UserProjectData.NEW)
-              # The user is NEW and for some reason was not created in previous run.
-              up.status = UserProjectData.NEW
-            elsif (user_project.status.nil?)
-              if (up.status == UserProjectData.DISABLED)
-                # The user was disabled in project,but now it should be enabled again
-                up.status = UserProjectData.CHANGED
-              else
-                # The user was in Persistent storage and it should stay unchanged
-                up.status = UserProjectData.OK
-              end
-
-            end
-            if (!up.notification_send and user_project.notification_send)
-              # The user was invited to project and now it is OK
+            elsif (up.status == UserProjectData.OK and up.role != user_project.role)
+              @@log.debug "Role change detected - status CHANGED"
+              up.status = UserProjectData.CHANGED
+            elsif (user_project.status == UserProjectData.OK and !up.notification_send and user_project.notification_send)
+              @@log.debug "User was invited to project - status OK"
               up.status = UserProjectData.OK
               up.notification_send = true
+            elsif (up.status == UserProjectData.OK and user_project.status == UserProjectData.TO_DISABLE_BY_PROJECT)
+              @@log.debug "User was in disabled project - disabling it"
+              up.status = UserProjectData.TO_DISABLE
+            elsif (up.status == UserProjectData.CHANGED and user_project.status == UserProjectData.TO_DISABLE_BY_PROJECT)
+              @@log.debug "User was in disabled project, but someone have left him in project-user mapping file - leaving it disabled"
+              up.status = UserProjectData.DISABLED
+            else
+              up.status = user_project.status
             end
           end
           up
         end
       end
-
     end
 
     def generate_mapping
@@ -221,7 +248,7 @@ module PowerByHelper
 
   class UserProjectData
 
-    attr_accessor :project_pid,:role,:status,:notification, :notification_send
+    attr_accessor :project_pid,:role,:status,:notification, :notification_send, :internal_role
 
 
     def self.NEW
@@ -239,6 +266,11 @@ module PowerByHelper
     def self.TO_DISABLE
       "TO_DISABLE"
     end
+
+    def self.TO_DISABLE_BY_PROJECT
+      "TO_DISABLE_BY_PROJECT"
+    end
+
 
     def self.DISABLED
       "DISABLED"
@@ -258,7 +290,7 @@ module PowerByHelper
         end
         @notification = data["notification"]
         @notification_send = data["notification_send"] || false
-
+        @internal_role = data["internal_role"] || "external"
     end
 
     def to_json
@@ -267,7 +299,8 @@ module PowerByHelper
           "role" => @role,
           "status" => @status,
           "notification" => @notification,
-          "notification_send" => @notification_send
+          "notification_send" => @notification_send,
+          "internal_role" => @internal_role
       }
     end
 

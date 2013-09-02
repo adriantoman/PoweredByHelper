@@ -65,10 +65,69 @@ module PowerByHelper
             Persistent.merge_user_project(user_data_element.login,user_project_data)
           rescue RestClient::BadRequest => e
             response = JSON.load(e.response)
-            @@log.warn "User #{user_data_element.login} could not be invite to project #{user_project_data.pid}. Reason: #{response["error"]["message"]}"
+            @@log.warn "User #{user_data_element.login} could not be invited to project #{user_project_data.project_pid}. Reason: #{response["error"]["message"]}"
           rescue RestClient::InternalServerError => e
             response = JSON.load(e.response)
-            @@log.warn "User #{user_data_element.login} could not be invite to project #{user_project_data.pid}. Reason: #{response["error"]["message"]}"
+            @@log.warn "User #{user_data_element.login} could not be invited to project #{user_project_data.project_pid}. Reason: #{response["error"]["message"]}"
+          end
+        end
+      end
+    end
+
+
+    def self.add_user(user_data_element)
+      user_data_element.user_project_mapping.each do |user_project_data|
+        if (user_project_data.status == UserProjectData.NEW and !user_project_data.notification)
+          request = create_user_request("ENABLED",user_data_element.uri,Persistent.get_role_uri_by_name(user_project_data.role,user_project_data.project_pid))
+          begin
+            GoodData.post("/gdc/projects/#{user_project_data.project_pid}/users", request)
+            user_project_data.status = UserProjectData.OK
+            Persistent.merge_user_project(user_data_element.login,user_project_data)
+          rescue RestClient::BadRequest => e
+            response = JSON.load(e.response)
+            @@log.warn "User #{user_data_element.login} could not be added to project #{user_project_data.project_pid}. Reason: #{response["error"]["message"]}"
+          rescue RestClient::InternalServerError => e
+            response = JSON.load(e.response)
+            @@log.warn "User #{user_data_element.login} could not be added to project #{user_project_data.project_pid}. Reason: #{response["error"]["message"]}"
+          end
+        end
+      end
+    end
+
+
+    def self.disable_user(user_data_element)
+      user_data_element.user_project_mapping.each do |user_project_data|
+        if (user_project_data.status == UserProjectData.TO_DISABLE)
+          request = create_user_request("DISABLED",user_data_element.uri)
+          begin
+            GoodData.post("/gdc/projects/#{user_project_data.project_pid}/users", request)
+            user_project_data.status = UserProjectData.DISABLED
+            Persistent.merge_user_project(user_data_element.login,user_project_data)
+          rescue RestClient::BadRequest => e
+            response = JSON.load(e.response)
+            @@log.warn "User #{user_data_element.login} could not be disabled in project #{user_project_data.project_pid}. Reason: #{response["error"]["message"]}"
+          rescue RestClient::InternalServerError => e
+            response = JSON.load(e.response)
+            @@log.warn "User #{user_data_element.login} could not be disabled in project #{user_project_data.project_pid}. Reason: #{response["error"]["message"]}"
+          end
+        end
+      end
+    end
+
+    def self.update_user(user_data_element)
+      user_data_element.user_project_mapping.each do |user_project_data|
+        if (user_project_data.status == UserProjectData.CHANGED)
+          request = create_user_request("ENABLED",user_data_element.uri,Persistent.get_role_uri_by_name(user_project_data.role,user_project_data.project_pid))
+          begin
+            GoodData.post("/gdc/projects/#{user_project_data.project_pid}/users", request)
+            user_project_data.status = UserProjectData.OK
+            Persistent.merge_user_project(user_data_element.login,user_project_data)
+          rescue RestClient::BadRequest => e
+            response = JSON.load(e.response)
+            @@log.warn "User #{user_data_element.login} could not be updated or re-enabled in project #{user_project_data.project_pid}. Reason: #{response["error"]["message"]}"
+          rescue RestClient::InternalServerError => e
+            response = JSON.load(e.response)
+            @@log.warn "User #{user_data_element.login} could not be updated or re-enabled in project #{user_project_data.project_pid}. Reason: #{response["error"]["message"]}"
           end
         end
       end
@@ -78,8 +137,21 @@ module PowerByHelper
 
 
 
-    def self.add_user_to_project()
-
+    def self.create_user_request(status,uri,role = nil)
+      request ={
+          "user" => {
+              "content" => {
+                  "status"=> status
+              },
+              "links"   => {
+                  "self"=> uri
+              }
+          }
+      }
+      if (!role.nil?)
+        request["user"]["content"].merge!({"userRoles" => [role]})
+      end
+      request
     end
 
 

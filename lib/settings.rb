@@ -12,9 +12,28 @@ module PowerByHelper
         @json["connection"]
       end
 
+      def connection_server
+        @json["connection"]["server"] || "https://secure.gooddata.com"
+      end
+
       def deployment_project
         @json["deployment"]["project"]
       end
+
+      def deployment_project_name_prefix
+        @json["deployment"]["project"]["name_prefix"] || ""
+      end
+
+
+
+      def deployment_project_delete
+        @json["deployment"]["project"]["delete"]
+      end
+
+      def deployment_project_disable_duration
+        @json["deployment"]["project"]["disable_duration"] || 30
+      end
+
 
       def deployment_source
         @json["deployment"]["source"]
@@ -35,6 +54,11 @@ module PowerByHelper
 
       def deployment_etl_notifications
         @json["deployment"]["etl"]["notifications"]
+      end
+
+
+      def deployment_user
+        @json["deployment"]["user"]
       end
 
 
@@ -64,15 +88,29 @@ module PowerByHelper
       end
 
       def storage_project_source
-        @json["storage"]["project"]["source"] || "data/project.csv"
+        if  (!@json["storage"]["project"].nil?)
+          @json["storage"]["project"]["source"] || "data/project.csv"
+        else
+          "data/project.csv"
+        end
       end
 
       def storage_etl_source
-        @json["storage"]["etl"]["source"] || "data/etl.csv"
+        if  (!@json["storage"]["etl"].nil?)
+          @json["storage"]["etl"]["source"] || "data/etl.csv"
+        else
+          "data/etl.csv"
+        end
       end
 
       def storage_user_source
-        @json["storage"]["user"]["source"] || "data/user.json"
+        if  (!@json["storage"]["user"].nil?)
+          @json["storage"]["user"]["source"] || "data/user.json"
+        else
+          "data/user.json"
+        end
+
+
       end
 
 

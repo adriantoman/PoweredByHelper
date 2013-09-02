@@ -30,7 +30,7 @@ module PowerByHelper
 
 
       def store_project
-        FileUtils.mkdir_p Settings.storage_project_source if !File.exists?(Settings.storage_project_source)
+        FileUtils.mkdir_p File.dirname(Settings.storage_project_source) if !File.exists?(Settings.storage_project_source)
         FasterCSV.open(Settings.storage_project_source, 'w',:quote_char => '"') do |csv|
           csv << ProjectData.header
           @project_data.each do |d|
@@ -100,8 +100,7 @@ module PowerByHelper
         pid = @project_data.first.project_pid
         fail "The project are not initialized. You cannot load roles without projects" if pid.nil?
 
-
-        roles_response = GoodData.get("/gdc/projects/#{pid}/roles")
+          roles_response = GoodData.get("/gdc/projects/#{pid}/roles")
         roles_response["projectRoles"]["roles"].each do |role_uri|
           r = GoodData.get(role_uri)
           identifier = r["projectRole"]["meta"]["identifier"]
@@ -147,13 +146,30 @@ module PowerByHelper
         else
           @project_data.collect! do |d|
             if (d.ident == data.ident )
-              data.project_pid = d.project_pid
-              data.status = d.status
-              data.to_delete = false
-              data
-            else
-              d
+              # Project was loaded from persistent storage and now it is in source file - nothing to do
+              if (data.status == ProjectData.NEW and d.status == ProjectData.TO_DISABLE)
+                @@log.info "Project - setting status to created - project found in source file"
+                d.status = ProjectData.OK
+              elsif (data.status == ProjectData.CREATED and d.status == ProjectData.NEW)
+                @@log.info "Project - setting status to created - project created"
+                d.status = ProjectData.CREATED
+                d.project_pid = d.project_pid
+              elsif (data.status == ProjectData.TO_DISABLE and d.status == ProjectData.DISABLED)
+                d.status = ProjectData.DISABLED
+                d.disable_at = DateTime.now().strftime("%Y-%m-%d %H:%M:%S")
+              elsif (data.status == ProjectData.DELETED and (d.status == ProjectData.DISABLED or d.status == ProjectData.TO_DISABLE))
+                d.status = ProjectData.DELETED
+              elsif (data.status == ProjectData.NEW and d.status == ProjectData.DISABLED)
+                @@log.info "Project - project was disabled, but it is again in provisiong file"
+                d.status = ProjectData.OK
+              elsif (data.status == ProjectData.NEW and d.status == ProjectData.DELETED)
+                @@log.info "Project - project was deleted, but it is again in provisioning file"
+                d.status = ProjectData.NEW
+              else
+                d.status = d.status
+              end
             end
+            d
           end
         end
         store_project
@@ -171,7 +187,8 @@ module PowerByHelper
               user_data = d.values.first
               user_data.admin = data.admin
               user_data.password = data.password
-              user_data.uri = data.uri
+              user_data.uri = data.uri if !Helper.blank?(data.uri)
+              user_data.internal_role = data.internal_role
               d[d.keys.first] = user_data
               d
             else

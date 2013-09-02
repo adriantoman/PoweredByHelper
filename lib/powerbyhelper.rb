@@ -26,29 +26,31 @@ module PowerByHelper
     def gooddata_login
       login = Settings.connection["login"]
       password = Settings.connection["password"]
-      server = Settings.connection["server"] || "https://na1.secure.gooddata.com/"
+      server = Settings.connection_server
       fail "Please put Gooddata Login and Password into the config file" if Helper.blank?(login) or Helper.blank?(password)
       GoodData.logger = @@log
       GoodData.connect(login,password,server)
     end
 
     def init_persistent_storage
-      @projects = Project.new()
-      @etl = Etl.new()
-      @user = User.new()
+      @projects = Project.new() if (!Settings.deployment_project.nil? and !Settings.deployment_project.empty?)
+      @etl = Etl.new() if (!Settings.deployment_etl.nil? and !Settings.deployment_etl.empty?)
+      @user = User.new() if (!Settings.deployment_user.nil? and !Settings.deployment_user.empty?)
     end
 
 
     def project_provisioning
-      fail "Persistent storage not initialized" if @projects.nil?
-      Helper.retryable do
+      @@log.info "Project persistent storage not initialized - skipping project provisioning" if @projects.nil?
+      #Helper.retryable do
         @projects.create_projects
-      end
+        @projects.handle_projects_disable
+      #end
     end
 
     def etl_provisioning
-      fail "Persistent storage not initialized" if @etl.nil?
-      Helper.retryable do
+      @@log.info "Etl persistent storage not initialized - skipping etl provisioning" if @etl.nil?
+      #Helper.retryable do
+      if (!@etl.nil?)
         @etl.deploy_process
         @etl.create_schedules
         @etl.create_notifications
@@ -56,17 +58,16 @@ module PowerByHelper
     end
 
     def user_synchronization
-      fail "Persistent storage not initialized" if @user.nil?
-
-      @user.create_new_users
-      @user.invite_users
-
+      @@log.info "Users persistent storage not initialized - skipping user provisioning" if @user.nil?
       #Helper.retryable do
-      #  @
-      #  @etl.create_schedules
-      #  @etl.create_notifications
+      if (!@user.nil?)
+        @user.create_new_users
+        @user.invite_users
+        @user.add_users
+        @user.disable_users
+        @user.update_users
+      end
       #end
-
     end
 
 
