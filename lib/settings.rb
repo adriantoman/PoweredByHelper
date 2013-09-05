@@ -88,7 +88,7 @@ module PowerByHelper
       end
 
       def storage_project_source
-        if  (!@json["storage"]["project"].nil?)
+        if  (!@json["storage"].nil? and !@json["storage"]["project"].nil?)
           @json["storage"]["project"]["source"] || "data/project.csv"
         else
           "data/project.csv"
@@ -96,7 +96,7 @@ module PowerByHelper
       end
 
       def storage_etl_source
-        if  (!@json["storage"]["etl"].nil?)
+        if  (!@json["storage"].nil? and !@json["storage"]["etl"].nil?)
           @json["storage"]["etl"]["source"] || "data/etl.csv"
         else
           "data/etl.csv"
@@ -104,7 +104,7 @@ module PowerByHelper
       end
 
       def storage_user_source
-        if  (!@json["storage"]["user"].nil?)
+        if  (!@json["storage"].nil? and !@json["storage"]["user"].nil?)
           @json["storage"]["user"]["source"] || "data/user.json"
         else
           "data/user.json"

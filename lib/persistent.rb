@@ -18,8 +18,10 @@ module PowerByHelper
       end
 
       def init_user()
-        @user_data = []
-        load_user()
+        if (@user_data.nil?)
+          @user_data = []
+          load_user()
+        end
       end
 
       def init_roles()
@@ -40,23 +42,27 @@ module PowerByHelper
       end
 
       def store_etl
-        FileUtils.mkdir_p File.dirname(Settings.storage_etl_source) if !File.exists?(Settings.storage_etl_source)
-        FasterCSV.open(Settings.storage_etl_source, 'w',:quote_char => '"') do |csv|
-          csv << EtlData.header
-          @etl_data.each do |d|
-            csv << d.to_a
+        if (!etl_data.nil?)
+          FileUtils.mkdir_p File.dirname(Settings.storage_etl_source) if !File.exists?(Settings.storage_etl_source)
+          FasterCSV.open(Settings.storage_etl_source, 'w',:quote_char => '"') do |csv|
+            csv << EtlData.header
+            @etl_data.each do |d|
+              csv << d.to_a
+            end
           end
         end
       end
 
 
       def store_user
-        FileUtils.mkdir_p File.dirname(Settings.storage_user_source) if !File.exists?(Settings.storage_user_source)
-        File.open(Settings.storage_user_source,"w") do |f|
-          hash = {
-              "user_data" => @user_data.map {|u| {  u.keys.first => u.values.first.to_json}}
-          }
-          f.write(JSON.pretty_generate(hash))
+        if (!@user_data.nil?)
+          FileUtils.mkdir_p File.dirname(Settings.storage_user_source) if !File.exists?(Settings.storage_user_source)
+          File.open(Settings.storage_user_source,"w") do |f|
+            hash = {
+                "user_data" => @user_data.map {|u| {  u.keys.first => u.values.first.to_json}}
+            }
+            f.write(JSON.pretty_generate(hash))
+          end
         end
       end
 
@@ -148,25 +154,28 @@ module PowerByHelper
             if (d.ident == data.ident )
               # Project was loaded from persistent storage and now it is in source file - nothing to do
               if (data.status == ProjectData.NEW and d.status == ProjectData.TO_DISABLE)
-                @@log.info "Project - setting status to created - project found in source file"
+                @@log.debug "Project - setting status to OK - project found in source file"
                 d.status = ProjectData.OK
               elsif (data.status == ProjectData.CREATED and d.status == ProjectData.NEW)
-                @@log.info "Project - setting status to created - project created"
+                @@log.debug "Project - setting status to CREATED - project created"
                 d.status = ProjectData.CREATED
                 d.project_pid = d.project_pid
-              elsif (data.status == ProjectData.TO_DISABLE and d.status == ProjectData.DISABLED)
+              elsif (data.status == ProjectData.DISABLED and d.status == ProjectData.TO_DISABLE)
+                @@log.debug "Project - project was TO_DISABLE waiting disable and now is DISABLED"
                 d.status = ProjectData.DISABLED
-                d.disable_at = DateTime.now().strftime("%Y-%m-%d %H:%M:%S")
+                d.disabled_at = DateTime.now().strftime("%Y-%m-%d %H:%M:%S")
               elsif (data.status == ProjectData.DELETED and (d.status == ProjectData.DISABLED or d.status == ProjectData.TO_DISABLE))
+                @@log.debug "Project - project was DISABLED or TO_DISABLE and force delete setting is enabled or project was disabled for long time"
                 d.status = ProjectData.DELETED
               elsif (data.status == ProjectData.NEW and d.status == ProjectData.DISABLED)
-                @@log.info "Project - project was disabled, but it is again in provisiong file"
+                @@log.debug "Project - project was disabled, but it is again in provisiong file"
                 d.status = ProjectData.OK
               elsif (data.status == ProjectData.NEW and d.status == ProjectData.DELETED)
-                @@log.info "Project - project was deleted, but it is again in provisioning file"
+                @@log.debug "Project - project was deleted, but it is again in provisioning file"
                 d.status = ProjectData.NEW
               else
-                d.status = d.status
+                @@log.debug "Project - default transition from #{d.status} to #{data.status}"
+                d.status = data.status
               end
             end
             d
@@ -188,7 +197,6 @@ module PowerByHelper
               user_data.admin = data.admin
               user_data.password = data.password
               user_data.uri = data.uri if !Helper.blank?(data.uri)
-              user_data.internal_role = data.internal_role
               d[d.keys.first] = user_data
               d
             else
@@ -201,7 +209,7 @@ module PowerByHelper
       def merge_user_project(login,user_project_data)
         user = @user_data.find{|u| u.keys.first == login}
         if (!user.nil?)
-          user.values.first.add_or_update_user_project_mapping(user_project_data)
+          user.values.first.add_or_update_user_project_mapping(login,user_project_data)
         else
           fail "You are looking for user in user data, but you have not found it. This should not happen"
         end
@@ -248,7 +256,13 @@ module PowerByHelper
       end
 
       def get_role_uri_by_name(name,pid)
-        @roles[name]["uri"].gsub("%PID%",pid)
+
+        if (@roles.has_key?(name))
+          @roles[name]["uri"].gsub("%PID%",pid)
+        else
+          @log.warn "Role #{name} is not valid GoodData role. Setting role to readOnlyUserRole by default"
+          @roles["readOnlyUserRole"]["uri"].gsub("%PID%",pid)
+        end
       end
 
       def reset_schedule_update
@@ -273,6 +287,29 @@ module PowerByHelper
       def exists_one_nonupdated_notification?
         etl = @etl_data.find {|s| s.is_updated_notification == false}
         !etl.nil?
+      end
+
+
+      def delete_project_by_project_pid(project_pid)
+        project_data.delete_if {|p| p.project_pid == project_pid}
+      end
+
+      def delete_etl_by_project_pid(project_pid)
+        @etl_data.delete_if {|e| e.project_pid == project_pid }
+      end
+
+      def delete_user_project_by_project_pid(project_pid)
+        if (!@user_data.nil?)
+          @user_data.collect! do |u|
+            data = u.values.first
+            data.user_project_mapping = data.user_project_mapping.delete_if {|up| up.project_pid == project_pid}
+            pp data.user_project_mapping
+
+            u[u.keys.first] = data
+            u
+          end
+        end
+
       end
 
 

@@ -18,7 +18,7 @@ module PowerByHelper
       Persistent.project_data.each do |p|
 
         etl = Persistent.get_etl_by_project_pid(p.project_pid)
-        if (etl.nil? or etl.status == EtlData.NEW )
+        if ((etl.nil? or etl.status == EtlData.NEW) and (p.status != ProjectData.DELETED and p.status != ProjectData.DISABLED))
           @@log.info "Deploying process for #{p.project_name} - #{p.project_pid}"
           etl = EtlData.new({"project_pid" => p.project_pid,"status" => EtlData.NEW})
           response = deploy_update_graph(Settings.deployment_etl_process["source"],p.project_name,p.project_pid)
@@ -69,11 +69,11 @@ module PowerByHelper
         Settings.deployment_etl_notifications.each do |notification_settings|
           Persistent.etl_data.each do |etl|
             if (Integer(etl.status) < Integer(EtlData.NOTIFICATION_CREATED))
-              @@log.info "Creating notification for #{p.project_name} - #{p.project_pid}"
+              @@log.info "Creating notification for #{etl.project_pid}"
               response = create_notification(notification_settings,etl.project_pid,etl.process_id)
               etl.status = EtlData.NOTIFICATION_CREATED
               Persistent.update_etl(etl)
-              @@log.info "Notification created #{p.project_name} - #{p.project_pid}"
+              @@log.info "Notification created #{etl.project_pid}"
             end
           end
         end

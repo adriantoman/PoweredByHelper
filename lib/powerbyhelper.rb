@@ -35,7 +35,6 @@ module PowerByHelper
     def init_persistent_storage
       @projects = Project.new() if (!Settings.deployment_project.nil? and !Settings.deployment_project.empty?)
       @etl = Etl.new() if (!Settings.deployment_etl.nil? and !Settings.deployment_etl.empty?)
-      @user = User.new() if (!Settings.deployment_user.nil? and !Settings.deployment_user.empty?)
     end
 
 
@@ -60,6 +59,7 @@ module PowerByHelper
     def user_synchronization
       @@log.info "Users persistent storage not initialized - skipping user provisioning" if @user.nil?
       #Helper.retryable do
+      @user = User.new() if (!Settings.deployment_user.nil? and !Settings.deployment_user.empty?)
       if (!@user.nil?)
         @user.create_new_users
         @user.invite_users

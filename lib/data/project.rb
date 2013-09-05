@@ -20,7 +20,7 @@ module PowerByHelper
 
       Persistent.init_project
 
-      FasterCSV.foreach(data_file_path, :headers => true) do |csv_obj|
+      FasterCSV.foreach(data_file_path, {:headers => true, :skip_blanks => true}) do |csv_obj|
         fail "One of the project names is empty" if Helper.blank?(csv_obj[data_mapping["project_name"]]) or Helper.blank?(csv_obj[data_mapping["ident"]])
         project_data = ProjectData.new({"ident" => csv_obj[data_mapping["ident"]], "project_name" => csv_obj[data_mapping["project_name"]], "summary" => csv_obj[data_mapping["summary"]],"status" => ProjectData.NEW})
         Persistent.merge_project(project_data)
@@ -79,6 +79,25 @@ module PowerByHelper
           end
         end
       end
+
+
+      while (Persistent.get_projects_by_status(ProjectData.CREATED).count > 0)
+        @@log.info "Waiting till all created project are provisioned"
+        Persistent.get_projects_by_status(ProjectData.CREATED).each do |for_check|
+          project_status = GoodData::Project[for_check.project_pid]
+          if !(project_status.to_json['content']['state'] =~ /^(PREPARING|PREPARED|LOADING)$/)
+            for_check.status = ProjectData.OK
+            Persistent.merge_project(for_check)
+          end
+        end
+
+        if (Persistent.get_projects_by_status(ProjectData.CREATED).count > 0)
+          @@log.info "Waiting - START"
+          sleep(10)
+          @@log.info "Waiting - STOP"
+        end
+      end
+
     end
 
 
@@ -86,7 +105,8 @@ module PowerByHelper
       if (Settings.deployment_project_delete.nil? or Settings.deployment_project_delete == "disable_users_first")
 
         if (Settings.deployment_user.nil?)
-          @@log.warn "You have set up, that you want to use user_disable for projects, but you don't have user provisioning section in settings"
+          @@log.warn "You have set up, that you want to use user_disable for projects, but you don't have user provisioning section in settings - SKIPPING"
+        else
           disable_projects
         end
       elsif (Settings.deployment_project_delete == "force_delete")
@@ -102,11 +122,13 @@ module PowerByHelper
 
     def disable_projects()
       Persistent.project_data.each do |p|
+        # For some reason there is need of clone here -> because if it is not used ... it updates elements in collections ... which is strange
+        p = p.clone
         if (p.status == ProjectData.DISABLED)
-          disabled_at = DateTime._strptime(p.disabled_at,"%Y-%m-%d %H:%M:%S")
-          store_period = Integer(Setting.deployment_project_disable_duration) || 30
+          disabled_at = DateTime.strptime(p.disabled_at,"%Y-%m-%d %H:%M:%S")
+          store_period = Integer(Settings.deployment_project_disable_duration) || 30
 
-          if ((DateTime.now - disabled_at) > store_period.days)
+          if ((DateTime.now - disabled_at) > store_period)
             delete_project(p)
           end
         end
@@ -123,20 +145,26 @@ module PowerByHelper
     def delete_projects()
       Persistent.project_data.each do |p|
         if (p.status == ProjectData.TO_DISABLE)
-          # We will delete all nece
+          # We will delete all project which are set to delete
           delete_project(p)
+          Persistent.delete_user_project_by_project_pid(p.project_pid)
+          Persistent.delete_etl_by_project_pid(p.project_pid)
+          Persistent.delete_project_by_project_pid(p.project_pid)
         end
+        Persistent.store_user
+        Persistent.store_etl
         Persistent.store_project
       end
     end
 
     def delete_project(project_data)
-
       begin
         @@log.info "Deleting project #{project_data.project_name} (#{project_data.project_pid} - #{project_data.ident})"
         GoodData.delete("/gdc/projects/#{project_data.project_pid}")
-        project_data.status = ProjectData.DELETED
-        Persistent.merge_project(project_data)
+        Persistent.init_user()
+        Persistent.delete_user_project_by_project_pid(project_data.project_pid)
+        Persistent.delete_etl_by_project_pid(project_data.project_pid)
+        Persistent.delete_project_by_project_pid(project_data.project_pid)
         @@log.info "Project deleted #{project_data.project_name} (#{project_data.project_pid} - #{project_data.ident})"
       rescue RestClient::BadRequest => e
         response = JSON.load(e.response)
@@ -145,6 +173,10 @@ module PowerByHelper
         response = JSON.load(e.response)
         @@log.warn "Project #{project_data.project_pid} could not be deleted. Reason: #{response["error"]["message"]}"
       end
+      Persistent.store_user
+      Persistent.store_etl
+      Persistent.store_project
+
     end
 
 
@@ -216,6 +248,7 @@ module PowerByHelper
       end
       @summary = data["summary"]
       @disabled_at = data["disabled_at"]
+      @@log.debug "Setting status to #{@status}"
     end
 
     def self.header

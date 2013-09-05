@@ -22,11 +22,12 @@ module PowerByHelper
       Persistent.init_user
       Persistent.init_roles
 
+
       password_mapping = user_creation_mapping["password"] || "password"
       admin_mapping = user_creation_mapping["admin"] || "admin"
 
       # Load info about users - domain file - representing users which should be in domain and merge it with info in Persistent storage
-      FasterCSV.foreach(Settings.deployment_user_creation["source"], :headers => true) do |csv_obj|
+      FasterCSV.foreach(Settings.deployment_user_creation["source"], {:headers => true, :skip_blanks => true}) do |csv_obj|
 
         user_data = UserData.new({"login" => csv_obj[user_creation_mapping["login"]], "first_name" => csv_obj[user_creation_mapping["first_name"]], "last_name" => csv_obj[user_creation_mapping["last_name"]], "status" => UserData.NEW})
         user_data.password = csv_obj[password_mapping] || rand(10000000000000).to_s
@@ -42,28 +43,31 @@ module PowerByHelper
       Persistent.store_user
 
       # Load info about user-project mapping and merge it with information from Persistent Storage
-      FasterCSV.foreach(Settings.deployment_user_project_synchronization["source"], :headers => true) do |csv_obj|
+      FasterCSV.foreach(Settings.deployment_user_project_synchronization["source"], {:headers => true, :skip_blanks => true}) do |csv_obj|
 
         ident = csv_obj[user_synchronization_mapping["ident"]]
 
         project_pid = Persistent.get_project_by_ident(ident)
 
-        fail "There is no project with specified ID #{ident}" if project_pid.nil?
+        if (!project_pid.nil?)
 
-        project_pid = project_pid.project_pid
+          project_pid = project_pid.project_pid
 
-        role = csv_obj[user_synchronization_mapping["role"]]
-        check = Helper.roles.find{|r| r.downcase == role.downcase}
-        fail "This role does not exist in Gooddata" if check.nil?
+          role = csv_obj[user_synchronization_mapping["role"]]
+          check = Helper.roles.find{|r| r.downcase == role.downcase}
+          fail "This role does not exist in Gooddata" if check.nil?
 
-        login = csv_obj[user_synchronization_mapping["login"]].downcase
-        notification = csv_obj[user_synchronization_mapping["notification"]].downcase == "1" ? true : false
-        internal_role = "external"
-        if (!user_synchronization_mapping["internal_role"].nil?)
-          internal_role = csv_obj[user_synchronization_mapping["internal_role"]].downcase
+          login = csv_obj[user_synchronization_mapping["login"]].downcase
+          notification = csv_obj[user_synchronization_mapping["notification"]].downcase == "1" ? true : false
+          internal_role = "external"
+          if (!user_synchronization_mapping["internal_role"].nil?)
+            internal_role = csv_obj[user_synchronization_mapping["internal_role"]].downcase
+          end
+          user_project_data = UserProjectData.new({"project_pid" => project_pid,"role" => role, "notification" => notification,"internal_role" => internal_role,"status" => UserProjectData.NEW})
+          Persistent.merge_user_project(login,user_project_data)
+        else
+          @@log.warn "Project with ID #{ident} don't exist. Skipping user #{csv_obj[user_synchronization_mapping["login"]].downcase} invitation"
         end
-        user_project_data = UserProjectData.new({"project_pid" => project_pid,"role" => role, "notification" => notification,"internal_role" => internal_role,status => UserProjectData.NEW})
-        Persistent.merge_user_project(login,user_project_data)
       end
       Persistent.store_user
 
@@ -74,7 +78,7 @@ module PowerByHelper
       admin_users.each do |admin|
         admin_data = admin.values.first
         projects.each do |p|
-          user_project_data = UserProjectData.new({"project_pid" => p.project_pid,"role" => "adminRole", "notification" => false, "internal_role" => "internal",status => UserProjectData.NEW})
+          user_project_data = UserProjectData.new({"project_pid" => p.project_pid,"role" => "adminRole", "notification" => false, "internal_role" => "internal","status" => UserProjectData.NEW})
           Persistent.merge_user_project(admin_data.login,user_project_data)
         end
       end
@@ -88,7 +92,11 @@ module PowerByHelper
       Persistent.user_data.each do |u|
         user_data = u.values.first
         user_data.user_project_mapping.each do |user_project|
-          is_disabled = !(projects_to_disable.find{|p| p.project_pid = user_project.pid}.nil?)
+          user_project = user_project.clone
+          temp = projects_to_disable.find do |p|
+            p.project_pid == user_project.project_pid
+          end
+          is_disabled = temp.nil? ? false : true
           if (is_disabled and user_project.internal_role != "internal")
             user_project.status = UserProjectData.TO_DISABLE_BY_PROJECT
             Persistent.merge_user_project(user_data.login,user_project)
@@ -96,7 +104,7 @@ module PowerByHelper
         end
       end
 
-      @log.info "Persistent storage for user provisioning initialized"
+      @@log.info "Persistent storage for user provisioning initialized"
 
 
   end
@@ -106,6 +114,7 @@ module PowerByHelper
       users_to_create = Persistent.get_users_by_status(UserData.NEW)
       users_to_create.each do |v|
         user_data = v.values.first
+        @@log.info "Creating new user #{user_data.login} in domain"
         user_data = UserHelper.create_user_in_domain(Settings.deployment_user_domain,user_data)
         Persistent.merge_user(user_data) if !user_data.nil?
       end
@@ -187,7 +196,7 @@ module PowerByHelper
     end
 
 
-    def add_or_update_user_project_mapping(user_project)
+    def add_or_update_user_project_mapping(login,user_project)
       user_check = @user_project_mapping.find{|up| up.project_pid == user_project.project_pid }
       if (user_check.nil?)
         @user_project_mapping.push(user_project)
@@ -195,25 +204,26 @@ module PowerByHelper
         @user_project_mapping.collect! do |up|
           if (up.project_pid == user_project.project_pid)
             if (up.status == UserProjectData.TO_DISABLE and user_project.status == UserProjectData.NEW)
-              @@log.debug "status OK"
+              @@log.debug "Login=#{login} Project_pid=#{up.project_pid} status OK"
               up.status = UserProjectData.OK
             elsif (up.status == UserProjectData.DISABLED and user_project.status == UserProjectData.NEW)
-              @@log.debug "Project again in source file - status CHANGED"
+              @@log.debug "Login=#{login} Project_pid=#{up.project_pid} Project again in source file - status CHANGED"
               up.status = UserProjectData.CHANGED
             elsif (up.status == UserProjectData.OK and up.role != user_project.role)
-              @@log.debug "Role change detected - status CHANGED"
+              @@log.debug "Login=#{login} Project_pid=#{up.project_pid} Role change detected - status CHANGED"
               up.status = UserProjectData.CHANGED
             elsif (user_project.status == UserProjectData.OK and !up.notification_send and user_project.notification_send)
-              @@log.debug "User was invited to project - status OK"
+              @@log.debug "Login=#{login} Project_pid=#{up.project_pid} User was invited to project - status OK"
               up.status = UserProjectData.OK
               up.notification_send = true
             elsif (up.status == UserProjectData.OK and user_project.status == UserProjectData.TO_DISABLE_BY_PROJECT)
-              @@log.debug "User was in disabled project - disabling it"
+              @@log.debug "Login=#{login} Project_pid=#{up.project_pid} User was in disabled project - disabling it"
               up.status = UserProjectData.TO_DISABLE
             elsif (up.status == UserProjectData.CHANGED and user_project.status == UserProjectData.TO_DISABLE_BY_PROJECT)
-              @@log.debug "User was in disabled project, but someone have left him in project-user mapping file - leaving it disabled"
+              @@log.debug "Login=#{login} Project_pid=#{up.project_pid} User is in disabled project - leaving it disabled"
               up.status = UserProjectData.DISABLED
             else
+              @@log.debug "Login=#{login} Project_pid=#{up.project_pid} Default behaviour - from #{up.status} to #{user_project.status}"
               up.status = user_project.status
             end
           end

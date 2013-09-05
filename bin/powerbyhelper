@@ -27,7 +27,7 @@ program_desc 'GoodData PowerBy provisioning app'
 pre do |global_options,command,options,args|
   next true if command.nil?
   @@log = Logger.new(STDOUT)
-  @@log.level = Logger::INFO
+  @@log.level = Logger::DEBUG
 end
 
 command :provision do |c|

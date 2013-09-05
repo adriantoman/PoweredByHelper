@@ -41,7 +41,7 @@ module PowerByHelper
     def self.invite_user(user_data_element)
       user_data_element.user_project_mapping.each do |user_project_data|
         if (user_project_data.status == UserProjectData.NEW and user_project_data.notification and !user_project_data.notification_send)
-
+          @@log.info "Inviting user #{user_data_element.login} to project #{user_project_data.project_pid} (with notification)"
           request = {
               "invitations" =>
                 [{
@@ -80,6 +80,7 @@ module PowerByHelper
         if (user_project_data.status == UserProjectData.NEW and !user_project_data.notification)
           request = create_user_request("ENABLED",user_data_element.uri,Persistent.get_role_uri_by_name(user_project_data.role,user_project_data.project_pid))
           begin
+            @@log.info "Adding user #{user_data_element.login} to project #{user_project_data.project_pid} (without notification)"
             GoodData.post("/gdc/projects/#{user_project_data.project_pid}/users", request)
             user_project_data.status = UserProjectData.OK
             Persistent.merge_user_project(user_data_element.login,user_project_data)
@@ -97,19 +98,26 @@ module PowerByHelper
 
     def self.disable_user(user_data_element)
       user_data_element.user_project_mapping.each do |user_project_data|
-        if (user_project_data.status == UserProjectData.TO_DISABLE)
-          request = create_user_request("DISABLED",user_data_element.uri)
-          begin
+        begin
+          if (user_project_data.status == UserProjectData.TO_DISABLE)
+            request = create_user_request("DISABLED",user_data_element.uri)
+            @@log.info "Disabling user #{user_data_element.login} in project #{user_project_data.project_pid}"
             GoodData.post("/gdc/projects/#{user_project_data.project_pid}/users", request)
             user_project_data.status = UserProjectData.DISABLED
             Persistent.merge_user_project(user_data_element.login,user_project_data)
-          rescue RestClient::BadRequest => e
-            response = JSON.load(e.response)
-            @@log.warn "User #{user_data_element.login} could not be disabled in project #{user_project_data.project_pid}. Reason: #{response["error"]["message"]}"
-          rescue RestClient::InternalServerError => e
-            response = JSON.load(e.response)
-            @@log.warn "User #{user_data_element.login} could not be disabled in project #{user_project_data.project_pid}. Reason: #{response["error"]["message"]}"
+          elsif (user_project_data.status == UserProjectData.TO_DISABLE_BY_PROJECT and user_project_data.internal_role != "internal")
+            request = create_user_request("DISABLED",user_data_element.uri)
+            @@log.info "Disabling user #{user_data_element.login} in project #{user_project_data.project_pid}"
+            GoodData.post("/gdc/projects/#{user_project_data.project_pid}/users", request)
+            user_project_data.status = UserProjectData.DISABLED
+            Persistent.merge_user_project(user_data_element.login,user_project_data)
           end
+        rescue RestClient::BadRequest => e
+          response = JSON.load(e.response)
+          @@log.warn "User #{user_data_element.login} could not be disabled in project #{user_project_data.project_pid}. Reason: #{response["error"]["message"]}"
+        rescue RestClient::InternalServerError => e
+          response = JSON.load(e.response)
+          @@log.warn "User #{user_data_element.login} could not be disabled in project #{user_project_data.project_pid}. Reason: #{response["error"]["message"]}"
         end
       end
     end
@@ -119,6 +127,7 @@ module PowerByHelper
         if (user_project_data.status == UserProjectData.CHANGED)
           request = create_user_request("ENABLED",user_data_element.uri,Persistent.get_role_uri_by_name(user_project_data.role,user_project_data.project_pid))
           begin
+            @@log.info "Updating user #{user_data_element.login} in project #{user_project_data.project_pid} (role - #{user_project_data.role}, status - ENABLED)"
             GoodData.post("/gdc/projects/#{user_project_data.project_pid}/users", request)
             user_project_data.status = UserProjectData.OK
             Persistent.merge_user_project(user_data_element.login,user_project_data)
