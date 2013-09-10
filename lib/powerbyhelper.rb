@@ -5,8 +5,6 @@ require 'fastercsv'
 require "awesome_print"
 require 'fileutils'
 
-
-
 %w(settings helper persistent userhelper).each {|a| require "lib/#{a}"}
 %w(project etl user).each {|a| require "lib/data/#{a}"}
 
@@ -37,6 +35,11 @@ module PowerByHelper
       @etl = Etl.new() if (!Settings.deployment_etl.nil? and !Settings.deployment_etl.empty?)
     end
 
+    def init_user_storage
+      @user = User.new() if (!Settings.deployment_user.nil? and !Settings.deployment_user.empty?)
+    end
+
+
 
     def project_provisioning
       @@log.info "Project persistent storage not initialized - skipping project provisioning" if @projects.nil?
@@ -57,9 +60,9 @@ module PowerByHelper
     end
 
     def user_synchronization
-      @@log.info "Users persistent storage not initialized - skipping user provisioning" if @user.nil?
+      #@@log.info "Users persistent storage not initialized - skipping user provisioning" if @user.nil?
       #Helper.retryable do
-      @user = User.new() if (!Settings.deployment_user.nil? and !Settings.deployment_user.empty?)
+      init_user_storage
       if (!@user.nil?)
         @user.create_new_users
         @user.invite_users

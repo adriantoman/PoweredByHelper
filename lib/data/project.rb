@@ -20,10 +20,24 @@ module PowerByHelper
 
       Persistent.init_project
 
+      file_rows = []
+
       FasterCSV.foreach(data_file_path, {:headers => true, :skip_blanks => true}) do |csv_obj|
         fail "One of the project names is empty" if Helper.blank?(csv_obj[data_mapping["project_name"]]) or Helper.blank?(csv_obj[data_mapping["ident"]])
-        project_data = ProjectData.new({"ident" => csv_obj[data_mapping["ident"]], "project_name" => csv_obj[data_mapping["project_name"]], "summary" => csv_obj[data_mapping["summary"]],"status" => ProjectData.NEW})
-        Persistent.merge_project(project_data)
+        file_rows.push(csv_obj)
+      end
+
+      file_rows.each do |csv_obj|
+        Persistent.change_project_status(csv_obj[data_mapping["ident"]],ProjectData.NEW,{"ident" => csv_obj[data_mapping["ident"]], "project_name" => csv_obj[data_mapping["project_name"]], "summary" => csv_obj[data_mapping["summary"]]})
+      end
+
+      Persistent.project_data.each do |p|
+        if (p.status != ProjectData.DISABLED)
+          row = file_rows.find{|r| r[data_mapping["ident"]] == p.ident}
+          if (row.nil?)
+            Persistent.change_project_status(p.ident,ProjectData.TO_DISABLE,nil)
+          end
+        end
       end
 
       @@log.info "Persistent storage for project provisioning initialized"
@@ -55,10 +69,7 @@ module PowerByHelper
 
           project = GoodData::Project.new json
           project.save
-          p.project_pid = project.obj_id
-
-          p.status = ProjectData.CREATED
-          Persistent.merge_project(p)
+          Persistent.change_project_status(p.ident,ProjectData.CREATED,{"project_pid" => project.obj_id})
           @@log.info "Project created!"
         end
 
@@ -67,8 +78,7 @@ module PowerByHelper
           Persistent.get_projects_by_status(ProjectData.CREATED).each do |for_check|
             project_status = GoodData::Project[for_check.project_pid]
             if !(project_status.to_json['content']['state'] =~ /^(PREPARING|PREPARED|LOADING)$/)
-              for_check.status = ProjectData.OK
-              Persistent.merge_project(for_check)
+              Persistent.change_project_status(for_check.ident,ProjectData.OK,nil)
             end
           end
 
@@ -86,8 +96,7 @@ module PowerByHelper
         Persistent.get_projects_by_status(ProjectData.CREATED).each do |for_check|
           project_status = GoodData::Project[for_check.project_pid]
           if !(project_status.to_json['content']['state'] =~ /^(PREPARING|PREPARED|LOADING)$/)
-            for_check.status = ProjectData.OK
-            Persistent.merge_project(for_check)
+            Persistent.change_project_status(for_check.ident,ProjectData.OK,nil)
           end
         end
 
@@ -135,8 +144,8 @@ module PowerByHelper
 
         if (p.status == ProjectData.TO_DISABLE)
           # Here we only mark project as disabled, users will be disabled in user provisioning part
-          p.status = ProjectData.DISABLED
-          Persistent.merge_project(p)
+          Persistent.change_project_status(p.ident,ProjectData.DISABLED,nil)
+
         end
         Persistent.store_project
       end
@@ -151,7 +160,7 @@ module PowerByHelper
           Persistent.delete_etl_by_project_pid(p.project_pid)
           Persistent.delete_project_by_project_pid(p.project_pid)
         end
-        Persistent.store_user
+        Persistent.store_user_project
         Persistent.store_etl
         Persistent.store_project
       end
@@ -173,7 +182,7 @@ module PowerByHelper
         response = JSON.load(e.response)
         @@log.warn "Project #{project_data.project_pid} could not be deleted. Reason: #{response["error"]["message"]}"
       end
-      Persistent.store_user
+      Persistent.store_user_project
       Persistent.store_etl
       Persistent.store_project
 
@@ -237,17 +246,14 @@ module PowerByHelper
 
 
 
-    def initialize(data)
-      @ident = data["ident"]
-      @project_pid = data["project_pid"]
-      @project_name = data["project_name"]
-      if (data["status"] == ProjectData.OK)
-        @status = ProjectData.TO_DISABLE
-      else
-        @status = data["status"]
-      end
-      @summary = data["summary"]
-      @disabled_at = data["disabled_at"]
+    def initialize(status,data)
+      @status = status
+
+      @ident = data["ident"] if !data["ident"].nil?
+      @project_pid = data["project_pid"] if !data["project_pid"].nil?
+      @project_name = data["project_name"] if !data["project_name"].nil?
+      @summary = data["summary"] if !data["summary"].nil?
+      @disabled_at = data["disabled_at"] if !data["disabled_at"].nil?
       @@log.debug "Setting status to #{@status}"
     end
 

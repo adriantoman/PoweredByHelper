@@ -105,13 +105,25 @@ module PowerByHelper
 
       def storage_user_source
         if  (!@json["storage"].nil? and !@json["storage"]["user"].nil?)
-          @json["storage"]["user"]["source"] || "data/user.json"
+          @json["storage"]["user"]["source"] || "data/user.csv"
         else
-          "data/user.json"
+          "data/user.csv"
         end
 
 
       end
+
+
+      def storage_user_project_source
+        if  (!@json["storage"].nil? and !@json["storage"]["user"].nil?)
+          @json["storage"]["user_project"]["source"] || "data/user_project.csv"
+        else
+          "data/user_project.csv"
+        end
+
+
+      end
+
 
 
 

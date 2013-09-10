@@ -195,6 +195,9 @@ module PowerByHelper
 
   class EtlData
 
+
+
+
     attr_accessor :project_pid,:process_id,:cron,:schedule_id,:status,:is_updated_schedule,:is_updated_notification
 
     def self.NEW

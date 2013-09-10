@@ -3,6 +3,7 @@ GEM
   specs:
     awesome_print (1.1.0)
     coderay (1.0.9)
+    colorize (0.5.8)
     fastercsv (1.5.5)
     gli (2.7.0)
     gooddata (0.5.14)
@@ -30,6 +31,7 @@ PLATFORMS
 
 DEPENDENCIES
   awesome_print (~> 1.1.0)
+  colorize
   fastercsv (~> 1.5.5)
   gli (~> 2.7.0)
   gooddata (= 0.5.14)
