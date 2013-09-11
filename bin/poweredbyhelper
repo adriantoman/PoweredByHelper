@@ -17,7 +17,7 @@ require 'gooddata'
 require 'logger'
 require 'pry'
 require 'gli'
-require 'powerbyhelper'
+require 'poweredbyhelper'
 require 'colorize'
 
 include GLI::App
@@ -29,7 +29,17 @@ pre do |global_options,command,options,args|
   next true if command.nil?
   @@log = Logger.new(STDOUT)
   @@log.level = Logger::INFO
+  if File.exists?('running.pid')
+    puts "Another process is running"
+    exit
+  end
+  FileUtils.touch('running.pid')
 end
+
+post do |global_options,command,options,args|
+  FileUtils.rm('running.pid')
+end
+
 
 command :provision do |c|
 
@@ -200,6 +210,7 @@ end
 
 
 on_error do |exception|
+  FileUtils.rm('running.pid')
   pp exception.backtrace
   if exception.is_a?(SystemExit) && exception.status == 0
     false

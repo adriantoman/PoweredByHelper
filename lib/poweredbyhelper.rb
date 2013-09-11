@@ -27,7 +27,7 @@ module PowerByHelper
       server = Settings.connection_server
       fail "Please put Gooddata Login and Password into the config file" if Helper.blank?(login) or Helper.blank?(password)
       GoodData.logger = @@log
-      GoodData.connect(login,password,server)
+      GoodData.connect(login,password,server,{:webdav_server => Settings.connection_webdav})
     end
 
     def init_persistent_storage

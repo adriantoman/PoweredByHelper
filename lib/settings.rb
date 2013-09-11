@@ -16,6 +16,10 @@ module PowerByHelper
         @json["connection"]["server"] || "https://secure.gooddata.com"
       end
 
+      def connection_webdav
+        @json["connection"]["webdav"] || "https://secure-di.gooddata.com"
+      end
+
       def deployment_project
         @json["deployment"]["project"]
       end
