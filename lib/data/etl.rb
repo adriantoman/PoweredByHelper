@@ -142,11 +142,9 @@ module PowerByHelper
 
       #add parameters
       schedule_settings["parameters"].each do |parameters|
-        if (parameters["name"] == "MODE")
-          json = { parameters["name"] => "#{parameters["value"]}/#{schedule_identification}"}
-        else
-          json = { parameters["name"] => parameters["value"] }
-        end
+        value = parameters["value"]
+        value.gsub!("%ID%",schedule_identification)
+        json = { parameters["name"] => value }
         data["schedule"]["params"].merge!(json)
       end
 
