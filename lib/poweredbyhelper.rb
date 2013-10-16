@@ -2,7 +2,6 @@ require 'json'
 require 'gooddata'
 
 require 'fastercsv'
-require "awesome_print"
 require 'fileutils'
 
 %w(settings helper persistent userhelper).each {|a| require "lib/#{a}"}
