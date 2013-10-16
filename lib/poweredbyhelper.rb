@@ -90,9 +90,9 @@ module PowerByHelper
       Persistent.project_data.each do |project|
         if (!project.nil? and !project.project_pid.nil?)
           @@log.info "Deleting project #{project.project_pid} #{ force ? "FORCED" : "DRY RUN"}"
-          project = GoodData::Project[project.project_pid]
+          project_gd = GoodData::Project[project.project_pid]
           if force
-            project.delete if force
+            project_gd.delete if force
             Persistent.delete_user_project_by_project_pid(project.project_pid)
             Persistent.delete_etl_by_project_pid(project.project_pid)
             Persistent.delete_project_by_project_pid(project.project_pid)
