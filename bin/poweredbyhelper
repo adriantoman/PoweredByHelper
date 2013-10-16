@@ -137,35 +137,36 @@ command :dry_run do |c|
       puts "Project PID: #{etl.project_pid} Process ID: #{etl.process_id} - Schedule ID: #{etl.schedule_id}".colorize( :light_green )
     end
     puts "------- ETL provisioning part -------\n".colorize( :light_blue )
-
-    puts "------- USER provisioning part - domain-------".colorize( :light_blue )
-    PowerByHelper::Persistent.user_data.sort{|a,b| b.admin == true ? 1 : 0  }.each do |user|
-      message = "Login: #{user.login} Name: #{user.first_name} #{user.last_name} Admin: #{user.admin ? "YES":"NO"} - STATUS: #{user.status}"
-      if (user.status == PowerByHelper::UserData.CREATED)
-        puts message.colorize( :light_green )
-      else
-        puts message.colorize( :red )
-      end
-    end
-
-    puts "------- USER provisioning part - project - user mapping -------\n".colorize( :light_blue )
-
-    PowerByHelper::Persistent.project_data.each do |p|
-      puts "Users in project: #{p.project_name} - ID: #{p.ident} - PID: #{p.project_pid}".colorize( :green )
-      users = PowerByHelper::Persistent.user_project_data.find_all{|u| u.project_pid == p.project_pid}
-      users.each do |user|
-        message = "User: #{user.login} - Status: #{user.status} GD Role: #{user.role} Organization Role: #{user.internal_role} Notification: #{user.notification_send}"
-        if (user.status == PowerByHelper::UserProjectData.OK)
-            puts message.colorize( :light_green )
-        elsif (user.status == PowerByHelper::UserProjectData.DISABLED)
-            puts message.colorize( :gray )
+    if (!PowerByHelper::Persistent.user_data.nil?)
+      puts "------- USER provisioning part - domain-------".colorize( :light_blue )
+      PowerByHelper::Persistent.user_data.sort{|a,b| b.admin == true ? 1 : 0  }.each do |user|
+        message = "Login: #{user.login} Name: #{user.first_name} #{user.last_name} Admin: #{user.admin ? "YES":"NO"} - STATUS: #{user.status}"
+        if (user.status == PowerByHelper::UserData.CREATED)
+          puts message.colorize( :light_green )
         else
-            puts message.colorize( :red )
+          puts message.colorize( :red )
         end
       end
 
+      puts "------- USER provisioning part - project - user mapping -------\n".colorize( :light_blue )
+
+      PowerByHelper::Persistent.project_data.each do |p|
+        puts "Users in project: #{p.project_name} - ID: #{p.ident} - PID: #{p.project_pid}".colorize( :green )
+        users = PowerByHelper::Persistent.user_project_data.find_all{|u| u.project_pid == p.project_pid}
+        users.each do |user|
+          message = "User: #{user.login} - Status: #{user.status} GD Role: #{user.role} Organization Role: #{user.internal_role} Notification: #{user.notification_send}"
+          if (user.status == PowerByHelper::UserProjectData.OK)
+              puts message.colorize( :light_green )
+          elsif (user.status == PowerByHelper::UserProjectData.DISABLED)
+              puts message.colorize( :gray )
+          else
+              puts message.colorize( :red )
+          end
+        end
+
+      end
+      puts "------- USER provisioning part - project -------".colorize(:light_blue )
     end
-    puts "------- USER provisioning part - project -------".colorize(:light_blue )
 
 
 
