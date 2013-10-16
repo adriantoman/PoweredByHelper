@@ -68,6 +68,10 @@ command :delete_all do |c|
   c.desc 'Config file path'
   c.flag [:config]
 
+  c.desc 'For deletion'
+  c.switch [:f,:force]
+
+
   c.action do |global_options,options,args|
 
     config_file = options[:config]
@@ -75,7 +79,7 @@ command :delete_all do |c|
     helper = PowerByHelper::Pwb.new(config_file,options[:test])
     helper.gooddata_login
     helper.init_persistent_storage
-    helper.delete_all_projects
+    helper.delete_all_projects(options[:force] || false)
   end
 
 

@@ -85,14 +85,15 @@ module PowerByHelper
 
 
 
-    def delete_all_projects
-      list = GoodData.get("gdc/md/")
-      list["about"]["links"].each do |p|
-        project = GoodData::Project[p["identifier"]]
-        project.delete
+    def delete_all_projects(force)
+      $log.info "Deleting project - dry run (to normal run specify force parameter)" if force
+      Persistent.project_data.each do |project|
+        if (!project.nil? and !project.project_pid.nil?)
+          $log.info "Deleting project #{project.project_pid}"
+          project = GoodData::Project[project.project_pid]
+          project.delete if force
+        end
       end
-
-
     end
 
 
