@@ -386,7 +386,7 @@ module PowerByHelper
 
 
       def delete_project_by_project_pid(project_pid)
-        project_data.delete_if {|p| p.project_pid == project_pid}
+        @project_data.delete_if {|p| p.project_pid == project_pid}
       end
 
       def delete_etl_by_project_pid(project_pid)
