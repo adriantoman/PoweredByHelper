@@ -27,7 +27,7 @@ program_desc 'GoodData PowerBy provisioning app'
 
 pre do |global_options,command,options,args|
   next true if command.nil?
-  @@log = Logger.new(STDOUT)
+  @@log = Logger.new("log/provision.log",'daily')
   @@log.level = Logger::INFO
   if File.exists?('running.pid')
     puts "Another process is running"
