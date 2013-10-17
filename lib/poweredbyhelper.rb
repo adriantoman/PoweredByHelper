@@ -99,6 +99,9 @@ module PowerByHelper
           end
         end
       end
+      Persistent.store_project
+      Persistent.store_etl
+      Persistent.store_user_project
     end
 
 
