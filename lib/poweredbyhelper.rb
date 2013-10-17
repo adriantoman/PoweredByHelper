@@ -87,12 +87,14 @@ module PowerByHelper
 
     def delete_all_projects(force)
       @@log.info "Deleting project - dry run (to normal run specify force parameter)" if !force
-      Persistent.project_data.each do |project|
+      project_data_copy = Persistent.project_data.clone
+
+      project_data_copy.each do |project|
         if (!project.nil? and !project.project_pid.nil?)
           @@log.info "Deleting project #{project.project_pid} #{ force ? "FORCED" : "DRY RUN"}"
           project_gd = GoodData::Project[project.project_pid]
           if force
-            project_gd.delete if force
+            project_gd.delete
             Persistent.delete_user_project_by_project_pid(project.project_pid)
             Persistent.delete_etl_by_project_pid(project.project_pid)
             Persistent.delete_project_by_project_pid(project.project_pid)

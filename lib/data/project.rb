@@ -156,13 +156,7 @@ module PowerByHelper
         if (p.status == ProjectData.TO_DISABLE)
           # We will delete all project which are set to delete
           delete_project(p)
-          Persistent.delete_user_project_by_project_pid(p.project_pid)
-          Persistent.delete_etl_by_project_pid(p.project_pid)
-          Persistent.delete_project_by_project_pid(p.project_pid)
         end
-        Persistent.store_user_project
-        Persistent.store_etl
-        Persistent.store_project
       end
     end
 
