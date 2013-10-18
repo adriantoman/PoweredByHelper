@@ -219,7 +219,7 @@ module PowerByHelper
         @login = data["login"]
         @project_pid = data["project_pid"]
         @role = data["role"]
-        @notification = data["notification"] == "1" ? true : false
+        @notification = data["notification"]
         @notification_send = data["notification_send"] || false
         @internal_role = data["internal_role"] || "external"
     end
