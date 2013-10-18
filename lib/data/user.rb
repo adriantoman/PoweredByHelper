@@ -32,7 +32,7 @@ module PowerByHelper
         user_data = UserData.new({"login" => csv_obj[user_creation_mapping["login"]], "first_name" => csv_obj[user_creation_mapping["first_name"]], "last_name" => csv_obj[user_creation_mapping["last_name"]], "status" => UserData.NEW})
         user_data.password = csv_obj[password_mapping] || rand(10000000000000).to_s
 
-        if (!Helper.blank?(csv_obj[admin_mapping]) and csv_obj[admin_mapping].downcase == "1")
+        if (!Helper.blank?(csv_obj[admin_mapping]) and csv_obj[admin_mapping].to_s == "1")
           user_data.admin = true
         else
           user_data.admin = false
@@ -64,7 +64,7 @@ module PowerByHelper
           fail "This role does not exist in Gooddata" if check.nil?
 
           login = csv_obj[user_synchronization_mapping["login"]].downcase
-          notification = csv_obj[user_synchronization_mapping["notification"]].downcase == "1" ? true : false
+          notification = csv_obj[user_synchronization_mapping["notification"]].to_s == "1" ? true : false
           internal_role = "external"
           if (!user_synchronization_mapping["internal_role"].nil?)
             internal_role = csv_obj[user_synchronization_mapping["internal_role"]].downcase

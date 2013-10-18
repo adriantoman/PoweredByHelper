@@ -80,7 +80,6 @@ module PowerByHelper
         if (user_project_data.status == UserProjectData.NEW and !user_project_data.notification)
           user_data = Persistent.get_user_by_login(user_project_data.login)
           request = create_user_request("ENABLED",user_data.uri,Persistent.get_role_uri_by_name(user_project_data.role,user_project_data.project_pid))
-
           begin
             @@log.info "Adding user #{user_data.login} to project #{user_project_data.project_pid} (without notification)"
             GoodData.post("/gdc/projects/#{user_project_data.project_pid}/users", request)
