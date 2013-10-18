@@ -158,7 +158,7 @@ command :dry_run do |c|
         puts "Users in project: #{p.project_name} - ID: #{p.ident} - PID: #{p.project_pid}".colorize( :green )
         users = PowerByHelper::Persistent.user_project_data.find_all{|u| u.project_pid == p.project_pid}
         users.each do |user|
-          message = "User: #{user.login} - Status: #{user.status} GD Role: #{user.role} Organization Role: #{user.internal_role} Notification: #{user.notification_send}"
+          message = "User: #{user.login} - Status: #{user.status} GD Role: #{user.role} Organization Role: #{user.internal_role} Notification Enabled: #{user.notification}  Notification Send: #{user.notification_send}"
           if (user.status == PowerByHelper::UserProjectData.OK)
               puts message.colorize( :light_green )
           elsif (user.status == PowerByHelper::UserProjectData.DISABLED)
