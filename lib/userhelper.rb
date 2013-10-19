@@ -42,33 +42,37 @@ module PowerByHelper
       Persistent.user_project_data.each do |user_project_data|
         if (user_project_data.status == UserProjectData.NEW and user_project_data.notification and !user_project_data.notification_send)
           user_data = Persistent.get_user_by_login(user_project_data.login)
-          @@log.info "Inviting user #{user_data.login} to project #{user_project_data.project_pid} (with notification)"
-          request = {
-              "invitations" =>
-                [{
-                    "invitation" => {
-                     "content"=> {
-                         "email"=> user_data.login,
-                         "role"=> Persistent.get_role_uri_by_name(user_project_data.role,user_project_data.project_pid),
-                         "firstname"=> "GoodData",
-                         "lastname"=> "",
-                         "action"=> {
-                             "setMessage"=> Settings.deployment_user_project_synchronization["notification_message"]
-                        }
-                    }
-                }
-              }]
-            }
-          begin
-            GoodData.post("/gdc/projects/#{user_project_data.project_pid}/invitations", request)
-            Persistent.change_user_project_status(user_project_data.login,user_project_data.project_pid,UserProjectData.OK,{"notification_send" => true})
-            Persistent.store_user_project
-          rescue RestClient::BadRequest => e
-            response = JSON.load(e.response)
-            @@log.warn "User #{user_data_element.login} could not be invited to project #{user_project_data.project_pid}. Reason: #{response["error"]["message"]}"
-          rescue RestClient::InternalServerError => e
-            response = JSON.load(e.response)
-            @@log.warn "User #{user_data_element.login} could not be invited to project #{user_project_data.project_pid}. Reason: #{response["error"]["message"]}"
+          if (!user_data.login.nil?)
+            @@log.info "Inviting user #{user_data.login} to project #{user_project_data.project_pid} (with notification)"
+            request = {
+                "invitations" =>
+                  [{
+                      "invitation" => {
+                       "content"=> {
+                           "email"=> user_data.login,
+                           "role"=> Persistent.get_role_uri_by_name(user_project_data.role,user_project_data.project_pid),
+                           "firstname"=> "GoodData",
+                           "lastname"=> "",
+                           "action"=> {
+                               "setMessage"=> Settings.deployment_user_project_synchronization["notification_message"]
+                          }
+                      }
+                  }
+                }]
+              }
+            begin
+              GoodData.post("/gdc/projects/#{user_project_data.project_pid}/invitations", request)
+              Persistent.change_user_project_status(user_project_data.login,user_project_data.project_pid,UserProjectData.OK,{"notification_send" => true})
+              Persistent.store_user_project
+            rescue RestClient::BadRequest => e
+              response = JSON.load(e.response)
+              @@log.warn "User #{user_data_element.login} could not be invited to project #{user_project_data.project_pid}. Reason: #{response["error"]["message"]}"
+            rescue RestClient::InternalServerError => e
+              response = JSON.load(e.response)
+              @@log.warn "User #{user_data_element.login} could not be invited to project #{user_project_data.project_pid}. Reason: #{response["error"]["message"]}"
+            end
+          else
+            @@log.info "Skipping invite of user #{user_project_data.login} to project #{user_project_data.project_pid} (with notification) - problem with domain user"
           end
         end
       end
@@ -79,18 +83,22 @@ module PowerByHelper
       Persistent.user_project_data.each do |user_project_data|
         if (user_project_data.status == UserProjectData.NEW and !user_project_data.notification)
           user_data = Persistent.get_user_by_login(user_project_data.login)
-          request = create_user_request("ENABLED",user_data.uri,Persistent.get_role_uri_by_name(user_project_data.role,user_project_data.project_pid))
-          begin
-            @@log.info "Adding user #{user_data.login} to project #{user_project_data.project_pid} (without notification)"
-            GoodData.post("/gdc/projects/#{user_project_data.project_pid}/users", request)
-            Persistent.change_user_project_status(user_project_data.login,user_project_data.project_pid,UserProjectData.OK,nil)
-            Persistent.store_user_project
-          rescue RestClient::BadRequest => e
-            response = JSON.load(e.response)
-            @@log.warn "User #{user_project_data.login} could not be added to project #{user_project_data.project_pid}. Reason: #{response["error"]["message"]}"
-          rescue RestClient::InternalServerError => e
-            response = JSON.load(e.response)
-            @@log.warn "User #{user_project_data.login} could not be added to project #{user_project_data.project_pid}. Reason: #{response["error"]["message"]}"
+          if (!user_data.login.nil?)
+            request = create_user_request("ENABLED",user_data.uri,Persistent.get_role_uri_by_name(user_project_data.role,user_project_data.project_pid))
+            begin
+              @@log.info "Adding user #{user_data.login} to project #{user_project_data.project_pid} (without notification)"
+              GoodData.post("/gdc/projects/#{user_project_data.project_pid}/users", request)
+              Persistent.change_user_project_status(user_project_data.login,user_project_data.project_pid,UserProjectData.OK,nil)
+              Persistent.store_user_project
+            rescue RestClient::BadRequest => e
+              response = JSON.load(e.response)
+              @@log.warn "User #{user_project_data.login} could not be added to project #{user_project_data.project_pid}. Reason: #{response["error"]["message"]}"
+            rescue RestClient::InternalServerError => e
+              response = JSON.load(e.response)
+              @@log.warn "User #{user_project_data.login} could not be added to project #{user_project_data.project_pid}. Reason: #{response["error"]["message"]}"
+            else
+              @@log.info "Skipping invite of user #{user_project_data.login} to project #{user_project_data.project_pid} (without notification) - problem with domain user"
+            end
           end
         end
       end
