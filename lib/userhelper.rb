@@ -96,9 +96,9 @@ module PowerByHelper
             rescue RestClient::InternalServerError => e
               response = JSON.load(e.response)
               @@log.warn "User #{user_project_data.login} could not be added to project #{user_project_data.project_pid}. Reason: #{response["error"]["message"]}"
-            else
-              @@log.info "Skipping invite of user #{user_project_data.login} to project #{user_project_data.project_pid} (without notification) - problem with domain user"
             end
+          else
+            @@log.info "Skipping invite of user #{user_project_data.login} to project #{user_project_data.project_pid} (without notification) - problem with domain user"
           end
         end
       end
