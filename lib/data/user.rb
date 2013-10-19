@@ -29,7 +29,7 @@ module PowerByHelper
       # Load info about users - domain file - representing users which should be in domain and merge it with info in Persistent storage
       FasterCSV.foreach(Settings.deployment_user_creation["source"], {:headers => true, :skip_blanks => true}) do |csv_obj|
 
-        user_data = UserData.new({"login" => csv_obj[user_creation_mapping["login"]], "first_name" => csv_obj[user_creation_mapping["first_name"]], "last_name" => csv_obj[user_creation_mapping["last_name"]], "status" => UserData.NEW})
+        user_data = UserData.new({"login" => csv_obj[user_creation_mapping["login"]].downcase, "first_name" => csv_obj[user_creation_mapping["first_name"]], "last_name" => csv_obj[user_creation_mapping["last_name"]], "status" => UserData.NEW})
         user_data.password = csv_obj[password_mapping] || rand(10000000000000).to_s
 
         if (!Helper.blank?(csv_obj[admin_mapping]) and csv_obj[admin_mapping].to_s == "1")
