@@ -93,6 +93,11 @@ module PowerByHelper
       def load_user
         if (File.exists?(Settings.storage_user_source))
           FasterCSV.foreach(Settings.storage_user_source, :headers => true,:quote_char => '"') do |csv_obj|
+            if (csv_obj["admin"] == "false")
+              csv_obj["admin"] = false
+            elsif (csv_obj["admin"] == "true")
+              csv_obj["admin"] = true
+            end
             user = UserData.new(csv_obj)
             @user_data.push(user)
           end
@@ -102,6 +107,17 @@ module PowerByHelper
       def load_user_project
         if (File.exists?(Settings.storage_user_project_source))
           FasterCSV.foreach(Settings.storage_user_project_source, :headers => true,:quote_char => '"') do |csv_obj|
+            if (csv_obj["notification"] == "false")
+              csv_obj["notification"] = false
+            elsif (csv_obj["notification"] == "true")
+              csv_obj["notification"] = true
+            end
+
+            if (csv_obj["notification_send"] == "false")
+              csv_obj["notification_send"] = fa lse
+            elsif (csv_obj["notification_send"] == "true")
+              csv_obj["notification_send"] = true
+            end
             Persistent.change_user_project_status(csv_obj["login"],csv_obj["project_pid"],csv_obj["status"],csv_obj)
           end
         end
