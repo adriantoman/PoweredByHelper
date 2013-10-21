@@ -42,7 +42,7 @@ module PowerByHelper
       Persistent.user_project_data.each do |user_project_data|
         if (user_project_data.status == UserProjectData.NEW and user_project_data.notification and !user_project_data.notification_send)
           user_data = Persistent.get_user_by_login(user_project_data.login)
-          if (!user_data.login.nil? and user_data.status == UserData.CREATED)
+          if (!user_data.nil? and user_data.status == UserData.CREATED)
             @@log.info "Inviting user #{user_data.login} to project #{user_project_data.project_pid} (with notification)"
             request = {
                 "invitations" =>
