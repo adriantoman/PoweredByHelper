@@ -114,7 +114,7 @@ module PowerByHelper
             end
 
             if (csv_obj["notification_send"] == "false")
-              csv_obj["notification_send"] = fa lse
+              csv_obj["notification_send"] = false
             elsif (csv_obj["notification_send"] == "true")
               csv_obj["notification_send"] = true
             end
