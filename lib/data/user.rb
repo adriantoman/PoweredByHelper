@@ -116,10 +116,19 @@ module PowerByHelper
 
     def create_new_users
       users_to_create = Persistent.get_users_by_status(UserData.NEW)
+      users_in_domain = UserHelper.load_domain_users
       users_to_create.each do |user_data|
-        @@log.info "Creating new user #{user_data.login} in domain"
-        user_data = UserHelper.create_user_in_domain(Settings.deployment_user_domain,user_data)
-        Persistent.merge_user(user_data) if !user_data.nil?
+        domain_user = users_in_domain.find{|u| u[:login] == user_data.login}
+        if (domain_user.nil?)
+          @@log.info "Creating new user #{user_data.login} in domain"
+          user_data = UserHelper.create_user_in_domain(Settings.deployment_user_domain,user_data)
+          Persistent.merge_user(user_data) if !user_data.nil?
+        else
+          @@log.info "User #{user_data.login} already in domain - reusing"
+          user_data.uri = domain_user[:profile]
+          user_data.status = UserData.CREATED
+          Persistent.merge_user(user_data)
+        end
       end
       Persistent.store_user
     end

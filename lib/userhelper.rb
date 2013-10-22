@@ -176,10 +176,18 @@ module PowerByHelper
     end
 
 
+    def self.load_domain_users
 
+      @@log.info "Loading users from domain"
+      response = GoodData.get("/gdc/account/domains/#{Settings.deployment_user_domain}/users")
+      users = []
 
-
-
+      response["accountSettings"]["items"].each do |item|
+          user_hash = {:login => item["accountSetting"]["login"],:profile => item["accountSetting"]["links"]["self"]}
+          users.push(user_hash)
+      end
+      users
+    end
 
   end
 end
