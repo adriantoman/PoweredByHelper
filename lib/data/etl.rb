@@ -39,7 +39,6 @@ module PowerByHelper
           @@log.info "Creating schedule for #{etl.project_pid}"
           project = Persistent.get_project_by_project_pid(etl.project_pid)
           response = create_update_schedule(schedule_settings,etl.project_pid,etl.process_id,"#{project.ident}")
-
           schedule_id = response["schedule"]["links"]["self"].split("/").last
           etl.schedule_id = schedule_id
           etl.status = EtlData.SCHEDULE_CREATED
@@ -118,8 +117,9 @@ module PowerByHelper
 
     #Schedule_identification will be automaticaly inserted in MODE param distinguish schedule
 
-    def create_update_schedule(schedule_settings,pid,process_id,schedule_identification,schedule_id = nil)
+    def create_update_schedule(schedule_settings,pid,process_id,project_ident,schedule_id = nil)
 
+      value = nil
       res = nil
       cron = schedule_settings["cron"]
       path = Dir["#{Settings.deployment_etl_process["source"]}**/#{schedule_settings["graph_name"]}"].first
@@ -142,18 +142,21 @@ module PowerByHelper
 
       #add parameters
       schedule_settings["parameters"].each do |parameters|
-        value = parameters["value"]
-        value.gsub!("%ID%",schedule_identification)
-        json = { parameters["name"] => value }
+        value_param = parameters["value"]
+        value_param = value_param.gsub("%ID%",project_ident)
+        value_param = Helper.replace_custom_parameters(project_ident,value_param)
+        json = { parameters["name"] => value_param }
         data["schedule"]["params"].merge!(json)
       end
 
       # add secure parameters
       schedule_settings["secure_parameters"].each do |parameters|
-        json = {parameters["name"] => parameters["value"]}
+        value_param = parameters["value"]
+        value_param = value.gsub("%ID%",project_ident)
+        value_param = Helper.replace_custom_parameters(project_ident,value_param)
+        json = {parameters["name"] => value_param}
         data["schedule"]["hiddenParams"].merge!(json)
       end
-
       if schedule_id.nil?
         res = GoodData.post("/gdc/projects/#{pid}/schedules", data)
       else

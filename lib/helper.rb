@@ -33,11 +33,14 @@ module PowerByHelper
     end
 
 
-
-
-
-
-
+    def self.replace_custom_parameters(ident,value)
+      params = Persistent.project_custom_params.find{|p| p.keys.first == ident}
+      changed_value = value
+      params.values.first.each do |param_value|
+        changed_value = changed_value.gsub("%#{param_value.keys.first}%",param_value.values.first)
+      end
+      changed_value
+    end
 
 
   end

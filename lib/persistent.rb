@@ -4,13 +4,28 @@ module PowerByHelper
 
     class << self
 
-      attr_accessor :project_data,:etl_data,:user_data,:roles,:user_project_data
+      attr_accessor :project_data,:etl_data,:user_data,:roles,:user_project_data,:project_custom_params,:custom_params_names
       # project section
 
       def init_project()
         @project_data = []
         load_project()
       end
+
+      def init_project_custom_params
+        @project_custom_params = []
+        @custom_params_names = []
+        # Custom parametrs loading
+        Settings.deployment_project["data"]["mapping"].each_pair do |key,value|
+          if (key.include?("custom"))
+            @custom_params_names.push({key => value })
+          end
+        end
+      end
+
+
+
+
 
       def init_etl()
         @etl_data = []
@@ -30,6 +45,8 @@ module PowerByHelper
         @roles = {}
         load_roles()
       end
+
+
 
 
 
@@ -320,16 +337,6 @@ module PowerByHelper
         end
 
       end
-
-
-
-
-
-
-
-
-
-
 
       def get_projects_by_status(status)
         @project_data.find_all{|d| d.status == status}

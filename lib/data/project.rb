@@ -19,6 +19,8 @@ module PowerByHelper
       fail "You have not specified token for project creation." if Helper.blank?(Settings.deployment_project["token"])
 
       Persistent.init_project
+      Persistent.init_project_custom_params
+
 
       file_rows = []
 
@@ -29,9 +31,16 @@ module PowerByHelper
 
       file_rows.each do |csv_obj|
         Persistent.change_project_status(csv_obj[data_mapping["ident"]],ProjectData.NEW,{"ident" => csv_obj[data_mapping["ident"]], "project_name" => csv_obj[data_mapping["project_name"]], "summary" => csv_obj[data_mapping["summary"]]})
+
+        #key value mapping
+        param_values = []
+        Persistent.custom_params_names.each do |value|
+          param_values.push({value.keys.first => csv_obj[value.values.first]})
+        end
+        Persistent.project_custom_params.push({csv_obj[data_mapping["ident"]] => param_values})
       end
 
-      Persistent.project_data.each do |p|
+    Persistent.project_data.each do |p|
         if (p.status != ProjectData.DISABLED)
           row = file_rows.find{|r| r[data_mapping["ident"]] == p.ident}
           if (row.nil?)
