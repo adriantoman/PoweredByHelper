@@ -152,7 +152,7 @@ module PowerByHelper
       # add secure parameters
       schedule_settings["secure_parameters"].each do |parameters|
         value_param = parameters["value"]
-        value_param = value.gsub("%ID%",project_ident)
+        value_param = value_param.gsub("%ID%",project_ident)
         value_param = Helper.replace_custom_parameters(project_ident,value_param)
         json = {parameters["name"] => value_param}
         data["schedule"]["hiddenParams"].merge!(json)
