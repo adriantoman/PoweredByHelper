@@ -32,12 +32,23 @@ module PowerByHelper
         user_data = UserData.new({"login" => csv_obj[user_creation_mapping["login"]].downcase.strip, "first_name" => csv_obj[user_creation_mapping["first_name"]], "last_name" => csv_obj[user_creation_mapping["last_name"]], "status" => UserData.NEW})
         user_data.password = csv_obj[password_mapping] || rand(10000000000000).to_s
 
-        if (!Helper.blank?(csv_obj[admin_mapping]) and csv_obj[admin_mapping].to_s == "1")
-          user_data.admin = true
+
+        if (!Helper.blank?(csv_obj[admin_mapping]))
+          # The admin mapping field could contain 0/1 ... the user is automaticaly admin
+          if (csv_obj[admin_mapping].to_s == "1")
+            user_data.admin = true
+          elsif (csv_obj[admin_mapping].to_s == "0")
+            user_data.admin = false
+          # The admin mapping field could contain gooddata role -> user will be created with this role
+          elsif (Helper.roles.include?(csv_obj[admin_mapping].to_s))
+            user_data.admin = true
+            user_data.admin_role = csv_obj[admin_mapping].to_s
+          else
+            fail "Role provided for one user in domain file is invalid #{csv_obj[user_creation_mapping["login"]].downcase.strip} role: #{csv_obj[admin_mapping].to_s}"
+          end
         else
           user_data.admin = false
         end
-
         Persistent.merge_user(user_data)
       end
       Persistent.store_user
@@ -80,16 +91,14 @@ module PowerByHelper
         end
       end
 
-
       # Find all admin users and make them admin in all of the projects - merge this information with persistent storage
       admin_users = Persistent.get_users_by_admin
       projects = Persistent.get_projects
       admin_users.each do |admin_data|
         projects.each do |p|
           Persistent.change_user_project_status(admin_data.login,p.project_pid,UserProjectData.NEW,
-                                                {"login" => admin_data.login,"project_pid" => p.project_pid, "notification" => false, "internal_role" => "internal", "role" => "adminRole"}
+                                                {"login" => admin_data.login,"project_pid" => p.project_pid, "notification" => false, "internal_role" => "internal", "role" =>  admin_data.admin_role}
           )
-
         end
       end
 
@@ -156,7 +165,7 @@ module PowerByHelper
 
 
   class UserData
-    attr_accessor :uri,:login,:first_name,:last_name,:user_project_mapping,:password,:admin,:status
+    attr_accessor :uri,:login,:first_name,:last_name,:user_project_mapping,:password,:admin,:status,:admin_role
 
 
     def self.NEW
@@ -174,6 +183,8 @@ module PowerByHelper
       @last_name = data["last_name"]
       @password = data["password"]
       @admin = data["admin"]
+      # Add to support different then adminrole powerusers (users which are automaticaly invited to all projects)
+      @admin_role = data["admin_role"] || "adminRole"
       @status = data["status"]
     end
 

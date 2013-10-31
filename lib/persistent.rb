@@ -259,7 +259,12 @@ module PowerByHelper
                 up.status = UserProjectData.OK
               elsif (up.status == UserProjectData.TO_DISABLE and status == UserProjectData.NEW)
                 @@log.debug "Login=#{login} Project_pid=#{project_pid} project-user was TO_DISABLE now it is NEW - it is in source file - setting for OK"
-                up.status = UserProjectData.OK
+                if (up.role != data["role"])
+                  up.status = UserProjectData.CHANGED
+                  up.role = data["role"]
+                else
+                  up.status = UserProjectData.OK
+                end
               elsif (up.status == UserProjectData.TO_DISABLE and status == UserProjectData.DISABLED)
                 @@log.debug "Login=#{login} Project_pid=#{project_pid} project-user was TO_DISABLE now it is DISABLED"
                 up.status = UserProjectData.DISABLED
@@ -320,6 +325,7 @@ module PowerByHelper
           @user_data.collect! do |d|
             if (d.login == data.login)
               d.admin = data.admin
+              d.admin_role = data.admin_role
               d.password = data.password
               d.uri = data.uri if !Helper.blank?(data.uri)
             end
