@@ -10,8 +10,8 @@ module PowerByHelper
                 "login"              => user_data.login,
                 "password"           => user_data.password,
                 "verifyPassword"     => user_data.password,
-                "firstName"          => user_data.first_name,
-                "lastName"           => user_data.last_name
+                "firstName"          => user_data.first_name || "John" ,
+                "lastName"           => user_data.last_name || "Doe"
             }
         }
 
