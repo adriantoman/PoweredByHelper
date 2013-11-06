@@ -81,6 +81,14 @@ module PowerByHelper
       end
     end
 
+    def update_processes()
+      @@log.info "Starting process update"
+      Helper.retryable do
+        @etl.update_processes
+      end
+    end
+
+
 
 
 

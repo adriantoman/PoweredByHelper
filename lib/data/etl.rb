@@ -62,6 +62,18 @@ module PowerByHelper
       end
     end
 
+    def update_processes()
+      Persistent.project_data.each do |p|
+        if (p.status != ProjectData.DELETED)
+          etl = Persistent.etl_data.find{|etl| etl.project_pid == p.project_pid}
+          if (!etl.nil?)
+            @@log.info "Redeploying project #{p.project_name} - #{p.project_pid} and process #{etl.process_id}"
+            deploy_update_graph(Settings.deployment_etl_process["source"],p.project_name,p.project_pid,etl.process_id)
+          end
+        end
+      end
+    end
+
 
     def create_notifications
       if (!Settings.deployment_etl_notifications.nil? && Settings.deployment_etl_notifications.count > 0)
@@ -81,7 +93,7 @@ module PowerByHelper
 
 
 
-    def deploy_update_graph(dir, name,pid, process_id = nil )
+    def deploy_update_graph(dir,name,pid, process_id = nil )
       dir = Pathname(dir)
 
       old_dir = Dir.pwd

@@ -43,7 +43,7 @@ module PowerByHelper
         if (user_project_data.status == UserProjectData.NEW and user_project_data.notification and !user_project_data.notification_send)
           user_data = Persistent.get_user_by_login(user_project_data.login)
           if (!user_data.nil? and user_data.status == UserData.CREATED)
-            @@log.info "Inviting user #{user_data.login} to project #{user_project_data.project_pid} (with notification)"
+            @@log.info "Inviting user #{user_data.login} to project #{user_project_data.project_pid} (#{user_project_data.role}) (with notification)"
             request = {
                 "invitations" =>
                   [{
@@ -72,7 +72,7 @@ module PowerByHelper
               @@log.warn "User #{user_data_element.login} could not be invited to project #{user_project_data.project_pid}. Reason: #{response["error"]["message"]}"
             end
           else
-            @@log.info "Skipping invite of user #{user_project_data.login} to project #{user_project_data.project_pid} (with notification) - problem with domain user"
+            @@log.warn "Skipping invite of user #{user_project_data.login} to project #{user_project_data.project_pid} (with notification) - problem with domain user"
           end
         end
       end
@@ -86,7 +86,7 @@ module PowerByHelper
           if (!user_data.login.nil? and user_data.status == UserData.CREATED)
             request = create_user_request("ENABLED",user_data.uri,Persistent.get_role_uri_by_name(user_project_data.role,user_project_data.project_pid))
             begin
-              @@log.info "Adding user #{user_data.login} to project #{user_project_data.project_pid} (without notification)"
+              @@log.info "Adding user #{user_data.login} to project #{user_project_data.project_pid} (#{user_project_data.role}) (without notification)"
               GoodData.post("/gdc/projects/#{user_project_data.project_pid}/users", request)
               Persistent.change_user_project_status(user_project_data.login,user_project_data.project_pid,UserProjectData.OK,nil)
               Persistent.store_user_project
@@ -98,7 +98,7 @@ module PowerByHelper
               @@log.warn "User #{user_project_data.login} could not be added to project #{user_project_data.project_pid}. Reason: #{response["error"]["message"]}"
             end
           else
-            @@log.info "Skipping invite of user #{user_project_data.login} to project #{user_project_data.project_pid} (without notification) - problem with domain user"
+            @@log.warn "Skipping invite of user #{user_project_data.login} to project #{user_project_data.project_pid} (without notification) - problem with domain user"
           end
         end
       end

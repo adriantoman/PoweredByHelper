@@ -171,23 +171,10 @@ command :dry_run do |c|
       end
       puts "------- USER provisioning part - project -------".colorize(:light_blue )
     end
-
-
-
-
-
   end
 
 
 end
-
-
-
-
-
-
-
-
 
 
 command :update_schedules do |c|
@@ -203,6 +190,24 @@ command :update_schedules do |c|
     helper.gooddata_login
     helper.init_persistent_storage
     helper.update_schedules
+  end
+
+
+end
+
+command :update_processes do |c|
+
+  c.desc 'Config file path'
+  c.flag [:config]
+
+  c.action do |global_options,options,args|
+
+    config_file = options[:config]
+    fail "Please provide link to config file" unless (File.exist?(config_file))
+    helper = PowerByHelper::Pwb.new(config_file,options[:test])
+    helper.gooddata_login
+    helper.init_persistent_storage
+    helper.update_processes
   end
 
 
