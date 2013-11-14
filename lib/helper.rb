@@ -76,7 +76,6 @@ module PowerByHelper
       password =  Settings.connection["password"]
 
       if (Helper.check_file_on_webdav(source))
-        pp "fakt"
         @@log.info "Moving file #{source} to #{target}"
         adress = Settings.connection_webdav_storage
         dav = Net::DAV.new(adress, :curl => false)
