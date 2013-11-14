@@ -1,7 +1,12 @@
 This file was created by JetBrains RubyMine 5.4.1 for binding GitHub repository
 
+I have migrated this project to Ruby Version 1.9.3 because some of dependent ruby Gems.
 
-Curreltly missing features:
+One of the dependencies is Nokogiri Gem, which could cause some installation issues on some specific operating systems.
+
+If you are experiencing some installation problems connected to Nokogiri, try to look here: http://nokogiri.org/tutorials/installing_nokogiri.html
+
+Currently missing features:
 
 Delete notifications
 Delete schedule

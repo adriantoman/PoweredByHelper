@@ -11,23 +11,35 @@ module PowerByHelper
       user_creation_mapping = Settings.deployment_user_creation["mapping"]
       user_synchronization_mapping = Settings.deployment_user_project_synchronization["mapping"]
 
+      user_creation_file_name = Settings.deployment_user_creation["source"]
+      user_project_creation_file_name = Settings.deployment_user_project_synchronization["source"]
+
+      #In case of remote file location, lets download file to local first
+      if (Settings.deployment_user_creation_type == "webdav")
+        Helper.download_file_from_webdav(user_creation_file_name,Settings.default_user_data_file_name)
+        user_creation_file_name = Settings.default_user_data_file_name
+      end
+
+      if (Settings.deployment_user_project_synchronization_type == "webdav")
+        Helper.download_file_from_webdav(user_project_creation_file_name,Settings.default_user_project_synchronization_data_file_name)
+        user_project_creation_file_name = Settings.default_user_project_synchronization_data_file_name
+      end
+
       #Checks
-      fail "User data file don't exists" unless File.exists?(Settings.deployment_user_creation["source"])
-      fail "User project data file don't exists" unless File.exists?(Settings.deployment_user_project_synchronization["source"])
+      fail "User data file don't exists" unless File.exists?(user_creation_file_name)
+      fail "User project data file don't exists" unless File.exists?(user_project_creation_file_name)
       fail "User creation mapping don't have all necessery fields" unless user_creation_mapping.has_key?("login") and user_creation_mapping.has_key?("first_name") and user_creation_mapping.has_key?("last_name")
       fail "User project synchronization  mapping don't have all necessery fields" unless user_synchronization_mapping.has_key?("ident") and user_synchronization_mapping.has_key?("login") and user_synchronization_mapping.has_key?("role") and user_synchronization_mapping.has_key?("notification")
-
 
       #Initializations
       Persistent.init_user
       Persistent.init_roles
 
-
       password_mapping = user_creation_mapping["password"] || "password"
       admin_mapping = user_creation_mapping["admin"] || "admin"
 
       # Load info about users - domain file - representing users which should be in domain and merge it with info in Persistent storage
-      FasterCSV.foreach(Settings.deployment_user_creation["source"], {:headers => true, :skip_blanks => true}) do |csv_obj|
+      FasterCSV.foreach(user_creation_file_name, {:headers => true, :skip_blanks => true}) do |csv_obj|
 
         user_data = UserData.new({"login" => csv_obj[user_creation_mapping["login"]].downcase.strip, "first_name" => csv_obj[user_creation_mapping["first_name"]], "last_name" => csv_obj[user_creation_mapping["last_name"]], "status" => UserData.NEW})
         user_data.password = csv_obj[password_mapping] || rand(10000000000000).to_s
@@ -60,7 +72,7 @@ module PowerByHelper
 
 
       # Load info about user-project mapping and merge it with information from Persistent Storage
-      FasterCSV.foreach(Settings.deployment_user_project_synchronization["source"], {:headers => true, :skip_blanks => true}) do |csv_obj|
+      FasterCSV.foreach(user_project_creation_file_name, {:headers => true, :skip_blanks => true}) do |csv_obj|
 
         ident = csv_obj[user_synchronization_mapping["ident"]]
 

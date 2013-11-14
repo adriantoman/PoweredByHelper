@@ -20,15 +20,35 @@ module PowerByHelper
         @json["connection"]["webdav"] || "https://secure-di.gooddata.com"
       end
 
+      def connection_webdav_storage
+        @json["connection"]["webdav_storage"]
+      end
+
       def deployment_project
         @json["deployment"]["project"]
       end
+
+
 
       def deployment_project_name_prefix
         @json["deployment"]["project"]["name_prefix"] || ""
       end
 
+      def deployment_project_data_file_name
+        @json["deployment"]["project"]["data"]["file_name"]
+      end
 
+      def default_project_data_file_name
+        "source/projects.csv"
+      end
+
+      def deployment_project_data_type
+        @json["deployment"]["project"]["data"]["type"] || "local"
+      end
+
+      def deployment_project_data_move_after_processing
+        @json["deployment"]["project"]["data"]["move_after_processing_to"]
+      end
 
       def deployment_project_delete
         @json["deployment"]["project"]["delete"]
@@ -70,13 +90,40 @@ module PowerByHelper
         @json["deployment"]["user"]["domain"]
       end
 
+
       def deployment_user_creation
         @json["deployment"]["user"]["creation"]
+      end
+
+      def deployment_user_creation_type
+        @json["deployment"]["user"]["creation"]["type"] || "local"
+      end
+
+      def deployment_user_creation_move_after_processing
+        @json["deployment"]["user"]["creation"]["move_after_processing_to"]
+      end
+
+      def default_user_data_file_name
+        "source/users.csv"
       end
 
       def deployment_user_project_synchronization
         @json["deployment"]["user"]["project_synchronization"]
       end
+
+      def deployment_user_project_synchronization_type
+        @json["deployment"]["user"]["project_synchronization"]["type"] || "local"
+      end
+
+      def deployment_user_project_synchronization_move_after_processing
+        @json["deployment"]["user"]["project_synchronization"]["move_after_processing_to"]
+      end
+
+
+      def default_user_project_synchronization_data_file_name
+        "source/user_projects.csv"
+      end
+
 
       def provisioning
         @json["provisioning"]

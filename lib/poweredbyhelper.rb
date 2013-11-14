@@ -89,8 +89,28 @@ module PowerByHelper
     end
 
 
+    def move_remote_project_files
+       if (Settings.deployment_project_data_type == "webdav" and !Settings.deployment_project_data_move_after_processing.nil?)
+         @@log.info "Moving file #{Settings.deployment_project_data_file_name} to #{Settings.deployment_project_data_move_after_processing}"
+         Helper.move_file_to_other_folder(Settings.deployment_project_data_file_name,Settings.deployment_project_data_move_after_processing)
+       end
+    end
 
+    def move_remote_user_files
+      pp Settings.deployment_user_creation_type
+      pp Settings.deployment_user_creation_move_after_processing
+      pp Settings.deployment_user_creation["source"]
 
+      if (Settings.deployment_user_creation_type == "webdav" and !Settings.deployment_user_creation_move_after_processing.nil?)
+        @@log.info "Moving file #{Settings.deployment_user_creation["source"]} to #{Settings.deployment_user_creation_move_after_processing}"
+        Helper.move_file_to_other_folder(Settings.deployment_user_creation["source"],Settings.deployment_user_creation_move_after_processing)
+      end
+
+      if (Settings.deployment_user_project_synchronization_type == "webdav" and !Settings.deployment_user_project_synchronization_move_after_processing.nil?)
+        @@log.info "Moving file #{Settings.deployment_user_project_synchronization["source"]} to #{Settings.deployment_user_project_synchronization_move_after_processing}"
+        Helper.move_file_to_other_folder(Settings.deployment_user_project_synchronization["source"],Settings.deployment_user_project_synchronization_move_after_processing)
+      end
+    end
 
 
     def delete_all_projects(force)

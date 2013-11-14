@@ -10,8 +10,14 @@ module PowerByHelper
     end
 
     def load_data_structure()
-      data_file_path = Settings.deployment_project["data"]["file_name"]
+      data_file_path = Settings.deployment_project_data_file_name
       data_mapping = Settings.deployment_project["data"]["mapping"]
+
+      #In case of remote file location, lets download file to local first
+      if (Settings.deployment_project_data_type == "webdav")
+        Helper.download_file_from_webdav(data_file_path,Settings.default_project_data_file_name)
+        data_file_path = Settings.default_project_data_file_name
+      end
 
       fail "Project data file don't exists" unless File.exists?(data_file_path)
       fail "Project mapping don't have all necessery fields" unless data_mapping.has_key?("project_name") and data_mapping.has_key?("ident")
@@ -20,7 +26,6 @@ module PowerByHelper
 
       Persistent.init_project
       Persistent.init_project_custom_params
-
 
       file_rows = []
 
