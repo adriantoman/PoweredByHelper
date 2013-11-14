@@ -98,12 +98,10 @@ module PowerByHelper
 
     def move_remote_user_files
       if (Settings.deployment_user_creation_type == "webdav" and !Settings.deployment_user_creation_move_after_processing.nil?)
-        @@log.info "Moving file #{Settings.deployment_user_creation["source"]} to #{Settings.deployment_user_creation_move_after_processing}"
         Helper.move_file_to_other_folder(Settings.deployment_user_creation["source"],Settings.deployment_user_creation_move_after_processing)
       end
 
       if (Settings.deployment_user_project_synchronization_type == "webdav" and !Settings.deployment_user_project_synchronization_move_after_processing.nil?)
-        @@log.info "Moving file #{Settings.deployment_user_project_synchronization["source"]} to #{Settings.deployment_user_project_synchronization_move_after_processing}"
         Helper.move_file_to_other_folder(Settings.deployment_user_project_synchronization["source"],Settings.deployment_user_project_synchronization_move_after_processing)
       end
     end
