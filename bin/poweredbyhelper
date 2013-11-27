@@ -29,9 +29,11 @@ program_desc 'GoodData PowerBy provisioning app'
 
 pre do |global_options,command,options,args|
   next true if command.nil?
+  @running = false
   @@log = Logger.new("log/provision.log",'daily')
   @@log.level = Logger::INFO
   if File.exists?('running.pid')
+    @running = true
     puts "Another process is running"
     exit
   end
@@ -39,7 +41,7 @@ pre do |global_options,command,options,args|
 end
 
 post do |global_options,command,options,args|
-  FileUtils.rm('running.pid')
+  FileUtils.rm('running.pid') if !@running
 end
 
 
@@ -219,17 +221,13 @@ end
 
 
 
-
-
-
-
 on_error do |exception|
+  @@log.error exception.backtrace
   FileUtils.rm('running.pid')
-  pp exception.backtrace
   if exception.is_a?(SystemExit) && exception.status == 0
     false
   else
-    pp exception.inspect
+    @@log.error exception.inspect
     false
   end
 end
