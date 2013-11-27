@@ -41,7 +41,7 @@ pre do |global_options,command,options,args|
 end
 
 post do |global_options,command,options,args|
-  FileUtils.rm('running.pid') if !@running
+  FileUtils.rm_f('running.pid') if !@running
 end
 
 
@@ -223,7 +223,7 @@ end
 
 on_error do |exception|
   @@log.error exception.backtrace
-  FileUtils.rm('running.pid')
+  FileUtils.rm_f('running.pid')
   if exception.is_a?(SystemExit) && exception.status == 0
     false
   else
