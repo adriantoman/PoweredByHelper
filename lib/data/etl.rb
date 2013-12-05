@@ -116,11 +116,15 @@ module PowerByHelper
       deploy_name = name
       res = nil
 
-      Zip.continue_on_exists_proc = true
-      Zip::File.open("deploy-process.zip", Zip::File::CREATE) do |zipfile|
+      processed_files = []
+      Zip::ZipFile.open("deploy-process.zip", Zip::ZipFile::CREATE) do |zipfile|
         Dir[File.join(dir, '**','**')].each do |file|
-          unless File.directory?(file)
-            zipfile.add(file.sub(dir,''), file)
+          temp = processed_files.find{|f| f == file}
+          if (temp.nil?)
+            unless File.directory?(file)
+              zipfile.add(file.sub(dir,''), file)
+              processed_files.push(file)
+            end
           end
         end
       end

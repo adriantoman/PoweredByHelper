@@ -8,5 +8,6 @@ gem "colorize"
 # Required for downloading data from webdav
 gem "net_dav"
 gem "curb"
-gem "rubyzip"
+gem "rubyzip","< 1.0.0"
+#gem "rubyzip"
 #gem "zip"

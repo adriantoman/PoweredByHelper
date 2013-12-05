@@ -38,7 +38,8 @@ require 'poweredbyhelper'
 require 'colorize'
 require "net/dav"
 require "curb"
-require "zip"
+require "zip/zip"
+
 
 
 include GLI::App

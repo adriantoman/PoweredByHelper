@@ -22,13 +22,13 @@ GEM
     nokogiri (1.6.0)
       mini_portile (~> 0.5.0)
     parseconfig (1.0.2)
-    pry (0.9.12.3)
+    pry (0.9.12.4)
       coderay (~> 1.0)
       method_source (~> 0.8)
       slop (~> 3.4)
     rest-client (1.6.7)
       mime-types (>= 1.16)
-    rubyzip (1.1.0)
+    rubyzip (0.9.9)
     slop (3.4.7)
 
 PLATFORMS
@@ -42,4 +42,4 @@ DEPENDENCIES
   gooddata (= 0.5.14)
   net_dav
   pry
-  rubyzip
+  rubyzip (< 1.0.0)
