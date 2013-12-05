@@ -59,8 +59,9 @@ module PowerByHelper
         end
         Persistent.project_custom_params.push({csv_obj[data_mapping["ident"]] => param_values})
       end
+      Persistent.store_project
 
-    Persistent.project_data.each do |p|
+      Persistent.project_data.each do |p|
         if (p.status != ProjectData.DISABLED)
           row = file_rows.find{|r| r[data_mapping["ident"]] == p.ident}
           if (row.nil?)
@@ -68,9 +69,19 @@ module PowerByHelper
           end
         end
       end
+      Persistent.store_project
 
       @@log.info "Persistent storage for project provisioning initialized"
 
+    end
+
+
+    def load_data_structure_maintenance()
+      data_file_path = Settings.deployment_project_data_file_name
+      fail "Project data file don't exists" unless File.exists?(data_file_path)
+
+      Persistent.init_project
+      @@log.info "Persistent storage for project maintenance initialized"
     end
 
 
@@ -99,6 +110,7 @@ module PowerByHelper
           project = GoodData::Project.new json
           project.save
           Persistent.change_project_status(p.ident,ProjectData.CREATED,{"project_pid" => project.obj_id})
+          Persistent.store_project
           @@log.info "Project created!"
         end
 
@@ -108,6 +120,7 @@ module PowerByHelper
             project_status = GoodData::Project[for_check.project_pid]
             if !(project_status.to_json['content']['state'] =~ /^(PREPARING|PREPARED|LOADING)$/)
               Persistent.change_project_status(for_check.ident,ProjectData.OK,nil)
+              Persistent.store_project
             end
           end
 
@@ -126,6 +139,7 @@ module PowerByHelper
           project_status = GoodData::Project[for_check.project_pid]
           if !(project_status.to_json['content']['state'] =~ /^(PREPARING|PREPARED|LOADING)$/)
             Persistent.change_project_status(for_check.ident,ProjectData.OK,nil)
+            Persistent.store_project
           end
         end
 
@@ -212,6 +226,17 @@ module PowerByHelper
     end
 
 
+    def maintenance_execute_maql(maql_file)
+
+      #Load MAQL from file
+      fail "MAQL file not exist" if !File.exist?(maql_file)
+      maql = File.read(maql_file)
+
+      Persistent.project_data.each do |project|
+        response = MaintenanceHelper.execute_maql(project,maql)
+      end
+    end
+
 
 
 
@@ -234,7 +259,7 @@ module PowerByHelper
 
   class ProjectData
 
-    attr_accessor :ident,:project_pid,:project_name,:status,:summary,:to_delete,:disabled_at
+    attr_accessor :ident,:project_pid,:project_name,:status,:summary,:to_delete,:disabled_at,:maintenance
 
     def self.CREATED
       "CREATED"
@@ -271,7 +296,6 @@ module PowerByHelper
 
     def initialize(status,data)
       @status = status
-
       @ident = data["ident"] if !data["ident"].nil?
       @project_pid = data["project_pid"] if !data["project_pid"].nil?
       @project_name = data["project_name"] if !data["project_name"].nil?

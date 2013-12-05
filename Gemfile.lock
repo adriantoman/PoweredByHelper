@@ -30,7 +30,6 @@ GEM
       mime-types (>= 1.16)
     rubyzip (1.1.0)
     slop (3.4.7)
-    zip (2.0.2)
 
 PLATFORMS
   ruby
@@ -43,4 +42,4 @@ DEPENDENCIES
   gooddata (= 0.5.14)
   net_dav
   pry
-  zip
+  rubyzip

@@ -20,7 +20,7 @@ require 'gooddata'
 require 'fastercsv'
 require 'fileutils'
 
-%w(settings helper persistent userhelper).each {|a| require "#{a}"}
+%w(settings helper persistent userhelper maintenancehelper).each {|a| require "#{a}"}
 %w(project etl user).each {|a| require "data/#{a}"}
 
 module PowerByHelper

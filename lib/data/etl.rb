@@ -109,36 +109,35 @@ module PowerByHelper
 
 
     def deploy_update_graph(dir,name,pid, process_id = nil )
-      dir = Pathname(dir)
+      #dir = Pathname(dir)
 
-      old_dir = Dir.pwd
-      Dir.chdir(dir)
+      #old_dir = Dir.pwd
+      #Dir.chdir(dir)
       deploy_name = name
       res = nil
-      Tempfile.open("deploy-graph-archive") do |temp|
-        Zip::ZipOutputStream.open(temp.path) do |zio|
-          Dir.glob("**/*") do |item|
-            unless File.directory?(item)
-              zio.put_next_entry(item)
-              zio.print IO.read(item)
-            end
+
+      Zip.continue_on_exists_proc = true
+      Zip::File.open("deploy-process.zip", Zip::File::CREATE) do |zipfile|
+        Dir[File.join(dir, '**','**')].each do |file|
+          unless File.directory?(file)
+            zipfile.add(file.sub(dir,''), file)
           end
         end
-
-        GoodData.connection.upload(temp.path)
-        data = {
-            :process => {
-                :name => deploy_name,
-                :path => "/uploads/#{File.basename(temp.path)}"
-            }
-        }
-        if process_id.nil?
-          res = GoodData.post("/gdc/projects/#{pid}/dataload/processes", data)
-        else
-          res = GoodData.put("/gdc/projects/#{pid}/dataload/processes/#{process_id}", data)
-        end
       end
-      Dir.chdir(old_dir)
+
+      GoodData.connection.upload("deploy-process.zip")
+      data = {
+          :process => {
+              :name => deploy_name,
+              :path => "/uploads/deploy-process.zip"
+          }
+      }
+      if process_id.nil?
+        res = GoodData.post("/gdc/projects/#{pid}/dataload/processes", data)
+      else
+        res = GoodData.put("/gdc/projects/#{pid}/dataload/processes/#{process_id}", data)
+      end
+      FileUtils.rm_f("deploy-process.zip")
       res
     end
 

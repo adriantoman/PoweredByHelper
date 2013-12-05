@@ -38,6 +38,8 @@ require 'poweredbyhelper'
 require 'colorize'
 require "net/dav"
 require "curb"
+require "zip"
+
 
 include GLI::App
 
@@ -239,7 +241,9 @@ end
 
 
 on_error do |exception|
-  @@log.error exception.backtrace
+  #@@log.error exception.backtrace
+  pp exception.message
+  pp exception.backtrace
   FileUtils.rm_f('running.pid')
   if exception.is_a?(SystemExit) && exception.status == 0
     false

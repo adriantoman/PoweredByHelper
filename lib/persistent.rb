@@ -63,6 +63,9 @@ module PowerByHelper
         load_roles()
       end
 
+      def init_maintenenace()
+        load_maintenance()
+      end
 
 
 
@@ -122,6 +125,15 @@ module PowerByHelper
           end
         end
       end
+
+      def load_maintenance
+        if (File.exists?(Settings.storage_maintenance_source))
+          FasterCSV.foreach(Settings.storage_maintenance_source, :headers => true,:quote_char => '"') do |csv_obj|
+            Persistent.change_maintenance_status(csv_obj["ident"],csv_obj["status"],csv_obj)
+          end
+        end
+      end
+
 
 
       def load_user
@@ -259,7 +271,7 @@ module PowerByHelper
             d
           end
         end
-        store_project
+
       end
 
       def change_user_project_status(login,project_pid,status,data)
