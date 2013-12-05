@@ -152,6 +152,8 @@ module PowerByHelper
       path = path.gsub(Settings.deployment_etl_process["source"], "")
       graph_name = path
 
+      cron = Helper.replace_custom_parameters(project_ident,cron)
+
       data = {
           "schedule" => {
             "type" => "MSETL",
