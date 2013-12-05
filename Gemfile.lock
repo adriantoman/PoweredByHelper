@@ -30,6 +30,7 @@ GEM
       mime-types (>= 1.16)
     rubyzip (1.1.0)
     slop (3.4.7)
+    zip (2.0.2)
 
 PLATFORMS
   ruby
@@ -43,3 +44,4 @@ DEPENDENCIES
   net_dav
   pry
   rubyzip
+  zip
