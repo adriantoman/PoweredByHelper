@@ -87,20 +87,23 @@ Example:
         }
 ```        
 
-ETL
+####ETL
 In this part of deployment section you can specify all settings needed for ETL scheduling and deployment. The possible settings are:
 
-process (required)
-source (required) - path to folder which contains graph folder with graphs, which need to be deployed on server. In most case scenario, it is link to CC project folder.
-schedule (required) - section for schedules settings
-graph_name (required) - name of the graph which need to be scheduled on platform
-cron (required) - cron definition of time, when the project should be executed in UTC
-parameters - section for normal schedule parameters. You can have more then one inner elemetns (more then one parameters)
-name (required) - name of the parameter (if you specify the name as MODE, there will be some special rules applied on this parameter, more info below this section)
-value (required) - value of the parameter
-secure_parameters - section for secure parameters. You can have more then one inner elements here
-name (required) - name of parameter
-value (required) - value of parameter
+* **process** (required)
+* **source** (required) - path to folder which contains graph folder with graphs, which need to be deployed on server. In most case scenario, it is link to CC project folder.
+* **schedule** (required) - section for schedules settings
+* **graph_name** (required) - name of the graph which need to be scheduled on platform
+* **cron** (required) - cron definition of time, when the project should be executed in UTC
+* parameters - section for normal schedule parameters. You can have more then one inner elemetns (more then one parameters)
+  * **name** (required) - name of the parameter (if you specify the name as MODE, there will be some special rules applied on this parameter, more info below this section)
+  * **value** (required) - value of the parameter
+* secure_parameters - section for secure parameters. You can have more then one inner elements here
+  * **name** (required) - name of parameter
+  * **value** (required) - value of parameter
+
+Example:
+```json
         "process":{
             "source":"/home/adrian.toman/projects/ProvisioningTest/"
         },
@@ -120,7 +123,8 @@ value (required) - value of parameter
                 }
             ]
         }
-You can use special construction %ID% to add project_id to any parameter.
+```        
+You can use special construction %ID% to add project_id to any parameter or you can use %custom1%,%custom2% to propagate custom parameters.
 
 notifications - in this section you can specify multiple notification messages, which will be added to each schedule
 type - the type of the event, on which the notification will react (success,error,schedule,start)
