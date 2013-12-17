@@ -21,7 +21,7 @@ module PowerByHelper
 
     class << self
 
-      attr_accessor :project_data,:etl_data,:user_data,:roles,:user_project_data,:project_custom_params,:custom_params_names
+      attr_accessor :project_data,:etl_data,:user_data,:maintenance_data,:roles,:user_project_data,:project_custom_params,:custom_params_names
       # project section
 
       def init_project()
@@ -63,7 +63,8 @@ module PowerByHelper
         load_roles()
       end
 
-      def init_maintenenace()
+      def init_maintenance()
+        @maintenance_data = []
         load_maintenance()
       end
 
@@ -92,6 +93,15 @@ module PowerByHelper
         end
       end
 
+      def store_maintenance
+        FileUtils.mkdir_p File.dirname(Settings.storage_maintenance_source) if !File.exists?(Settings.storage_maintenance_source)
+        FasterCSV.open(Settings.storage_maintenance_source, 'w',:quote_char => '"') do |csv|
+          csv << MaintenanceData.header
+          @maintenance_data.each do |d|
+            csv << d.to_a
+          end
+        end
+      end
 
       def store_user
         if (!@user_data.nil?)
@@ -274,6 +284,52 @@ module PowerByHelper
 
       end
 
+
+      def change_maintenance_status(id, status, data)
+        if (@maintenance_data.find{|p| p.project_pid == id }.nil?)
+          @maintenance_data.push(MaintenanceData.new(data))
+        else
+          @maintenance_data.collect! do |d|
+            if (d.project_pid == id )
+              # Project was loaded from persistent storage and now it is in source file - nothing to do
+              if (d.status == status)
+                @@log.debug "Same status - do nothing"
+              elsif (d.status == MaintenanceData.PROCESSING_MAQL_SCHEDULED and status == MaintenanceData.PROCESSING_MAQL_TASK_CREATED )
+                d.task_id = data["task_id"]
+                d.status = MaintenanceData.PROCESSING_MAQL_TASK_CREATED
+                @@log.debug "Maintenance task #{id} send to Gooddata"
+              elsif (d.status == MaintenanceData.PROCESSING_PARTIAL_SCHEDULED and status == MaintenanceData.PROCESSING_PARTIAL_TASK_CREATED )
+                d.task_id = data["task_id"]
+                d.status = MaintenanceData.PROCESSING_PARTIAL_TASK_CREATED
+                @@log.debug "Maintenance task #{id} send to Gooddata"
+              elsif (d.status == MaintenanceData.PROCESSING_MAQL_TASK_CREATED and status == MaintenanceData.OK)
+                d.status = MaintenanceData.OK
+                d.task_id = data["task_id"]
+                @@log.debug "Maintenance task #{id} - received positive response"
+              elsif (d.status == MaintenanceData.PROCESSING_PARTIAL_TASK_CREATED and status == MaintenanceData.OK)
+                d.status = MaintenanceData.OK
+                d.task_id = data["task_id"]
+                @@log.debug "Maintenance task #{id} - received positive response"
+              elsif (status == MaintenanceData.ERROR)
+                d.status = MaintenanceData.ERROR
+                @@log.debug "Maintenance task #{id} - received negative response (ERROR)"
+              elsif (d.status == MaintenanceData.ERROR and (status == MaintenanceData.PROCESSING_PARTIAL_SCHEDULED or status == MaintenanceData.PROCESSING_MAQL_SCHEDULED))
+                d.status = status
+                d.task_id = nil
+                @@log.debug "Maintenance task #{id} - ERROR - setting to proper status - retrying"
+              elsif (d.status == MaintenanceData.ERROR)
+                @@log.debug "Maintenance task #{id} - ERROR status ignoring all operations"
+              else
+                fail "Non-supported transition from #{d.status} to #{status}"
+              end
+            end
+            d
+          end
+        end
+      end
+
+
+
       def change_user_project_status(login,project_pid,status,data)
         user_check = @user_project_data.find{|up| up.project_pid == project_pid and up.login == login }
         if (user_check.nil?)
@@ -375,6 +431,14 @@ module PowerByHelper
 
       def get_projects_by_status(status)
         @project_data.find_all{|d| d.status == status}
+      end
+
+      def get_maintenance_by_status(status)
+        @maintenance_data.find_all{|d| d.status == status}
+      end
+
+      def get_maintenance_by_status_not(status)
+        @maintenance_data.find_all{|d| d.status != status}
       end
 
       def get_projects

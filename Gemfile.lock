@@ -6,12 +6,12 @@ GEM
     curb (0.8.5)
     fastercsv (1.5.5)
     gli (2.7.0)
-    gooddata (0.5.14)
+    gooddata (0.5.16)
       json
       json_pure
       parseconfig
       rest-client
-      rubyzip
+      rubyzip (< 1.0.0)
     json (1.8.1)
     json_pure (1.8.1)
     method_source (0.8.2)
@@ -39,7 +39,7 @@ DEPENDENCIES
   curb
   fastercsv (~> 1.5.5)
   gli (~> 2.7.0)
-  gooddata (= 0.5.14)
+  gooddata (= 0.5.16)
   net_dav
   pry
   rubyzip (< 1.0.0)

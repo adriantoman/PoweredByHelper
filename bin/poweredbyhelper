@@ -46,12 +46,16 @@ include GLI::App
 
 program_desc 'GoodData PowerBy provisioning app'
 
+desc "Output to STDOUT"
+switch [:d,:debug]
 
 pre do |global_options,command,options,args|
   next true if command.nil?
   @running = false
-  @@log = Logger.new("log/provision.log",'daily')
+  @@log = Logger.new("log/provision.log",'daily') if !global_options[:debug]
+  @@log = Logger.new(STDOUT) if global_options[:debug]
   @@log.level = Logger::INFO
+
   if File.exists?('running.pid')
     @running = true
     puts "Another process is running"
@@ -240,11 +244,50 @@ command :update_processes do |c|
 end
 
 
+command :execute_maql do |c|
+
+  c.desc 'Config file path'
+  c.flag [:config]
+
+  c.desc 'MAQL file path'
+  c.flag [:maql]
+
+  c.action do |global_options,options,args|
+
+    config_file = options[:config]
+    fail "Please provide link to config file" unless (File.exist?(config_file))
+    helper = PowerByHelper::Pwb.new(config_file,options[:test])
+    helper.gooddata_login
+    helper.init_maintenance_storage
+    helper.execute_maql(options[:maql])
+  end
+
+
+end
+
+
+command :execute_partial_metadata do |c|
+
+  c.desc 'Config file path'
+  c.flag [:config]
+
+  c.desc 'Partial metadata export token'
+  c.flag [:token]
+
+  c.action do |global_options,options,args|
+    config_file = options[:config]
+    fail "Please provide link to config file" unless (File.exist?(config_file))
+    helper = PowerByHelper::Pwb.new(config_file,options[:test])
+    helper.gooddata_login
+    helper.init_maintenance_storage
+    helper.execute_partial_metadata(options[:token])
+  end
+
+
+end
 
 on_error do |exception|
-  #@@log.error exception.backtrace
-  pp exception.message
-  pp exception.backtrace
+  @@log.error exception.backtrace
   FileUtils.rm_f('running.pid')
   if exception.is_a?(SystemExit) && exception.status == 0
     false
@@ -253,8 +296,6 @@ on_error do |exception|
     false
   end
 end
-
-
 
 exit run(ARGV)
 

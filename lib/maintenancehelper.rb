@@ -20,7 +20,7 @@ module PowerByHelper
 
 
 
-    def self.execute_maql(project_data,maql)
+    def self.execute_maql(maintenance_data,maql)
       maql = {
           "manage" => {
               "maql" => maql
@@ -28,8 +28,31 @@ module PowerByHelper
 
       }
       begin
-        result = GoodData.post("/gdc/md/#{project_data.project_pid}/ldm/manage", maql)
+        result = GoodData.post("/gdc/md/#{maintenance_data.project_pid}/ldm/manage2", maql)
         return result
+      rescue RestClient::BadRequest => e
+        response = JSON.load(e.response)
+        @@log.warn "The maql could not be applied on project #{maintenance_data.project_pid}. Reason: #{response["error"]["message"]}"
+        return nil
+      rescue RestClient::InternalServerError => e
+        response = JSON.load(e.response)
+        @@log.warn "The maql could not be applied on project #{maintenance_data.project_pid} and returned 500. Reason: #{response["error"]["message"]}"
+        return nil
+      rescue => e
+        response = JSON.load(e.response)
+        @@log.warn "Unknown error - The maql could not be applied on project #{maintenance_data.project_pid} and returned 500. Reason: #{response["error"]["message"]}"
+        return nil
+      end
+    end
+
+    def self.check_task_status(maintenance_data)
+      begin
+        result = GoodData.get("/gdc/md/#{maintenance_data.project_pid}/tasks/#{maintenance_data.task_id}/status")
+        status = result["wTaskStatus"]["status"]
+        if (status == "ERROR")
+          @@log.warn "MAQL request for project: #{maintenance_data.project_pid} has failed. Reason: #{result["wTaskStatus"]["error"]["message"]}"
+        end
+        return status
       rescue RestClient::BadRequest => e
         response = JSON.load(e.response)
         @@log.warn "User #{user_data.login} could not be created. Reason: #{response["error"]["message"]}"
@@ -38,39 +61,44 @@ module PowerByHelper
         response = JSON.load(e.response)
         @@log.warn "User #{user_data.login} could not be created and returned 500. Reason: #{response["error"]["message"]}"
         return nil
+
       end
     end
 
 
-
-
-    def self.create_user_in_domain(domain,user_data)
-
-        account_setting = {
-            "accountSetting" => {
-                "login"              => user_data.login,
-                "password"           => user_data.password,
-                "verifyPassword"     => user_data.password,
-                "firstName"          => user_data.first_name || "John" ,
-                "lastName"           => user_data.last_name || "Doe"
-            }
+    def self.execute_partial_import(maintenance_data,token)
+      json = {
+          "partialMDImport" => {
+              "token" => "#{token}",
+              "overwriteNewer" => "1",
+              "updateLDMObjects" => "0"
         }
+      }
+      begin
+        result = GoodData.post("/gdc/md/#{maintenance_data.project_pid}/maintenance/partialmdimport", json)
+        return result
+      rescue RestClient::BadRequest => e
+        response = JSON.load(e.response)
+        @@log.warn "The partial metadata could not be applied on project #{maintenance_data.project_pid}. Reason: #{response["error"]["message"]}"
+        return nil
+      rescue RestClient::InternalServerError => e
+        response = JSON.load(e.response)
+        @@log.warn "The partial metadata could not be applied on project #{maintenance_data.project_pid} and returned 500. Reason: #{response["error"]["message"]}"
+        return nil
+      rescue => e
+        response = JSON.load(e.response)
+        pp response
+        @@log.warn "Unknown error - The maql could not be applied on project #{maintenance_data.project_pid} and returned 500. Reason: #{response["message"]}"
+        return nil
+      end
 
-        begin
-          result = GoodData.post("/gdc/account/domains/#{domain}/users", account_setting)
-          user_data.uri = result["uri"]
-          user_data.status = UserData.CREATED
-          return user_data
-        rescue RestClient::BadRequest => e
-          response = JSON.load(e.response)
-          @@log.warn "User #{user_data.login} could not be created. Reason: #{response["error"]["message"]}"
-          return
-        rescue RestClient::InternalServerError => e
-          response = JSON.load(e.response)
-          @@log.warn "User #{user_data.login} could not be created and returned 500. Reason: #{response["error"]["message"]}"
-          return
-        end
+
     end
+
+
+
+
+
 
 
 

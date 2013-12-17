@@ -21,7 +21,7 @@ require 'fastercsv'
 require 'fileutils'
 
 %w(settings helper persistent userhelper maintenancehelper).each {|a| require "#{a}"}
-%w(project etl user).each {|a| require "data/#{a}"}
+%w(project etl user maintenance).each {|a| require "data/#{a}"}
 
 module PowerByHelper
 
@@ -42,6 +42,7 @@ module PowerByHelper
       server = Settings.connection_server
       fail "Please put Gooddata Login and Password into the config file" if Helper.blank?(login) or Helper.blank?(password)
       GoodData.logger = @@log
+      #GoodData.logger.level = Logger::DEBUG
       GoodData.connect(login,password,server,{:webdav_server => Settings.connection_webdav})
     end
 
@@ -49,6 +50,11 @@ module PowerByHelper
       @projects = Project.new() if (!Settings.deployment_project.nil? and !Settings.deployment_project.empty?)
       @etl = Etl.new() if (!Settings.deployment_etl.nil? and !Settings.deployment_etl.empty?)
     end
+
+    def init_maintenance_storage
+      @maintenance = Maintenance.new()
+    end
+
 
     def init_user_storage
       @user = User.new() if (!Settings.deployment_user.nil? and !Settings.deployment_user.empty?)
@@ -103,6 +109,25 @@ module PowerByHelper
         @etl.update_processes
       end
     end
+
+    def execute_maql(maql_file)
+      @@log.info "Starting maql execution"
+      #Helper.retryable do
+        @maintenance.executed_maql(maql_file)
+      #end
+      @@log.info "Maql execution finished"
+    end
+
+
+    def execute_partial_metadata(token)
+      @@log.info "Starting partial metadata execution"
+      @maintenance.execute_partial_metadata(token)
+      @@log.info "Partial metadata export execution finished"
+    end
+
+
+
+
 
 
     def move_remote_project_files
