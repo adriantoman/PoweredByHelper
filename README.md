@@ -124,15 +124,17 @@ Example:
             ]
         }
 ```        
-You can use special construction %ID% to add project_id to any parameter or you can use %custom1%,%custom2% to propagate custom parameters.
+You can use special construction %ID% to add project_id to any parameter or you can use %custom1%,%custom2% to use custom parameter from project source file.
 
-notifications - in this section you can specify multiple notification messages, which will be added to each schedule
-type - the type of the event, on which the notification will react (success,error,schedule,start)
-email -  email which should receive the notification
-subject - notification subject
-message - notification message
+* notifications - in this section you can specify multiple notification messages, which will be added to each schedule
+* type - the type of the event, on which the notification will react (success,error,schedule,start)
+* email -  email which should receive the notification
+* subject - notification subject
+* message - notification message
+
 Example:
 
+```json
            "notifications":[
                 {
                  "type":"success",
@@ -147,31 +149,33 @@ Example:
                  "message":"Please note that the \"Hodes\" project load ETL process (graph ${params.GRAPH}) that started at ${params.START_TIME} failed at ${params.FINISH_TIME} with following ERROR: \n ${params.ERROR_MESSAGE} \n Please inspect the ${params.LOG} for more details."
                 }
             ]
+```
 
-
-User
+####User
 The part of deployment section is used for enabling user provisioning. It consist of two distinguished part. Part for user domain creation and part for user-project mapping.
 
-domain (required) - name of the Gooddata domain. User specified in connection section must be admin of this domain.
-creation - user domain creation section
-source (required) - path to user domain CSV file
-mapping - mapping of fields from CSV file to internal PWH fields
-login - user login (must be unique in domain). Most likely it will be user email adress
-first_name - user first name
-last_name - user last name
-password - user password. In case when password is not specified, PWH will generate random password for the user.
-super_admin (0/1) - sets if user is super admin. Super admin user will be invited to all project maintained by PWH tool. Please use wisely.
-project_synchronization - user-project mapping section
-source (required) -  path to user-project mapping CSV file
-notification_message - this message will be part of the Gooddata user invite, which will be send to user after successful invitation to project.
-mapping - mapping of fields from CSV file to internal PWH fields
-ident - mapping to project identification field (this should correspond to ident in project file)
-login - mapping to user login field
-role - mapping to Gooddata role field (adminRole,connectorsSystemRole,editorRole,dashboardOnlyRole,unverifiedAdminRole,readOnlyUserRole)
-notification (1/0) - mapping to notification field. If notification is enabled, user will receive Gooddata invitation mail, if it is disabled user will be automaticaly added to project.
-internal_role (External/Internal) - mapping to internal role field. If the user is internal, he will have access to disabled projects. If the user is external, he will lose access to project after it is disabled.
+* **domain** (required) - name of the Gooddata domain. User specified in connection section must be admin of this domain.
+* creation - user domain creation section
+  * **source** (required) - path to user domain CSV file
+  * mapping - mapping of fields from CSV file to internal PWH fields
+    * login - user login (must be unique in domain). Most likely it will be user email adress
+    * first_name - user first name
+    * last_name - user last name
+    * password - user password. In case when password is not specified, PWH will generate random password for the user.
+    * super_admin (0/1) - sets if user is super admin. Super admin user will be invited to all project maintained by PWH tool. Please use wisely.
+* project_synchronization - user-project mapping section
+  * **source** (required) -  path to user-project mapping CSV file
+  * notification_message - this message will be part of the Gooddata user invite, which will be send to user after successful invitation to project.
+  * mapping - mapping of fields from CSV file to internal PWH fields
+    * ident - mapping to project identification field (this should correspond to ident in project file)
+    * login - mapping to user login field
+    * role - mapping to Gooddata role field (adminRole,connectorsSystemRole,editorRole,dashboardOnlyRole,unverifiedAdminRole,readOnlyUserRole)
+    * notification (1/0) - mapping to notification field. If notification is enabled, user will receive Gooddata invitation mail, if it is disabled user will be automaticaly added to project.
+    * internal_role (External/Internal) - mapping to internal role field. If the user is internal, he will have access to disabled projects. If the user is external, he will lose access to project after it is disabled.
+
 Example:
 
+```json
         "user":{
             "domain" : "gooddata-adrian-toman",
             "creation":{
@@ -196,23 +200,31 @@ Example:
                 "notification_message":"Welcome to new TWC project"
             }
         }
-Execution
+```        
+
+##Execution
 The execution part of the tools is quite strait forward. After you have successfully configured the application you can run it.
 
-Dry run
+
+###Dry run
 The dry run will show you what will be done in standard run. You can executed it by following command executed in folder where you have installed provisioning tool:
 
+```bash
 ruby bin/poweredbyhelper dry_run --config=config/config.json
-Provisioning
+```
+###Provisioning
+
 This command will start the provisioning. Tool will not start if there is other execution running. The messages about progress will be posted to console
 
+```bash
 ruby bin/poweredbyhelper provision --config=config/config.json
+```
 
 
 
 
 
-FAQ
+##FAQ
 
 
 
