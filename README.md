@@ -220,8 +220,42 @@ This command will start the provisioning. Tool will not start if there is other 
 ruby bin/poweredbyhelper provision --config=config/config.json
 ```
 
+###Update schedule
 
+This command will will update schedules for all provisioned projects, with settings from config.json file.
 
+```bash
+ruby bin/poweredbyhelper update_schedule --config=config/config.json
+```
+
+###Update process
+
+This command will deploy new ETL to all provisioned projects. Process ID will stay the same.
+
+```bash
+ruby bin/poweredbyhelper update_process --config=config/config.json
+
+```
+
+###Execute maql
+
+This command will execute maql on all projects provisioned by this tool
+
+```bash
+ruby bin/poweredbyhelper execute_maql --config=config/config.json --maql=config/maql.txt
+
+```
+
+###Execute Partial Metadata
+
+This command will execute partial metadata import on all project provisioned by this tool.
+
+```bash
+ruby bin/poweredbyhelper execute_partial_metadata --config=config/config.json --token=export_token
+
+```
+
+More info about partial metadata import/export look here: [http://developer.gooddata.com/article/migrating-selected-objects-between-projects]
 
 
 ##FAQ
