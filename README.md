@@ -31,10 +31,10 @@ The tool configuration is done by one JSON file. The JSON file consist of few di
 ###Connection section
 In the connection section you need to specify credentials for Gooddata servers. The possible settings are:
 
- **login** (required) - GoodData login (must be domain admin, if you want to use USER provisioning functionality)
- **password** (require) - Gooddata password
- server - GoodData server adress (default https://secure.gooddata.com)
- webdav - GoodData webdav adress (default https://secure-di.gooddata.com)
+* **login** (required) - GoodData login (must be domain admin, if you want to use USER provisioning functionality)
+* **password** (require) - Gooddata password
+* server - GoodData server adress (default https://secure.gooddata.com)
+* webdav - GoodData webdav adress (default https://secure-di.gooddata.com)
 
 If you want to use other server then secure.gooddata.com, you must specify both server and webdav adress.
 
@@ -55,20 +55,20 @@ In the deployment section, you can specify settings needed for deployment to ser
 ####Project
 In this part of deployment section you need to specify information needed for project creation and maintenance. The possible settings are:
 
- **token** (requried) - GoodData project token
- **template** (required) - Location of project template. You can list all the templates here.
- delete - possible options here - disabled_users_first and force_delete. More info about this functionality is below the list.
- disable_duration - Duration in days, for how long project will be disabled before deletion.
- **data** (required) - Section for source data configuration
- **file_name** (required) - Path to source file with project provisioning data
- mapping - mapping of source file fields to PWH internal fields
- ident - unique project indetification field
- project_name - name of GoodData project
+* **token** (requried) - GoodData project token
+* **template** (required) - Location of project template. You can list all the templates here.
+* delete - possible options here - disabled_users_first and force_delete. More info about this functionality is below the list.
+* disable_duration - Duration in days, for how long project will be disabled before deletion.
+* **data** (required) - Section for source data configuration
+* **file_name** (required) - Path to source file with project provisioning data
+* mapping - mapping of source file fields to PWH internal fields
+* ident - unique project indetification field
+* project_name - name of GoodData project
 
 The delete options is quite important one. There are two possible setting and each represent special functionality:
 
- **force_delete** - when the project will disappear from project source file, it will be automacly deleted from Gooddata. This is ireversible action and all data and changes done in project will be lost. Please use this option with caution.
- **disabled_users_first** (default) - when the project disappear from the project source file, the tool will automaticaly disable all External users (more info about external users is in User part of Deployment section) in project. Project will be in this state for interval specified in disable_duration settings. After that period project will be deleted. This setting will not work in case, when you are not using project provisioning.
+* **force_delete** - when the project will disappear from project source file, it will be automacly deleted from Gooddata. This is ireversible action and all data and changes done in project will be lost. Please use this option with caution.
+* **disabled_users_first** (default) - when the project disappear from the project source file, the tool will automaticaly disable all External users (more info about external users is in User part of Deployment section) in project. Project will be in this state for interval specified in disable_duration settings. After that period project will be deleted. This setting will not work in case, when you are not using project provisioning.
 
 Example:
 ```json
