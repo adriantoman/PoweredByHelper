@@ -154,8 +154,7 @@ module PowerByHelper
             elsif (csv_obj["admin"] == "true")
               csv_obj["admin"] = true
             end
-            user = UserData.new(csv_obj)
-            @user_data.push(user)
+            Persistent.change_user_status(csv_obj["login"],csv_obj["status"],csv_obj)
           end
         end
       end
@@ -327,6 +326,53 @@ module PowerByHelper
           end
         end
       end
+
+
+      def change_user_status(login,status,data)
+        user_check = @user_data.find{|up| up.login == login }
+        if (user_check.nil?)
+          @user_data.push(UserData.new(status,data))
+        else
+          @user_data.collect! do |up|
+            if (up.login == login )
+              if (up.status == UserData.NEW and status == UserData.NEW)
+                up.password = data["password"]
+                up.sso_provider = data["sso_provider"]
+                up.first_name = data["first_name"]
+                up.last_name = data["last_name"]
+              elsif (up.status == UserData.CHANGED and status == UserData.NEW)
+                @@log.debug "Login=#{login} status was CHANGED - leaving CHANGED"
+              elsif (up.status == status)
+                @@log.debug "Login=#{login} same status - no work done"
+              elsif (up.status == UserData.CREATED and status == UserData.NEW)
+                # This two fields are change by user_project section - only moving to persistent without object change
+                up.admin = data["admin"]
+                up.admin_role = data["admin_role"]
+                if (Helper.blank?(up.sso_provider) and Helper.blank?(data["sso_provider"]))
+                  up.status = UserData.CREATED
+                  @@log.debug "Login=#{login} status was CREATED, change is SSO_PROVIDER was not done (both blank) - leaving CREATED"
+                elsif (up.sso_provider != data["sso_provider"])
+                  up.sso_provider = data["sso_provider"]
+                  up.status = UserData.CHANGED
+                  @@log.debug "Login=#{login} status was CREATED, change in SSO_PROVIDER was done - changing to CHANGED"
+                else
+                  up.status = UserData.CREATED
+                  @@log.debug "Login=#{login} status was CREATED, change is SSO_PROVIDER was not done - leaving CREATED"
+                end
+              elsif (up.status == UserData.CHANGED and status == UserData.CREATED)
+                up.status = UserData.CREATED
+              elsif (up.status == UserData.NEW and status == UserData.CREATED)
+                up.uri = data["uri"]
+                up.status = UserData.CREATED
+              else
+                fail "Unsuported status change - #{up.status} #{status}"
+              end
+            end
+            up
+          end
+        end
+      end
+
 
 
 

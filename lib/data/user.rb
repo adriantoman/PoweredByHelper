@@ -58,27 +58,41 @@ module PowerByHelper
       # Load info about users - domain file - representing users which should be in domain and merge it with info in Persistent storage
       FasterCSV.foreach(user_creation_file_name, {:headers => true, :skip_blanks => true}) do |csv_obj|
 
-        user_data = UserData.new({"login" => csv_obj[user_creation_mapping["login"]].downcase.strip, "first_name" => csv_obj[user_creation_mapping["first_name"]], "last_name" => csv_obj[user_creation_mapping["last_name"]], "status" => UserData.NEW})
-        user_data.password = csv_obj[password_mapping] || rand(10000000000000).to_s
+        user_password = csv_obj[password_mapping] || rand(10000000000000).to_s
 
-
+        user_admin = false
+        user_admin_role = "adminRole"
         if (!Helper.blank?(csv_obj[admin_mapping]))
           # The admin mapping field could contain 0/1 ... the user is automaticaly admin
           if (csv_obj[admin_mapping].to_s == "1")
-            user_data.admin = true
+            user_admin = true
           elsif (csv_obj[admin_mapping].to_s == "0")
-            user_data.admin = false
-          # The admin mapping field could contain gooddata role -> user will be created with this role
+            user_admin = false
+            # The admin mapping field could contain gooddata role -> user will be created with this role
           elsif (Helper.roles.include?(csv_obj[admin_mapping].to_s))
-            user_data.admin = true
-            user_data.admin_role = csv_obj[admin_mapping].to_s
+            user_admin = true
+            user_admin_role = csv_obj[admin_mapping].to_s
           else
             fail "Role provided for one user in domain file is invalid #{csv_obj[user_creation_mapping["login"]].downcase.strip} role: #{csv_obj[admin_mapping].to_s}"
           end
-        else
-          user_data.admin = false
         end
-        Persistent.merge_user(user_data)
+        sso_provider = ""
+        if (!Helper.blank?(user_creation_mapping["sso_provider"]))
+          sso_provider = csv_obj[user_creation_mapping["sso_provider"]]
+        end
+
+        data = {
+                "login" => csv_obj[user_creation_mapping["login"]].downcase.strip,
+                "first_name" => csv_obj[user_creation_mapping["first_name"]],
+                "last_name" => csv_obj[user_creation_mapping["last_name"]],
+                "password" => user_password,
+                "admin" => user_admin,
+                "admin_role" => user_admin_role,
+                "status" => UserData.NEW,
+                "sso_provider" => sso_provider
+              }
+
+        Persistent.change_user_status(csv_obj[user_creation_mapping["login"]].downcase.strip,UserData.NEW,data)
       end
       Persistent.store_user
 
@@ -159,13 +173,10 @@ module PowerByHelper
         domain_user = users_in_domain.find{|u| u[:login] == user_data.login}
         if (domain_user.nil?)
           @@log.info "Creating new user #{user_data.login} in domain"
-          user_data = UserHelper.create_user_in_domain(Settings.deployment_user_domain,user_data)
-          Persistent.merge_user(user_data) if !user_data.nil?
+          UserHelper.create_user_in_domain(Settings.deployment_user_domain,user_data)
         else
           @@log.info "User #{user_data.login} already in domain - reusing"
-          user_data.uri = domain_user[:profile]
-          user_data.status = UserData.CREATED
-          Persistent.merge_user(user_data)
+          Persistent.change_user_status(user_data.login,UserData.CREATED,{"uri" => domain_user[:profile]})
         end
       end
       Persistent.store_user
@@ -173,7 +184,11 @@ module PowerByHelper
 
     def invite_users
        UserHelper.invite_user()
+    end
 
+
+    def change_users
+       UserHelper.change_users()
     end
 
     def add_users
@@ -194,7 +209,7 @@ module PowerByHelper
 
 
   class UserData
-    attr_accessor :uri,:login,:first_name,:last_name,:user_project_mapping,:password,:admin,:status,:admin_role
+    attr_accessor :uri,:login,:first_name,:last_name,:user_project_mapping,:password,:admin,:status,:admin_role,:sso_provider
 
 
     def self.NEW
@@ -205,7 +220,12 @@ module PowerByHelper
       "CREATED"
     end
 
-    def initialize(data)
+    def self.CHANGED
+      "CHANGED"
+    end
+
+    def initialize(status,data)
+      @status = status
       @uri = data["uri"] || ""
       @login = data["login"]
       @first_name = data["first_name"]
@@ -214,16 +234,16 @@ module PowerByHelper
       @admin = data["admin"]
       # Add to support different then adminrole powerusers (users which are automaticaly invited to all projects)
       @admin_role = data["admin_role"] || "adminRole"
-      @status = data["status"]
+      @sso_provider = data["sso_provider"]
     end
 
 
     def self.header
-      ["login","uri","first_name","last_name","admin","status"]
+      ["login","uri","first_name","last_name","admin","status","sso_provider"]
     end
 
     def to_a
-      [@login,@uri,@first_name,@last_name, @admin, @status]
+      [@login,@uri,@first_name,@last_name, @admin, @status,@sso_provider]
     end
 
 

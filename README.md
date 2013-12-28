@@ -162,7 +162,9 @@ The part of deployment section is used for enabling user provisioning. It consis
     * first_name - user first name
     * last_name - user last name
     * password - user password. In case when password is not specified, PWH will generate random password for the user.
-    * super_admin (0/1) - sets if user is super admin. Super admin user will be invited to all project maintained by PWH tool. Please use wisely.
+    * admin (0/1) - sets if user is super admin. Super admin user will be invited to all project maintained by PWH tool. Please use wisely.
+    * sso_provider (optional) - set SSO Provider for each user
+
 * project_synchronization - user-project mapping section
   * **source** (required) -  path to user-project mapping CSV file
   * notification_message - this message will be part of the Gooddata user invite, which will be send to user after successful invitation to project.
@@ -185,7 +187,8 @@ Example:
                     "first_name":"firstname",
                     "last_name":"lastname",
                     "password":"password",
-                    "admin":"admin"
+                    "admin":"admin",
+                    "sso_provider":"sso"
                 }
             },
             "project_synchronization":{

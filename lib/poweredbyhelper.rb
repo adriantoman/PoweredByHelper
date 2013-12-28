@@ -86,6 +86,7 @@ module PowerByHelper
       init_user_storage
       if (!@user.nil?)
         @user.create_new_users
+        @user.change_users
         @user.invite_users
         @user.add_users
         @user.disable_users

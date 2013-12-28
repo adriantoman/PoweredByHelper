@@ -27,15 +27,16 @@ module PowerByHelper
                 "password"           => user_data.password,
                 "verifyPassword"     => user_data.password,
                 "firstName"          => user_data.first_name || "John" ,
-                "lastName"           => user_data.last_name || "Doe"
+                "lastName"           => user_data.last_name || "Doe",
+                "ssoProvider"        => user_data.sso_provider
             }
         }
 
         begin
           result = GoodData.post("/gdc/account/domains/#{domain}/users", account_setting)
-          user_data.uri = result["uri"]
-          user_data.status = UserData.CREATED
-          return user_data
+          Persistent.change_user_status(user_data.login,UserData.CREATED,{"uri" => result["uri"]})
+          Persistent.store_user
+          return
         rescue RestClient::BadRequest => e
           response = JSON.load(e.response)
           @@log.warn "User #{user_data.login} could not be created. Reason: #{response["error"]["message"]}"
@@ -47,12 +48,53 @@ module PowerByHelper
         end
     end
 
-    def self.add_user_to_project(user_project_data)
-      # Two possible ways of adding user to project (with invitation mail / without invitation mail)
+
+    def self.change_user(user_data)
+      account_setting = {
+          "accountSetting" => {
+              "firstName"          => user_data.first_name || "John" ,
+              "lastName"           => user_data.last_name || "Doe",
+              "ssoProvider"        => user_data.sso_provider
+          }
+      }
+
+      begin
+        @@log.info "Changing user #{user_data.login} - first_name: #{user_data.first_name} last_name: #{user_data.last_name} sso_provider: #{user_data.sso_provider}"
+        result = GoodData.put(user_data.uri, account_setting)
+        Persistent.change_user_status(user_data.login,UserData.CREATED,{})
+        Persistent.store_user
+        return
+      rescue RestClient::BadRequest => e
+        response = JSON.load(e.response)
+        @@log.warn "Data for user #{user_data.login} could not be changed. Reason: #{response["error"]["message"]}"
+        return
+      rescue RestClient::InternalServerError => e
+        response = JSON.load(e.response)
+        @@log.warn "Data for user #{user_data.login} could not be changed and returned 500. Reason: #{response["error"]["message"]}"
+        return
+      end
 
 
 
     end
+
+
+    def self.add_user_to_project(user_project_data)
+      # Two possible ways of adding user to project (with invitation mail / without invitation mail)
+
+    end
+
+    def self.change_users()
+      Persistent.user_data.each do |user_data|
+        if (user_data.status == UserData.CHANGED)
+          change_user(user_data)
+        end
+
+      end
+
+
+    end
+
 
     def self.invite_user()
       Persistent.user_project_data.each do |user_project_data|
