@@ -415,6 +415,9 @@ module PowerByHelper
                 @@log.debug "Login=#{login} Project_pid=#{project_pid} project-user was OK now it is CHANGED"
                 up.status = UserProjectData.CHANGED
                 up.role = data["role"]
+              elsif (up.status == UserProjectData.CHANGED and status == UserProjectData.NEW)
+                @@log.debug "Login=#{login} Project_pid=#{project_pid} project-user was CHANGED, leaving CHANGED"
+                up.status = UserProjectData.CHANGED
               elsif (up.status == UserProjectData.CHANGED and status == UserProjectData.OK)
                 @@log.debug "Login=#{login} Project_pid=#{project_pid} project was CHANGED now it is OK"
                 up.status = UserProjectData.OK
