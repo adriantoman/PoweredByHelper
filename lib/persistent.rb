@@ -524,7 +524,7 @@ module PowerByHelper
       def get_role_uri_by_name(name,pid)
         @@log.info "Looking for #{name} in #{pid}"
         if (@roles.has_key?(name))
-          @log.info "Role URI - #{@roles[name]["uri"]}"
+          @@log.info "Role URI - #{@roles[name]["uri"]}"
           @roles[name]["uri"].gsub("%PID%",pid)
         else
           @@log.warn "Role #{name} is not valid GoodData role. Setting role to readOnlyUserRole by default"
