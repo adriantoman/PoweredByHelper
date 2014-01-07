@@ -176,7 +176,7 @@ module PowerByHelper
           UserHelper.create_user_in_domain(Settings.deployment_user_domain,user_data)
         else
           @@log.info "User #{user_data.login} already in domain - reusing"
-          Persistent.change_user_status(user_data.login,UserData.CREATED,{"uri" => domain_user[:profile]})
+          Persistent.change_user_status(user_data.login,UserData.CREATED,{"uri" => domain_user[:profile],"sso_provider" => domain_user["ssoProvider"]})
         end
       end
       Persistent.store_user

@@ -235,7 +235,6 @@ module PowerByHelper
 
 
     def self.load_domain_users
-      @@log.info "Loading users from domain"
       users = []
       finished = false
       offset = 0

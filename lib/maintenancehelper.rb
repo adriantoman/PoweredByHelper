@@ -50,7 +50,7 @@ module PowerByHelper
         result = GoodData.get("/gdc/md/#{maintenance_data.project_pid}/tasks/#{maintenance_data.task_id}/status")
         status = result["wTaskStatus"]["status"]
         if (status == "ERROR")
-          @@log.warn "MAQL request for project: #{maintenance_data.project_pid} has failed. Reason: #{result["wTaskStatus"]["error"]["message"]}"
+          @@log.warn "MAQL request for project: #{maintenance_data.project_pid} has failed. Reason: #{result}"
         end
         return status
       rescue RestClient::BadRequest => e

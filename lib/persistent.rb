@@ -363,6 +363,7 @@ module PowerByHelper
                 up.status = UserData.CREATED
               elsif (up.status == UserData.NEW and status == UserData.CREATED)
                 up.uri = data["uri"]
+                up.sso_provider = data["sso_provider"]
                 up.status = UserData.CREATED
               else
                 fail "Unsuported status change - #{up.status} #{status}"
