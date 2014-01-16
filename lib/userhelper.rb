@@ -245,7 +245,7 @@ module PowerByHelper
         @@log.info "Loading users from domain offset=#{offset} limit=#{limit}"
         response = GoodData.get("/gdc/account/domains/#{Settings.deployment_user_domain}/users?offset=#{offset}&limit=#{limit}")
         response["accountSettings"]["items"].each do |item|
-          user_hash = {:login => item["accountSetting"]["login"],:profile => item["accountSetting"]["links"]["self"]}
+          user_hash = {:login => item["accountSetting"]["login"],:profile => item["accountSetting"]["links"]["self"],:sso_provider => item["accountSetting"]["ssoProvider"] }
           users.push(user_hash)
         end
         if (response["accountSettings"]["items"].count == limit) then

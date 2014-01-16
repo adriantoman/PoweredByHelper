@@ -1,0 +1,10 @@
+Version v0.1.0
+    - Start of versions checking
+Version v0.2.0
+    Bugs:
+        Fixed bug, that if you started to create project with ETL from scratch, first run of ETL would fail after project creation
+        Fixed bug with creating multiple notification
+        Fixed bug with dry-run. No persistent changes are saved when running dry run
+    Features:
+        Added support for multiple schedules
+

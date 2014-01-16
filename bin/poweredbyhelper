@@ -82,10 +82,12 @@ command :provision do |c|
     config_file = options[:config]
     fail "Please provide link to config file" unless (File.exist?(config_file))
     helper = PowerByHelper::Pwb.new(config_file,options[:test])
+    helper.migration
     helper.gooddata_login
     helper.init_persistent_storage
     helper.project_provisioning
     helper.move_remote_project_files
+    helper.init_etl_persistent_storage
     helper.etl_provisioning
     helper.user_synchronization
     helper.move_remote_user_files
@@ -109,6 +111,7 @@ command :delete_all do |c|
     helper = PowerByHelper::Pwb.new(config_file,options[:test])
     helper.gooddata_login
     helper.init_persistent_storage
+    helper.init_etl_persistent_storage
     helper.delete_all_projects(options[:force] || false)
   end
 
@@ -150,6 +153,7 @@ command :dry_run do |c|
     config_file = options[:config]
     fail "Please provide link to config file" unless (File.exist?(config_file))
     helper = PowerByHelper::Pwb.new(config_file,options[:test])
+    helper.migration
     helper.gooddata_login
     helper.init_persistent_storage
     helper.init_user_storage
@@ -166,11 +170,43 @@ command :dry_run do |c|
     end
     puts "------- Project provisioning part -------\n".colorize( :light_blue )
 
-    puts "------- ETL provisioning part -------".colorize( :light_blue )
+    helper.init_etl_persistent_storage
+    puts "------- ETL provisioning part - processes -------".colorize( :light_blue )
     PowerByHelper::Persistent.etl_data.each do |etl|
-      puts "Project PID: #{etl.project_pid} Process ID: #{etl.process_id} - Schedule ID: #{etl.schedule_id}".colorize( :light_green )
+      status = ""
+      if (etl.status == PowerByHelper::EtlData.NOTIFICATION_CREATED)
+        status = "NOTIFICATION_CREATED"
+      elsif (etl.status == PowerByHelper::EtlData.NEW)
+        status = "NEW"
+      elsif (etl.status == PowerByHelper::EtlData.PROCESS_CREATED)
+        status = "PROCESS_CREATED"
+      end
+      message = "Project PID: #{etl.project_pid} Process ID: #{etl.process_id} - Status: #{status}"
+      if (etl.status == PowerByHelper::EtlData.NOTIFICATION_CREATED)
+        puts message.colorize( :light_green )
+      else
+        puts message.colorize( :red )
+      end
     end
-    puts "------- ETL provisioning part -------\n".colorize( :light_blue )
+    puts "------- ETL provisioning part - processes-------\n".colorize( :light_blue )
+
+    puts "------- ETL provisioning part - schedules -------".colorize( :light_blue )
+    PowerByHelper::Persistent.schedule_data.each do |schedule|
+      if (schedule.status == PowerByHelper::ScheduleData.SCHEDULE_CREATED)
+        status = "SCHEDULE_CREATED"
+      else
+        status = "NEW"
+      end
+      message =  "Project PID: #{schedule.project_pid} - Schedule Ident - #{schedule.ident} Schedule ID: #{schedule.schedule_id} Status: #{status}"
+      if (schedule.status == PowerByHelper::ScheduleData.SCHEDULE_CREATED)
+        puts message.colorize( :light_green )
+      else
+        puts message.colorize( :red )
+      end
+    end
+    puts "------- ETL provisioning part - schedules-------\n".colorize( :light_blue )
+
+
     if (!PowerByHelper::Persistent.user_data.nil?)
       puts "------- USER provisioning part - domain-------".colorize( :light_blue )
       PowerByHelper::Persistent.user_data.sort{|a,b| b.admin == true ? 1 : 0  }.each do |user|
@@ -217,8 +253,11 @@ command :update_schedules do |c|
     config_file = options[:config]
     fail "Please provide link to config file" unless (File.exist?(config_file))
     helper = PowerByHelper::Pwb.new(config_file,options[:test])
+    helper.migration
     helper.gooddata_login
     helper.init_persistent_storage
+    helper.init_etl_persistent_storage
+
     helper.update_schedules
   end
 
@@ -237,6 +276,7 @@ command :update_processes do |c|
     helper = PowerByHelper::Pwb.new(config_file,options[:test])
     helper.gooddata_login
     helper.init_persistent_storage
+    helper.init_etl_persistent_storage
     helper.update_processes
   end
 
@@ -257,6 +297,7 @@ command :execute_maql do |c|
     config_file = options[:config]
     fail "Please provide link to config file" unless (File.exist?(config_file))
     helper = PowerByHelper::Pwb.new(config_file,options[:test])
+    helper.migration
     helper.gooddata_login
     helper.init_maintenance_storage
     helper.execute_maql(options[:maql])
@@ -278,6 +319,7 @@ command :execute_partial_metadata do |c|
     config_file = options[:config]
     fail "Please provide link to config file" unless (File.exist?(config_file))
     helper = PowerByHelper::Pwb.new(config_file,options[:test])
+    helper.migration
     helper.gooddata_login
     helper.init_maintenance_storage
     helper.execute_partial_metadata(options[:token])
@@ -286,10 +328,31 @@ command :execute_partial_metadata do |c|
 
 end
 
+command :test do |c|
+
+  c.desc 'Config file path'
+  c.flag [:config]
+
+  c.desc 'Partial metadata export token'
+  c.flag [:token]
+
+  c.action do |global_options,options,args|
+    config_file = options[:config]
+    fail "Please provide link to config file" unless (File.exist?(config_file))
+    helper = PowerByHelper::Pwb.new(config_file,options[:test])
+    helper.migration
+  end
+
+
+end
+
+
+
 on_error do |exception|
   @@log.error exception.backtrace
   FileUtils.rm_f('running.pid')
   if exception.is_a?(SystemExit) && exception.status == 0
+    @@log.error exception.inspect
     false
   else
     @@log.error exception.inspect

@@ -21,7 +21,7 @@ module PowerByHelper
 
     class << self
 
-      attr_accessor :project_data,:etl_data,:user_data,:maintenance_data,:roles,:user_project_data,:project_custom_params,:custom_params_names
+      attr_accessor :project_data,:etl_data,:schedule_data,:user_data,:maintenance_data,:roles,:user_project_data,:project_custom_params,:custom_params_names
       # project section
 
       def init_project()
@@ -46,6 +46,7 @@ module PowerByHelper
 
       def init_etl()
         @etl_data = []
+        @schedule_data = []
         load_etl()
       end
 
@@ -92,6 +93,20 @@ module PowerByHelper
           end
         end
       end
+
+      def store_schedules
+        if (!@schedule_data.nil?)
+          FileUtils.mkdir_p File.dirname(Settings.storage_schedules_source) if !File.exists?(Settings.storage_schedules_source)
+          FasterCSV.open(Settings.storage_schedules_source, 'w',:quote_char => '"') do |csv|
+            csv << ScheduleData.header
+            @schedule_data.each do |d|
+              csv << d.to_a
+            end
+          end
+        end
+      end
+
+
 
       def store_maintenance
         FileUtils.mkdir_p File.dirname(Settings.storage_maintenance_source) if !File.exists?(Settings.storage_maintenance_source)
@@ -183,10 +198,16 @@ module PowerByHelper
       def load_etl
         if (File.exists?(Settings.storage_etl_source))
           FasterCSV.foreach(Settings.storage_etl_source, :headers => true,:quote_char => '"') do |csv_obj|
-            etl = EtlData.new(csv_obj)
-            @etl_data.push(etl)
+            Persistent.change_etl_status(csv_obj["project_pid"],csv_obj["status"],csv_obj)
           end
         end
+
+        if (File.exists?(Settings.storage_schedules_source))
+          FasterCSV.foreach(Settings.storage_schedules_source, :headers => true,:quote_char => '"') do |csv_obj|
+            Persistent.change_schedule_status(csv_obj["project_pid"],csv_obj["ident"],csv_obj["status"],csv_obj)
+          end
+        end
+
       end
 
 
@@ -448,6 +469,67 @@ module PowerByHelper
       end
 
 
+      def change_etl_status(project_pid,status,data)
+        etl_check = @etl_data.find{|s| s.project_pid == project_pid }
+        if (etl_check.nil?)
+          @etl_data.push(EtlData.new(data))
+        else
+          @etl_data.collect! do |etl|
+            if (etl.project_pid == project_pid)
+              if (etl.status == status)
+                @@log.debug "ETL - ProjectPid=#{project_pid} same status - no work done"
+              elsif (etl.status == EtlData.NOTIFICATION_CREATED)
+                @@log.debug "ETL - ProjectPid=#{project_pid} status was NOTIFICATION_CREATED - leaving this way"
+              elsif (etl.status == EtlData.NEW and status == EtlData.PROCESS_CREATED )
+                etl.process_id = data["process_id"]
+                etl.status = EtlData.PROCESS_CREATED
+                @@log.debug "ETL - ProjectPid=#{project_pid} status was NEW - now PROCESS_CREATED"
+              elsif (etl.status == EtlData.PROCESS_CREATED and status == EtlData.NOTIFICATION_CREATED)
+                etl.status = EtlData.NOTIFICATION_CREATED
+                @@log.debug "ETL - ProjectPid=#{project_pid} status was NEW - now PROCESS_CREATED"
+              elsif (etl.status == EtlData.PROCESS_CREATED and status == EtlData.NEW)
+                etl.status = EtlData.PROCESS_CREATED
+                @@log.debug "ETL - ProjectPid=#{project_pid} status was PROCESS_CREATED - leaving PROCESS_CREATED"
+              else
+                fail "Unsuported status change - #{etl.status} #{status}"
+              end
+            end
+            etl
+          end
+        end
+      end
+
+
+      def change_schedule_status(project_pid,ident,status,data)
+        schedule_check = @schedule_data.find{|s| s.project_pid == project_pid and s.ident == ident }
+        if (schedule_check.nil?)
+          @schedule_data.push(ScheduleData.new(data))
+        else
+          @schedule_data.collect! do |schedule|
+            if (schedule.project_pid == project_pid and schedule.ident == ident )
+              if (schedule.status == status)
+                @@log.debug "Schedule - ProjectPid=#{project_pid} Ident=#{ident} same status - no work done"
+              elsif (schedule.status == ScheduleData.SCHEDULE_CREATED and status == ScheduleData.SCHEDULE_CREATED )
+                @@log.debug "Schedule - ProjectPid=#{project_pid} Ident=#{ident} old status SCHEDULE_CREATE - new status SCHEDULE_CREATE - update"
+                schedule.is_updated_schedule = data["is_updated_schedule"]
+                schedule.schedule_id = data["schedule_id"]
+              elsif (schedule.status == ScheduleData.SCHEDULE_CREATED)
+                @@log.debug "Schedule - ProjectPid=#{project_pid} Ident=#{ident} old status SCHEDULE_CREATE - final one - no work done"
+              elsif (schedule.status == ScheduleData.NEW and status == ScheduleData.SCHEDULE_CREATED)
+                schedule.schedule_id = data["schedule_id"]
+                schedule.status = ScheduleData.SCHEDULE_CREATED
+                @@log.debug "Schedule - ProjectPid=#{project_pid} Ident=#{ident} old NEW new SCHEDULE_CREATED"
+              else
+                fail "Unsuported status change - #{schedule.status} #{status}"
+              end
+            end
+            schedule
+          end
+        end
+      end
+
+
+
 
 
       def merge_user(data)
@@ -533,7 +615,7 @@ module PowerByHelper
       end
 
       def reset_schedule_update
-        @etl_data.collect! do |d|
+        @schedule_data.collect! do |d|
           d.is_updated_schedule = false
           d
         end
@@ -547,8 +629,8 @@ module PowerByHelper
       end
 
       def exists_one_nonupdated_schedule?
-        etl = @etl_data.find {|s| s.is_updated_schedule == false}
-        !etl.nil?
+        schedule = @schedule_data.find {|s| s.is_updated_schedule == false}
+        !schedule.nil?
       end
 
       def exists_one_nonupdated_notification?
@@ -564,6 +646,12 @@ module PowerByHelper
       def delete_etl_by_project_pid(project_pid)
         @etl_data.delete_if {|e| e.project_pid == project_pid }
       end
+
+      def delete_schedule_by_project_pid(project_pid)
+        @schedule_data.delete_if {|s| s.project_pid == project_pid }
+      end
+
+
 
       def delete_user_project_by_project_pid(project_pid)
         init_user if @user_project_data.nil?

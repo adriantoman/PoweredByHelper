@@ -22,7 +22,7 @@ The tool is tested under ruby version 1.9.3, so you need to have this version of
 ```bash
 git clone https://github.com/adriantoman/PoweredByHelper.git PoweredByHelper
 cd PoweredByHelper
-gem install bundler
+gem install bundler --path gems
 bundle install
 ```
 ##Configuration
@@ -88,10 +88,11 @@ Example:
 ```        
 
 ####ETL
-In this part of deployment section you can specify all settings needed for ETL scheduling and deployment. The possible settings are:
+In this part of deployment section you can specify all settings needed for ETL scheduling and deployment. From version 0.2.0 it is possible to set multiple schedules. You can see the example in example_config.json. The possible settings are:
 
 * **process** (required)
 * **source** (required) - path to folder which contains graph folder with graphs, which need to be deployed on server. In most case scenario, it is link to CC project folder.
+* **ident** (required when using multiple schedules) - this is identification of schedule. This is needed because you can create two different schedules on same time, same graph etc. This will differentiate between same schedules.
 * **schedule** (required) - section for schedules settings
 * **graph_name** (required) - name of the graph which need to be scheduled on platform
 * **cron** (required) - cron definition of time, when the project should be executed in UTC
@@ -107,7 +108,8 @@ Example:
         "process":{
             "source":"/home/adrian.toman/projects/ProvisioningTest/"
         },
-		"schedule":  {
+		"schedule":  [{
+            "ident": "1",
             "graph_name":"run.grf",
             "cron":"0 10 * * *",
             "parameters":[
@@ -122,7 +124,7 @@ Example:
                     "value":"SECRET"
                 }
             ]
-        }
+        }]
 ```        
 You can use special construction %ID% to add project_id to any parameter or you can use %custom1%,%custom2% to use custom parameter from project source file.
 
@@ -143,7 +145,7 @@ Example:
                  "message":"The project has finished successfully"
                 },
                 {
-                 "type":"failure",
+                 "type":"error",
                  "email":"adrian.toman@gooddata.com",
                  "subject":"This is automatic notification",
                  "message":"Please note that the \"Hodes\" project load ETL process (graph ${params.GRAPH}) that started at ${params.START_TIME} failed at ${params.FINISH_TIME} with following ERROR: \n ${params.ERROR_MESSAGE} \n Please inspect the ${params.LOG} for more details."

@@ -111,7 +111,11 @@ module PowerByHelper
       end
 
       def deployment_user_creation_type
-        @json["deployment"]["user"]["creation"]["type"] || "local"
+        if (!@json["deployment"]["user"].nil? and !@json["deployment"]["user"]["creation"].nil?)
+          @json["deployment"]["user"]["creation"]["type"] || "local"
+        else
+          "local"
+        end
       end
 
       def deployment_user_creation_move_after_processing
@@ -127,7 +131,11 @@ module PowerByHelper
       end
 
       def deployment_user_project_synchronization_type
-        @json["deployment"]["user"]["project_synchronization"]["type"] || "local"
+        if (!@json["deployment"]["user"].nil? and !@json["deployment"]["user"]["project_synchronization"].nil?)
+          @json["deployment"]["user"]["project_synchronization"]["type"] || "local"
+        else
+          "local"
+        end
       end
 
       def deployment_user_project_synchronization_move_after_processing
@@ -177,6 +185,16 @@ module PowerByHelper
           "data/etl.csv"
         end
       end
+
+      def storage_schedules_source
+        if  (!@json["storage"].nil? and !@json["storage"]["etl"].nil?)
+          @json["storage"]["schedules"]["source"] || "data/schedules.csv"
+        else
+          "data/schedules.csv"
+        end
+      end
+
+
 
       def storage_user_source
         if  (!@json["storage"].nil? and !@json["storage"]["user"].nil?)

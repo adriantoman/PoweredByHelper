@@ -59,7 +59,6 @@ module PowerByHelper
         end
         Persistent.project_custom_params.push({csv_obj[data_mapping["ident"]] => param_values})
       end
-      Persistent.store_project
 
       Persistent.project_data.each do |p|
         if (p.status != ProjectData.DISABLED)
@@ -69,7 +68,6 @@ module PowerByHelper
           end
         end
       end
-      Persistent.store_project
 
       @@log.info "Persistent storage for project provisioning initialized"
 

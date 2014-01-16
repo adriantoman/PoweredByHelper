@@ -94,7 +94,6 @@ module PowerByHelper
 
         Persistent.change_user_status(csv_obj[user_creation_mapping["login"]].downcase.strip,UserData.NEW,data)
       end
-      Persistent.store_user
 
       # Cleaning - mark all user_project mappings as disabled
       Persistent.user_project_data.each do |user_project_data|
@@ -176,7 +175,7 @@ module PowerByHelper
           UserHelper.create_user_in_domain(Settings.deployment_user_domain,user_data)
         else
           @@log.info "User #{user_data.login} already in domain - reusing"
-          Persistent.change_user_status(user_data.login,UserData.CREATED,{"uri" => domain_user[:profile],"sso_provider" => domain_user["ssoProvider"]})
+          Persistent.change_user_status(user_data.login,UserData.CREATED,{"uri" => domain_user[:profile],"sso_provider" => domain_user[:sso_provider]})
         end
       end
       Persistent.store_user

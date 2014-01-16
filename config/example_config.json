@@ -29,7 +29,8 @@
             "source":"LINK_TO_ETL_PROJECT_FOLDER"
         },
         "schedule":
-        {
+        [{
+            "ident":"1",
             "graph_name":"NAME_OF_GRAPH",
             "cron":"0 10 * * *",
             "parameters":[
@@ -45,6 +46,23 @@
                 }
             ]
         },
+           {
+               "ident": "2",
+               "graph_name":"SECOND_NAME_OF_GRAPH",
+                "cron":"0 10 * * *",
+                "parameters":[
+                    {
+                        "name":"PARAMETER_NAME",
+                        "value":"CUSTOM/%ID%/%custom1%/%custom2%"
+                    }
+                ],
+                "secure_parameters":[
+                    {
+                        "name":"PASSWORD",
+                        "value":"SECRET"
+                    }
+                ]
+            }],
         "notifications":[
             {
                 "type":"success",

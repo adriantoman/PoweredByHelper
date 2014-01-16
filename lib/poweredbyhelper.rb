@@ -20,7 +20,7 @@ require 'gooddata'
 require 'fastercsv'
 require 'fileutils'
 
-%w(settings helper persistent userhelper maintenancehelper).each {|a| require "#{a}"}
+%w(settings helper persistent userhelper maintenancehelper migration).each {|a| require "#{a}"}
 %w(project etl user maintenance).each {|a| require "data/#{a}"}
 
 module PowerByHelper
@@ -48,6 +48,9 @@ module PowerByHelper
 
     def init_persistent_storage
       @projects = Project.new() if (!Settings.deployment_project.nil? and !Settings.deployment_project.empty?)
+    end
+
+    def init_etl_persistent_storage
       @etl = Etl.new() if (!Settings.deployment_etl.nil? and !Settings.deployment_etl.empty?)
     end
 
@@ -99,9 +102,9 @@ module PowerByHelper
     def update_schedules()
       @@log.info "Starting schedule update"
       Persistent.reset_schedule_update
-      Helper.retryable do
+      #Helper.retryable do
         @etl.update_schedules
-      end
+      #end
     end
 
     def update_processes()
@@ -161,6 +164,7 @@ module PowerByHelper
             project_gd.delete
             Persistent.delete_user_project_by_project_pid(project.project_pid)
             Persistent.delete_etl_by_project_pid(project.project_pid)
+            Persistent.delete_schedule_by_project_pid(project.project_pid)
             Persistent.delete_project_by_project_pid(project.project_pid)
           end
         end
@@ -168,9 +172,17 @@ module PowerByHelper
       if (force)
         Persistent.store_project
         Persistent.store_etl
+        Persistent.store_schedules
         Persistent.store_user_project
       end
     end
+
+    def migration()
+      @@log.info "Checking if migration is needed"
+      @migration = Migration.new
+      @migration.migrationA()
+    end
+
 
 
 
