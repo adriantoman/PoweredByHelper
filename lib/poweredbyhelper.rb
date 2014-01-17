@@ -36,13 +36,13 @@ module PowerByHelper
     end
 
 
-    def gooddata_login
+    def gooddata_login(debug = false)
       login = Settings.connection["login"]
       password = Settings.connection["password"]
       server = Settings.connection_server
       fail "Please put Gooddata Login and Password into the config file" if Helper.blank?(login) or Helper.blank?(password)
       GoodData.logger = @@log
-      #GoodData.logger.level = Logger::DEBUG
+      GoodData.logger.level = Logger::DEBUG if debug
       GoodData.connect(login,password,server,{:webdav_server => Settings.connection_webdav})
     end
 

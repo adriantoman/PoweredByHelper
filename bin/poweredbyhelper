@@ -49,12 +49,19 @@ program_desc 'GoodData PowerBy provisioning app'
 desc "Output to STDOUT"
 switch [:d,:debug]
 
+desc "Log level from API - DEBUG"
+switch [:v,:verbose]
+
+
+
 pre do |global_options,command,options,args|
   next true if command.nil?
   @running = false
   @@log = Logger.new("log/provision.log",'daily') if !global_options[:debug]
   @@log = Logger.new(STDOUT) if global_options[:debug]
   @@log.level = Logger::INFO
+  @@api_debug = global_options[:debug] || false
+
 
   if File.exists?('running.pid')
     @running = true
@@ -83,7 +90,7 @@ command :provision do |c|
     fail "Please provide link to config file" unless (File.exist?(config_file))
     helper = PowerByHelper::Pwb.new(config_file,options[:test])
     helper.migration
-    helper.gooddata_login
+    helper.gooddata_login(@@api_debug)
     helper.init_persistent_storage
     helper.project_provisioning
     helper.move_remote_project_files
@@ -109,7 +116,7 @@ command :delete_all do |c|
     config_file = options[:config]
     fail "Please provide link to config file" unless (File.exist?(config_file))
     helper = PowerByHelper::Pwb.new(config_file,options[:test])
-    helper.gooddata_login
+    helper.gooddata_login(@@api_debug)
     helper.init_persistent_storage
     helper.init_etl_persistent_storage
     helper.delete_all_projects(options[:force] || false)
@@ -129,7 +136,7 @@ command :delete_users do |c|
     config_file = options[:config]
     fail "Please provide link to config file" unless (File.exist?(config_file))
     helper = PowerByHelper::Pwb.new(config_file,options[:test])
-    helper.gooddata_login
+    helper.gooddata_login(@@api_debug)
 
     response = GoodData.get("gdc/account/domains/gooddata-adrian-toman/users")
     response["accountSettings"]["items"].each do |user|
@@ -154,7 +161,7 @@ command :dry_run do |c|
     fail "Please provide link to config file" unless (File.exist?(config_file))
     helper = PowerByHelper::Pwb.new(config_file,options[:test])
     helper.migration
-    helper.gooddata_login
+    helper.gooddata_login(@@api_debug)
     helper.init_persistent_storage
     helper.init_user_storage
 
@@ -254,7 +261,7 @@ command :update_schedules do |c|
     fail "Please provide link to config file" unless (File.exist?(config_file))
     helper = PowerByHelper::Pwb.new(config_file,options[:test])
     helper.migration
-    helper.gooddata_login
+    helper.gooddata_login(@@api_debug)
     helper.init_persistent_storage
     helper.init_etl_persistent_storage
 
@@ -274,7 +281,7 @@ command :update_processes do |c|
     config_file = options[:config]
     fail "Please provide link to config file" unless (File.exist?(config_file))
     helper = PowerByHelper::Pwb.new(config_file,options[:test])
-    helper.gooddata_login
+    helper.gooddata_login(@@api_debug)
     helper.init_persistent_storage
     helper.init_etl_persistent_storage
     helper.update_processes
@@ -298,7 +305,7 @@ command :execute_maql do |c|
     fail "Please provide link to config file" unless (File.exist?(config_file))
     helper = PowerByHelper::Pwb.new(config_file,options[:test])
     helper.migration
-    helper.gooddata_login
+    helper.gooddata_login(@@api_debug)
     helper.init_maintenance_storage
     helper.execute_maql(options[:maql])
   end
@@ -320,7 +327,7 @@ command :execute_partial_metadata do |c|
     fail "Please provide link to config file" unless (File.exist?(config_file))
     helper = PowerByHelper::Pwb.new(config_file,options[:test])
     helper.migration
-    helper.gooddata_login
+    helper.gooddata_login(@@api_debug)
     helper.init_maintenance_storage
     helper.execute_partial_metadata(options[:token])
   end

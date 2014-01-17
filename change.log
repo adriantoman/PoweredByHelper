@@ -7,4 +7,7 @@ Version v0.2.0
         Fixed bug with dry-run. No persistent changes are saved when running dry run
     Features:
         Added support for multiple schedules
+Version v0.2.1
+    Features:
+        Added switch, to enable debug level informations from API
 
