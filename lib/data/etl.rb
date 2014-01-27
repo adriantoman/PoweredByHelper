@@ -275,6 +275,15 @@ module PowerByHelper
         }
       }
 
+      if (!schedule_settings["reschedule"].nil? and schedule_settings["reschedule"] !=  "" )
+        if (schedule_settings["reschedule"].instance_of? Fixnum )
+          data["schedule"].merge!({"reschedule" => schedule_settings["reschedule"] })
+        else
+          @@log.warn "The reschedule setting is not number, please change it to number - ignoring the reschedule setting"
+        end
+      end
+
+
       #add parameters
       schedule_settings["parameters"].each do |parameters|
         value_param = parameters["value"]

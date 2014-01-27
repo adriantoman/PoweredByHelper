@@ -1,7 +1,7 @@
 Version v0.1.0
     - Start of versions checking
 Version v0.2.0
-    Bugs:
+    Bug fixes:
         Fixed bug, that if you started to create project with ETL from scratch, first run of ETL would fail after project creation
         Fixed bug with creating multiple notification
         Fixed bug with dry-run. No persistent changes are saved when running dry run
@@ -10,4 +10,11 @@ Version v0.2.0
 Version v0.2.1
     Features:
         Added switch, to enable debug level informations from API
+Version v0.2.2
+    Bug fixes:
+        Fixed bug with empty SSO_PROVIDER in source file and error connected to it
+        Fixed bug with inconsistent error handling where the user was not created in GD
+    Features:
+        Added reschedule parameter to schedule setting
+
 

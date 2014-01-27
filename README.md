@@ -96,6 +96,7 @@ In this part of deployment section you can specify all settings needed for ETL s
 * **schedule** (required) - section for schedules settings
 * **graph_name** (required) - name of the graph which need to be scheduled on platform
 * **cron** (required) - cron definition of time, when the project should be executed in UTC
+* **reschedule** (optional) - this will activate the reschedule feature on schedule (automatic restart)
 * parameters - section for normal schedule parameters. You can have more then one inner elemetns (more then one parameters)
   * **name** (required) - name of the parameter (if you specify the name as MODE, there will be some special rules applied on this parameter, more info below this section)
   * **value** (required) - value of the parameter
@@ -112,6 +113,7 @@ Example:
             "ident": "1",
             "graph_name":"run.grf",
             "cron":"0 10 * * *",
+            "reschedule":15,
             "parameters":[
                 {
                     "name":"MODE",
