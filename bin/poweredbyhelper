@@ -60,7 +60,7 @@ pre do |global_options,command,options,args|
   @@log = Logger.new("log/provision.log",'daily') if !global_options[:debug]
   @@log = Logger.new(STDOUT) if global_options[:debug]
   @@log.level = Logger::INFO
-  @@api_debug = global_options[:debug] || false
+  @@api_debug = global_options[:verbose] || false
 
 
   if File.exists?('running.pid')
