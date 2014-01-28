@@ -22,8 +22,8 @@ The tool is tested under ruby version 1.9.3, so you need to have this version of
 ```bash
 git clone https://github.com/adriantoman/PoweredByHelper.git PoweredByHelper
 cd PoweredByHelper
-gem install bundler --path gems
-bundle install
+gem install bundler
+bundle install --path gems
 ```
 ##Configuration
 The tool configuration is done by one JSON file. The JSON file consist of few distinguish sections. Sections are: connection and deployment.
