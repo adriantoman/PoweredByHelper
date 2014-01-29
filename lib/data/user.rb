@@ -167,7 +167,7 @@ module PowerByHelper
 
     def create_new_users
       users_to_create = Persistent.get_users_by_status(UserData.NEW)
-      users_in_domain = UserHelper.load_domain_users
+      users_in_domain = UserHelper.load_domain_users unless Helper.blank?(Settings.deployment_user_domain)
       users_to_create.each do |user_data|
         domain_user = users_in_domain.find{|u| u[:login] == user_data.login}
         if (domain_user.nil?)

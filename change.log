@@ -16,5 +16,8 @@ Version v0.2.2
         Fixed bug with inconsistent error handling where the user was not created in GD
     Features:
         Added reschedule parameter to schedule setting
+Version v0.2.3
+    Features:
+        If User Domain is empty, the domain will not be contacted at all
 
 

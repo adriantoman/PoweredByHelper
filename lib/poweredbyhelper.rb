@@ -129,11 +129,6 @@ module PowerByHelper
       @@log.info "Partial metadata export execution finished"
     end
 
-
-
-
-
-
     def move_remote_project_files
        if (Settings.deployment_project_data_type == "webdav" and !Settings.deployment_project_data_move_after_processing.nil?)
          @@log.info "Moving file #{Settings.deployment_project_data_file_name} to #{Settings.deployment_project_data_move_after_processing}"
