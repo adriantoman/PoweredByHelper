@@ -19,5 +19,8 @@ Version v0.2.2
 Version v0.2.3
     Features:
         If User Domain is empty, the domain will not be contacted at all
+Version v0.2.4
+    Bug fixes:
+        Fixed problem with process deployment in case of Gooddata Error.
 
 

@@ -212,6 +212,8 @@ module PowerByHelper
       deploy_name = name
       res = nil
 
+      FileUtils.rm_f("deploy-process.zip") if File.exists?("deploy-process.zip")
+
       processed_files = []
       Zip::ZipFile.open("deploy-process.zip", Zip::ZipFile::CREATE) do |zipfile|
         Dir[File.join(dir, '**','**')].each do |file|
