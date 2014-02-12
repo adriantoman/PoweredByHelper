@@ -22,5 +22,8 @@ Version v0.2.3
 Version v0.2.4
     Bug fixes:
         Fixed problem with process deployment in case of Gooddata Error.
+Version v0.2.5
+    Bug fixes:
+        Fixed problem with process deployment in case of Gooddata Error, the program will not be stoped, the WARN message will appear in log.
 
 

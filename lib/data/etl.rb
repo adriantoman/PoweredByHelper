@@ -73,10 +73,12 @@ module PowerByHelper
           project = Persistent.get_project_by_project_pid(etl.project_pid)
           @@log.info "Deploying process for #{project.project_name} - #{etl.project_pid}"
           response = deploy_update_graph(Settings.deployment_etl_process["source"],project.project_name,etl.project_pid)
-          process_id = response["process"]["links"]["self"].split("/").last
-          Persistent.change_etl_status(etl.project_pid,EtlData.PROCESS_CREATED,{"process_id" => process_id})
-          Persistent.store_etl
-          @@log.info "Deploy completed"
+          if (!response.nil?)
+            process_id = response["process"]["links"]["self"].split("/").last
+            Persistent.change_etl_status(etl.project_pid,EtlData.PROCESS_CREATED,{"process_id" => process_id})
+            Persistent.store_etl
+            @@log.info "Deploy completed"
+          end
         end
       end
     end
@@ -234,10 +236,19 @@ module PowerByHelper
               :path => "/uploads/deploy-process.zip"
           }
       }
-      if process_id.nil?
-        res = GoodData.post("/gdc/projects/#{pid}/dataload/processes", data)
-      else
-        res = GoodData.put("/gdc/projects/#{pid}/dataload/processes/#{process_id}", data)
+      res = nil
+      begin
+        if process_id.nil?
+          res = GoodData.post("/gdc/projects/#{pid}/dataload/processes", data)
+        else
+          res = GoodData.put("/gdc/projects/#{pid}/dataload/processes/#{process_id}", data)
+        end
+      rescue RestClient::BadRequest => e
+        response = JSON.load(e.response)
+        @@log.warn "Process for project: #{pid} could not be updated. Reason: #{response["error"]["message"]}"
+      rescue RestClient::InternalServerError => e
+        response = JSON.load(e.response)
+        @@log.warn "Process for project: #{pid} could not be updated. Reason: #{response["error"]["message"]}"
       end
       FileUtils.rm_f("deploy-process.zip")
       res
