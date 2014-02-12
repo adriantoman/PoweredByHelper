@@ -249,6 +249,8 @@ module PowerByHelper
       rescue RestClient::InternalServerError => e
         response = JSON.load(e.response)
         @@log.warn "Process for project: #{pid} could not be updated. Reason: #{response["error"]["message"]}"
+      rescue => e
+        @@log.warn "Process for project: #{pid} could not be updated. Reason: Unknown reason"
       end
       FileUtils.rm_f("deploy-process.zip")
       res
