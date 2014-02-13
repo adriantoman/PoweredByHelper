@@ -179,36 +179,40 @@ command :dry_run do |c|
 
     helper.init_etl_persistent_storage
     puts "------- ETL provisioning part - processes -------".colorize( :light_blue )
-    PowerByHelper::Persistent.etl_data.each do |etl|
-      status = ""
-      if (etl.status == PowerByHelper::EtlData.NOTIFICATION_CREATED)
-        status = "NOTIFICATION_CREATED"
-      elsif (etl.status == PowerByHelper::EtlData.NEW)
-        status = "NEW"
-      elsif (etl.status == PowerByHelper::EtlData.PROCESS_CREATED)
-        status = "PROCESS_CREATED"
-      end
-      message = "Project PID: #{etl.project_pid} Process ID: #{etl.process_id} - Status: #{status}"
-      if (etl.status == PowerByHelper::EtlData.NOTIFICATION_CREATED)
-        puts message.colorize( :light_green )
-      else
-        puts message.colorize( :red )
+    if (!PowerByHelper::Persistent.etl_data.nil?)
+      PowerByHelper::Persistent.etl_data.each do |etl|
+        status = ""
+        if (etl.status == PowerByHelper::EtlData.NOTIFICATION_CREATED)
+          status = "NOTIFICATION_CREATED"
+        elsif (etl.status == PowerByHelper::EtlData.NEW)
+          status = "NEW"
+        elsif (etl.status == PowerByHelper::EtlData.PROCESS_CREATED)
+          status = "PROCESS_CREATED"
+        end
+        message = "Project PID: #{etl.project_pid} Process ID: #{etl.process_id} - Status: #{status}"
+        if (etl.status == PowerByHelper::EtlData.NOTIFICATION_CREATED)
+          puts message.colorize( :light_green )
+        else
+          puts message.colorize( :red )
+        end
       end
     end
     puts "------- ETL provisioning part - processes-------\n".colorize( :light_blue )
 
     puts "------- ETL provisioning part - schedules -------".colorize( :light_blue )
-    PowerByHelper::Persistent.schedule_data.each do |schedule|
-      if (schedule.status == PowerByHelper::ScheduleData.SCHEDULE_CREATED)
-        status = "SCHEDULE_CREATED"
-      else
-        status = "NEW"
-      end
-      message =  "Project PID: #{schedule.project_pid} - Schedule Ident - #{schedule.ident} Schedule ID: #{schedule.schedule_id} Status: #{status}"
-      if (schedule.status == PowerByHelper::ScheduleData.SCHEDULE_CREATED)
-        puts message.colorize( :light_green )
-      else
-        puts message.colorize( :red )
+    if (!PowerByHelper::Persistent.schedule_data.nil?)
+      PowerByHelper::Persistent.schedule_data.each do |schedule|
+        if (schedule.status == PowerByHelper::ScheduleData.SCHEDULE_CREATED)
+          status = "SCHEDULE_CREATED"
+        else
+          status = "NEW"
+        end
+        message =  "Project PID: #{schedule.project_pid} - Schedule Ident - #{schedule.ident} Schedule ID: #{schedule.schedule_id} Status: #{status}"
+        if (schedule.status == PowerByHelper::ScheduleData.SCHEDULE_CREATED)
+          puts message.colorize( :light_green )
+        else
+          puts message.colorize( :red )
+        end
       end
     end
     puts "------- ETL provisioning part - schedules-------\n".colorize( :light_blue )

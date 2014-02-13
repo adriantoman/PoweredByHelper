@@ -28,5 +28,9 @@ Version v0.2.5
 Version v0.2.6
     Bug fixes:
         Fixed problem with process deployment in case of Gooddata Error, the program will not be stoped, the WARN message will appear in log.
+Version v0.2.7
+    Bug fixes:
+        Fixed dry_run in case of empty schedule settings
+
 
 
