@@ -155,6 +155,9 @@ command :dry_run do |c|
   c.desc 'Config file path'
   c.flag [:config]
 
+  c.desc 'Do only test run with debug output'
+  c.switch [:t,:test]
+
   c.action do |global_options,options,args|
 
     config_file = options[:config]
@@ -258,6 +261,9 @@ command :update_schedules do |c|
 
   c.desc 'Config file path'
   c.flag [:config]
+
+  c.desc 'Do only test run with debug output'
+  c.switch [:t,:test]
 
   c.action do |global_options,options,args|
 
