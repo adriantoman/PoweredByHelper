@@ -366,6 +366,8 @@ end
 
 
 on_error do |exception|
+  @@log ||= Logger.new(STDOUT)
+  @@log.level = Logger::INFO
   @@log.error exception.backtrace
   FileUtils.rm_f('running.pid')
   if exception.is_a?(SystemExit) && exception.status == 0
