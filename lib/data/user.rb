@@ -55,6 +55,12 @@ module PowerByHelper
       password_mapping = user_creation_mapping["password"] || "password"
       admin_mapping = user_creation_mapping["admin"] || "admin"
 
+
+      # Clean deleted domain users
+      Persistent.user_data.each do |user|
+        Persistent.change_user_status(user.login,UserData.TO_DISABLE,nil)
+      end
+
       # Load info about users - domain file - representing users which should be in domain and merge it with info in Persistent storage
       FasterCSV.foreach(user_creation_file_name, {:headers => true, :skip_blanks => true}) do |csv_obj|
 
@@ -166,6 +172,13 @@ module PowerByHelper
 
 
     def create_new_users
+      # Move automaticaly all users to DISABLE state
+      Persistent.user_data.each do |user|
+        if (user.status == UserData.TO_DISABLE)
+          Persistent.change_user_status(user.login,UserData.DISABLED,nil)
+        end
+      end
+
       users_to_create = Persistent.get_users_by_status(UserData.NEW)
       if !Helper.blank?(Settings.deployment_user_domain)
         users_in_domain = UserHelper.load_domain_users
@@ -226,6 +239,16 @@ module PowerByHelper
     def self.CHANGED
       "CHANGED"
     end
+
+    def self.TO_DISABLE
+      "TO_DISABLE"
+    end
+
+    def self.DISABLED
+      "DISABLED"
+    end
+
+
 
     def initialize(status,data)
       @status = status

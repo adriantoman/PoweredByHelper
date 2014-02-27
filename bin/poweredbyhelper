@@ -227,6 +227,8 @@ command :dry_run do |c|
         message = "Login: #{user.login} Name: #{user.first_name} #{user.last_name} Admin: #{user.admin ? "YES":"NO"} - STATUS: #{user.status}"
         if (user.status == PowerByHelper::UserData.CREATED)
           puts message.colorize( :light_green )
+        elsif (user.status == PowerByHelper::UserData.DISABLED)
+          puts message.colorize( :black )
         else
           puts message.colorize( :red )
         end

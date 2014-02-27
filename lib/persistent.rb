@@ -356,39 +356,49 @@ module PowerByHelper
         else
           @user_data.collect! do |up|
             if (up.login == login )
-              if (up.status == UserData.NEW and status == UserData.NEW)
-                up.password = data["password"]
-                up.sso_provider = data["sso_provider"]
-                up.first_name = data["first_name"]
-                up.last_name = data["last_name"]
-              elsif (up.status == UserData.CHANGED and status == UserData.NEW)
-                @@log.debug "Login=#{login} status was CHANGED - leaving CHANGED"
-              elsif (up.status == status)
-                @@log.debug "Login=#{login} same status - no work done"
-              elsif (up.status == UserData.CREATED and status == UserData.NEW)
-                # This two fields are change by user_project section - only moving to persistent without object change
-                up.admin = data["admin"]
-                up.admin_role = data["admin_role"]
-                if (Helper.blank?(up.sso_provider) and Helper.blank?(data["sso_provider"]))
-                  up.status = UserData.CREATED
-                  @@log.debug "Login=#{login} status was CREATED, change is SSO_PROVIDER was not done (both blank) - leaving CREATED"
-                elsif (up.sso_provider != data["sso_provider"])
+              if (up.status == UserData.CREATED and status == UserData.TO_DISABLE )
+                @@log.debug "Login=#{login} status was CREATED - now TO_DISABLED"
+                up.status = UserData.TO_DISABLE
+              elsif (up.status == UserData.CHANGED and status == UserData.TO_DISABLE )
+                @@log.debug "Login=#{login} status was CHANGED - leaving CHANGED (received TO DISABLE)"
+              elsif (up.status == UserData.DISABLED and status == UserData.TO_DISABLE )
+                  @@log.debug "Login=#{login} status was DISABLED - leaving DISABLED (received TO DISABLE)"
+              elsif (up.status == UserData.NEW and status == UserData.NEW)
+                  up.password = data["password"]
                   up.sso_provider = data["sso_provider"]
-                  up.status = UserData.CHANGED
-                  @@log.debug "Login=#{login} status was CREATED, change in SSO_PROVIDER was done - changing to CHANGED"
-                else
+                  up.first_name = data["first_name"]
+                  up.last_name = data["last_name"]
+                elsif (up.status == UserData.CHANGED and status == UserData.NEW)
+                  @@log.debug "Login=#{login} status was CHANGED - leaving CHANGED"
+                elsif (up.status == status)
+                  @@log.debug "Login=#{login} same status - no work done"
+                elsif ((up.status == UserData.CREATED or up.status == UserData.TO_DISABLE or up.status == UserData.DISABLED) and status == UserData.NEW)
+                  # This two fields are change by user_project section - only moving to persistent without object change
+                  up.admin = data["admin"]
+                  up.admin_role = data["admin_role"]
+                  if (Helper.blank?(up.sso_provider) and Helper.blank?(data["sso_provider"]))
+                    up.status = UserData.CREATED
+                    @@log.debug "Login=#{login} status was CREATED, change is SSO_PROVIDER was not done (both blank) - leaving CREATED"
+                  elsif (up.sso_provider != data["sso_provider"])
+                    up.sso_provider = data["sso_provider"]
+                    up.status = UserData.CHANGED
+                    @@log.debug "Login=#{login} status was CREATED, change in SSO_PROVIDER was done - changing to CHANGED"
+                  else
+                    up.status = UserData.CREATED
+                    @@log.debug "Login=#{login} status was CREATED, change is SSO_PROVIDER was not done - leaving CREATED"
+                  end
+                elsif (up.status == UserData.CHANGED and status == UserData.CREATED)
                   up.status = UserData.CREATED
-                  @@log.debug "Login=#{login} status was CREATED, change is SSO_PROVIDER was not done - leaving CREATED"
+                elsif (up.status == UserData.NEW and status == UserData.CREATED)
+                  up.uri = data["uri"]
+                  up.sso_provider = data["sso_provider"]
+                  up.status = UserData.CREATED
+                elsif (up.status == UserData.TO_DISABLE and status == UserData.DISABLED)
+                  @@log.debug "Login=#{login} status was TO_DISABLE - now DISABLED"
+                  up.status = UserData.DISABLED
+                else
+                  fail "Unsuported status change - #{up.status} #{status}"
                 end
-              elsif (up.status == UserData.CHANGED and status == UserData.CREATED)
-                up.status = UserData.CREATED
-              elsif (up.status == UserData.NEW and status == UserData.CREATED)
-                up.uri = data["uri"]
-                up.sso_provider = data["sso_provider"]
-                up.status = UserData.CREATED
-              else
-                fail "Unsuported status change - #{up.status} #{status}"
-              end
             end
             up
           end
@@ -432,6 +442,7 @@ module PowerByHelper
                 up.status = UserProjectData.DISABLED
               elsif (up.status == UserProjectData.DISABLED and status == UserProjectData.NEW)
                 @@log.debug "Login=#{login} Project_pid=#{project_pid} project-user was DISABLED requested status change to NEW - setting status to CHANGE "
+                up.role = data["role"]
                 up.status = UserProjectData.CHANGED
               elsif (up.status == UserProjectData.OK and status == UserProjectData.CHANGED)
                 @@log.debug "Login=#{login} Project_pid=#{project_pid} project-user was OK now it is CHANGED"
@@ -459,6 +470,9 @@ module PowerByHelper
               elsif (up.status == UserProjectData.TO_DISABLE_BY_PROJECT and status == UserProjectData.DISABLED)
                 @@log.debug "Login=#{login} Project_pid=#{project_pid} project-user was TO_DISABLE_BY_PROJECT now it is DISABLED"
                 up.status = UserProjectData.DISABLED
+              elsif (up.status == UserProjectData.TO_DISABLE and status == UserProjectData.TO_DISABLE_BY_PROJECT)
+                @@log.debug "Login=#{login} Project_pid=#{project_pid} project-user was TO_DISABLE we get TO_DISABLE_BY_PROJECT now it is DISABLED"
+                up.status = UserProjectData.TO_DISABLE
               else
                 fail "Unsuported status change - #{up.status} #{status}"
               end
@@ -600,7 +614,7 @@ module PowerByHelper
 
 
       def get_users_by_admin
-        @user_data.find_all{|e| e.admin == true}
+        @user_data.find_all{|e| e.admin == true and e.status != UserData.DISABLED and e.status != UserData.TO_DISABLE}
       end
 
       def get_role_uri_by_name(name,pid)
