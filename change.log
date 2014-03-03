@@ -35,6 +35,9 @@ Version v0.2.8
     Bug fixes:
         Added nev transtion for User_project data, handling use-case when project is disabled and users were in same delete from user_project mapping file
         Fixed bug, that global admin users, are not disabled in case of deletion from user project
+Version v0.2.9
+    Features:
+        Added new settings "force_execute" to schedule settings. This setting will force schedule to be executed right after deployment or update of schedule
 
 
 

@@ -102,6 +102,12 @@ module PowerByHelper
           Persistent.change_schedule_status(schedule.project_pid,schedule.ident,ScheduleData.SCHEDULE_CREATED,{"schedule_id" => schedule_id})
           Persistent.store_schedules
           @@log.info "Schedule created"
+
+          # We will execute the schedule right after it has been scheduled
+          if (!settings["force_execute"].nil? and settings["force_execute"])
+            restart(schedule.project_pid,schedule_id)
+          end
+
         end
       end
 
@@ -155,6 +161,12 @@ module PowerByHelper
               schedule_id = response["schedule"]["links"]["self"].split("/").last
               Persistent.change_schedule_status(schedule.project_pid,schedule.ident,ScheduleData.SCHEDULE_CREATED,{"schedule_id" => schedule_id,"is_updated_schedule" => true})
               @@log.info "Update successful"
+
+              # We will execute the schedule right after it has been scheduled
+              if (!settings["force_execute"].nil? and settings["force_execute"])
+                restart(schedule.project_pid,schedule_id)
+              end
+
             rescue RestClient::BadRequest => e
               response = JSON.load(e.response)
               @@log.warn "Schedule #{schedule.project_pid} could not be updated. Reason: #{response["error"]["message"]}"
@@ -162,6 +174,10 @@ module PowerByHelper
               response = JSON.load(e.response)
               @@log.warn "Schedule #{schedule.project_pid} could not be updated. Reason: #{response["error"]["message"]}"
             end
+
+
+
+
           end
           Persistent.store_schedules
         end
@@ -183,6 +199,25 @@ module PowerByHelper
         end
       end
     end
+
+    def restart(project_pid,schedule_id)
+      data = { "execution" => {} }
+
+      begin
+        @@log.info "Starting ETL for project: #{project_pid} schedule:#{schedule_id}"
+        response = GoodData.post("gdc/projects/#{project_pid}/schedules/#{schedule_id}/executions",data)
+        @@log.info "Success!!!"
+        return true
+      rescue RestClient::BadRequest => e
+        @@log.warn "The project: #{project_pid} schedule: #{schedule_id} could not be started. Reason: #{response["error"]["message"]}"
+        return false
+      rescue RestClient::InternalServerError => e
+        @@log.warn "The project: #{project_pid} schedule: #{schedule_id} could not be started. Reason: #{response["error"]["message"]}"
+        return false
+      end
+    end
+
+
 
 
     def create_notifications

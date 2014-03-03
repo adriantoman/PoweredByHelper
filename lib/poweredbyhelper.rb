@@ -43,7 +43,7 @@ module PowerByHelper
       fail "Please put Gooddata Login and Password into the config file" if Helper.blank?(login) or Helper.blank?(password)
       GoodData.logger = @@log
       GoodData.logger.level = Logger::DEBUG if debug
-      GoodData.connect(login,password,server,{:webdav_server => Settings.connection_webdav})
+      GoodData.connect(login,password,server,{:webdav_server => Settings.connection_webdav,:headers => {"X-GDC-CC-PRIORITY-MODE" => 'NORMAL'}})
     end
 
     def init_persistent_storage
