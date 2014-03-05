@@ -38,6 +38,9 @@ Version v0.2.8
 Version v0.2.9
     Features:
         Added new settings "force_execute" to schedule settings. This setting will force schedule to be executed right after deployment or update of schedule
+Version v0.2.10
+    Bug fixes:
+        Fixed problem, with transition NEW to TO_DISABLE
 
 
 

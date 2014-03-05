@@ -361,6 +361,8 @@ module PowerByHelper
                 up.status = UserData.TO_DISABLE
               elsif (up.status == UserData.CHANGED and status == UserData.TO_DISABLE )
                 @@log.debug "Login=#{login} status was CHANGED - leaving CHANGED (received TO DISABLE)"
+              elsif (up.status == UserData.NEW and status == UserData.TO_DISABLE )
+                @@log.debug "Login=#{login} status was NEW - leaving NEW (received TO_DISABLE)"
               elsif (up.status == UserData.DISABLED and status == UserData.TO_DISABLE )
                   @@log.debug "Login=#{login} status was DISABLED - leaving DISABLED (received TO DISABLE)"
               elsif (up.status == UserData.NEW and status == UserData.NEW)
