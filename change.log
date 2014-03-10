@@ -41,6 +41,9 @@ Version v0.2.9
 Version v0.2.10
     Bug fixes:
         Fixed problem, with transition NEW to TO_DISABLE
+Version v0.2.11
+    Bug fixes:
+        Fixed problem, with generating random password for user
 
 
 

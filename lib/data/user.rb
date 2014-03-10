@@ -64,7 +64,13 @@ module PowerByHelper
       # Load info about users - domain file - representing users which should be in domain and merge it with info in Persistent storage
       FasterCSV.foreach(user_creation_file_name, {:headers => true, :skip_blanks => true}) do |csv_obj|
 
-        user_password = csv_obj[password_mapping] || rand(10000000000000).to_s
+        user_password = ""
+
+        if (csv_obj[password_mapping].nil? or csv_obj[password_mapping] == "")
+          user_password = rand(10000000000000).to_s
+        else
+          user_password = csv_obj[password_mapping]
+        end
 
         user_admin = false
         user_admin_role = "adminRole"
