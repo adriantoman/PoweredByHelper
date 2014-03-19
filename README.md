@@ -230,6 +230,7 @@ For example the CSV file could look like this:
 "adrian.toman+testing1@gooddata.com","Petr","Novak"
 "adrian.toman+testing2@gooddata.com","Adrian","Novak"
 "adrian.toman+testing2@gooddata.com","Petr","Tichy"
+```
 
 This file is representing setting for two mufs. It will set attribute1 and attribute2 (the attribute1 and attribute2 settings need to be present in config.json file) for specific logins. As you can see, you can
 apply multiple values for one muf. In this example we are settings two MUFs for one login. Each row, represent one MUF value. If you don't have same number of MUF values for each attribute, you can use
@@ -272,6 +273,7 @@ Example:
 
                  ]
              }
+```             
 
 ##Execution
 The execution part of the tools is quite strait forward. After you have successfully configured the application you can run it.
