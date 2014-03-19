@@ -204,28 +204,40 @@ module PowerByHelper
       Persistent.store_user
     end
 
-    def invite_users
-       UserHelper.invite_user()
-    end
-
-
     def change_users
-       UserHelper.change_users()
-    end
-
-    def add_users
-      UserHelper.add_user()
+      UserHelper.change_users()
     end
 
 
-    def disable_users
-      UserHelper.disable_user()
-    end
 
-    def update_users
-      UserHelper.update_user()
-    end
+    def manage_user_project(muf_collection)
+      @muf_collection = muf_collection
+      # With new MUF functionality, I want to add users by project basis
+      project_pids = Persistent.user_project_data.map{|p| p.project_pid}
+      project_pids.uniq!
+      # Let find all projects pids, which need to by changed somehow and iterate through project list
+      project_pids.each do |pid|
+        user_project_data_for_one_pid = Persistent.user_project_data.find_all{|pd| pd.project_pid == pid}
+        user_project_data_for_one_pid.each do |user_project_data|
+          if (!@muf_collection.nil?)
+            @muf_project = @muf_collection.find_muf_project_by_pid(pid)
+            @muf_login = @muf_project.find_login_by_login(user_project_data.login)
+            @muf_collection.work(@muf_project,@muf_login)
+          end
+          UserHelper.invite_user(user_project_data)
+          UserHelper.add_user(user_project_data)
+          UserHelper.disable_user(user_project_data)
+          UserHelper.update_user(user_project_data)
+        end
 
+
+
+      end
+
+
+
+
+    end
   end
 
 
@@ -312,8 +324,17 @@ module PowerByHelper
       "DISABLED"
     end
 
+    def self.MUF_CHANGE_START
+      "MUF_CHANGE_START"
+    end
 
+    def self.MUF_USER_DISABLED
+      "MUF_USER_DISABLED"
+    end
 
+    def self.MUF_SET
+      "MUF_SET"
+    end
 
     def initialize(status,data)
         @status = status

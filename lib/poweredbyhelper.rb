@@ -19,9 +19,12 @@ require 'gooddata'
 
 require 'fastercsv'
 require 'fileutils'
+require 'state_machine'
+require 'yaml'
 
 %w(settings helper persistent userhelper maintenancehelper migration).each {|a| require "#{a}"}
 %w(project etl user maintenance).each {|a| require "data/#{a}"}
+%w(muf_collection muf muf_project muf_login).each {|a| require "muf/#{a}"}
 
 module PowerByHelper
 
@@ -60,8 +63,13 @@ module PowerByHelper
 
 
     def init_user_storage
-      @user = User.new() if (!Settings.deployment_user.nil? and !Settings.deployment_user.empty?)
+      @user = User.new()  if (!Settings.deployment_user.nil? and !Settings.deployment_user.empty?)
     end
+
+    def init_muf_storage
+      @muf = MufCollection.new() if (!Settings.deployment_mufs.nil?)
+    end
+
 
 
 
@@ -90,10 +98,11 @@ module PowerByHelper
       if (!@user.nil?)
         @user.create_new_users
         @user.change_users
-        @user.invite_users
-        @user.add_users
-        @user.disable_users
-        @user.update_users
+        init_muf_storage
+        if (!@muf.nil?)
+          @muf.compare
+        end
+        @user.manage_user_project(@muf)
       end
       #end
     end
@@ -128,6 +137,17 @@ module PowerByHelper
       @maintenance.execute_partial_metadata(token)
       @@log.info "Partial metadata export execution finished"
     end
+
+    def execute_muf_sychronization
+      init_muf_storage
+      @muf.compare
+      @muf.work
+    end
+
+
+
+
+
 
     def move_remote_project_files
        if (Settings.deployment_project_data_type == "webdav" and !Settings.deployment_project_data_move_after_processing.nil?)

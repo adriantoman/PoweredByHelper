@@ -21,7 +21,7 @@ module PowerByHelper
 
     class << self
 
-      attr_accessor :project_data,:etl_data,:schedule_data,:user_data,:maintenance_data,:roles,:user_project_data,:project_custom_params,:custom_params_names
+      attr_accessor :project_data,:etl_data,:schedule_data,:user_data,:maintenance_data,:roles,:user_project_data,:project_custom_params,:custom_params_names,:muf_projects
       # project section
 
       def init_project()
@@ -67,6 +67,36 @@ module PowerByHelper
       def init_maintenance()
         @maintenance_data = []
         load_maintenance()
+      end
+
+      def init_muf()
+        @muf_projects = []
+      end
+
+
+
+
+      def load_mufs()
+        if (File.exists?(Settings.storage_muf_source))
+          $/="\n\n"
+          File.open(Settings.storage_muf_source, "r").each do |object|
+            @muf_projects << YAML::load(object)
+          end
+        end
+        # We need to invalid elements cache, because it was possible that project was changed in mean time
+        @muf_projects.each do |muf_project|
+          muf_project.elements_lookup.clear
+        end
+      end
+
+      def store_mufs
+        @@log.info "The MUF storage has be saved"
+        File.open(Settings.storage_muf_source, "w") do |file|
+          @muf_projects.each do |project|
+            file.puts YAML::dump(project)
+            file.puts ""
+          end
+        end
       end
 
 
@@ -419,6 +449,17 @@ module PowerByHelper
             if (up.project_pid == project_pid and up.login == login )
               if (up.status == status)
                 @@log.debug "Login=#{login} Project_pid=#{project_pid} same status - no work done"
+              elsif (up.status == UserProjectData.MUF_CHANGE_START and status == UserProjectData.MUF_USER_DISABLED)
+                @@log.debug "Login=#{login} Project_pid=#{project_pid} project_user was MUF_CHANGE_START received MUF_USER_DISABLED - now MUF_USER_DISABLED"
+                up.status = UserProjectData.MUF_USER_DISABLED
+              elsif (up.status == UserProjectData.MUF_USER_DISABLED and status == UserProjectData.MUF_SET)
+                @@log.debug "Login=#{login} Project_pid=#{project_pid} project_user was MUF_USER_DISABLED received MUF_SET - now MUF_SET"
+                up.status = UserProjectData.MUF_SET
+              elsif (up.status == UserProjectData.MUF_SET and status == UserProjectData.OK)
+                @@log.debug "Login=#{login} Project_pid=#{project_pid} project_user was MUF_SET received OK - now OK"
+                up.status = UserProjectData.MUF_OK
+              elsif (up.status == UserProjectData.MUF_CHANGE_START or up.status == UserProjectData.MUF_USER_DISABLED or UserProjectData.MUF_SET)
+                @@log.debug "Login=#{login} Project_pid=#{project_pid} project_user was #{up.status} received #{status} - now #{up.status}"
               elsif (up.status == UserProjectData.TO_DISABLE and status == UserProjectData.OK)
                 @@log.debug "Login=#{login} Project_pid=#{project_pid} project-user was TO_DISABLE now it is OK"
                 up.status = UserProjectData.OK
@@ -613,6 +654,11 @@ module PowerByHelper
       def get_user_by_login(login)
         @user_data.find{|e| e.login == login}
       end
+
+      def get_user_by_profile_id(profile_id)
+        @user_data.find{|e| e.uri == profile_id}
+      end
+
 
 
       def get_users_by_admin

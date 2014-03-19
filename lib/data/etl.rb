@@ -246,10 +246,10 @@ module PowerByHelper
 
       #old_dir = Dir.pwd
       #Dir.chdir(dir)
+      FileUtils.rm_f("deploy-process.zip") if File.exists?("deploy-process.zip")
+
       deploy_name = name
       res = nil
-
-      FileUtils.rm_f("deploy-process.zip") if File.exists?("deploy-process.zip")
 
       processed_files = []
       Zip::ZipFile.open("deploy-process.zip", Zip::ZipFile::CREATE) do |zipfile|
@@ -335,22 +335,27 @@ module PowerByHelper
 
 
       #add parameters
-      schedule_settings["parameters"].each do |parameters|
-        value_param = parameters["value"]
-        value_param = value_param.gsub("%ID%",project_ident)
-        value_param = Helper.replace_custom_parameters(project_ident,value_param)
-        json = { parameters["name"] => value_param }
-        data["schedule"]["params"].merge!(json)
+      if (!schedule_settings["parameters"].nil?)
+        schedule_settings["parameters"].each do |parameters|
+          value_param = parameters["value"]
+          value_param = value_param.gsub("%ID%",project_ident)
+          value_param = Helper.replace_custom_parameters(project_ident,value_param)
+          json = { parameters["name"] => value_param }
+          data["schedule"]["params"].merge!(json)
+        end
       end
 
       # add secure parameters
-      schedule_settings["secure_parameters"].each do |parameters|
-        value_param = parameters["value"]
-        value_param = value_param.gsub("%ID%",project_ident)
-        value_param = Helper.replace_custom_parameters(project_ident,value_param)
-        json = {parameters["name"] => value_param}
-        data["schedule"]["hiddenParams"].merge!(json)
+      if (!schedule_settings["secure_parameters"].nil?)
+        schedule_settings["secure_parameters"].each do |parameters|
+          value_param = parameters["value"]
+          value_param = value_param.gsub("%ID%",project_ident)
+          value_param = Helper.replace_custom_parameters(project_ident,value_param)
+          json = {parameters["name"] => value_param}
+          data["schedule"]["hiddenParams"].merge!(json)
+        end
       end
+
       if schedule_id.nil?
         res = GoodData.post("/gdc/projects/#{pid}/schedules", data)
       else

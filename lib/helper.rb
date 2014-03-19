@@ -53,6 +53,7 @@ module PowerByHelper
     def self.replace_custom_parameters(ident,value)
       params = Persistent.project_custom_params.find{|p| p.keys.first == ident}
       changed_value = value
+      changed_value = changed_value.gsub("%ID%",ident)
       params.values.first.each do |param_value|
         changed_value = changed_value.gsub("%#{param_value.keys.first}%",param_value.values.first)
       end
@@ -118,6 +119,73 @@ module PowerByHelper
       end
       exist
     end
+
+    def self.get_element_object_url(pid,id)
+      "/gdc/md/#{pid}/obj/#{id}/elements"
+    end
+
+    def self.get_element_attribute_url(pid,id)
+      "/gdc/md/#{pid}/obj/#{id}"
+    end
+
+    def self.object_exists?(url)
+      begin
+        @@log.debug "Checking existence of url #{url}"
+        response = GoodData.get(url)
+        return true
+      rescue RestClient::BadRequest => e
+        @@log.warn "The object #{url} don't exists in current project"
+        return false
+      rescue RestClient::InternalServerError => e
+        @@log.warn "There was internal server error when retrieving #{url} "
+        return false
+      end
+
+
+
+
+    end
+
+    def self.create_update_filter(login,expression,pid,uri = nil)
+      filter = {
+          "userFilter" => {
+              "content" => {
+                  "expression" => expression
+              },
+              "meta" => {
+                  "category" => "userFilter",
+                  "title" => "Filter for login: #{login} and pid: #{pid} by PBH"
+              }
+          }
+      }
+      if (uri.nil?)
+        result = GoodData.post("/gdc/md/#{pid}/obj",filter )
+      else
+        result = GoodData.post(uri,filter)
+      end
+      result["uri"]
+    end
+
+    def self.apply_filter(login,filter_url)
+      user_data = Persistent.get_user_by_login(login)
+      user_filter = {
+          "userFilters" => {
+              "items" => [
+                  {
+                      "user" => user_data.uri,
+                      "userFilters" => [ filter_url ]
+                  }
+              ]
+          }
+      }
+      GoodData.post "/gdc/md/#{pid}/userfilters", user_filter
+    end
+
+
+
+
+
+
 
 
 

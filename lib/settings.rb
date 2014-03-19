@@ -148,6 +148,35 @@ module PowerByHelper
       end
 
 
+      def deployment_mufs
+        @json["deployment"]["mufs"]
+      end
+
+      def deployment_mufs_file_pattern
+        deployment_mufs["file_pattern"]
+      end
+
+      def deployment_mufs_user_id_field
+        deployment_mufs["user_id_field"] || "login"
+      end
+
+      def deployment_mufs_use_cache
+        if (deployment_mufs["use_cache"].nil?)
+          true
+        else
+          deployment_mufs["use_cache"]
+        end
+      end
+
+      def deployment_mufs_muf
+        deployment_mufs["muf"]
+      end
+
+      def deployment_mufs_empty_value
+        deployment_mufs["empty_value"] || "TRUE"
+      end
+
+
       def provisioning
         @json["provisioning"]
       end
@@ -216,6 +245,19 @@ module PowerByHelper
 
 
       end
+
+
+      def storage_muf_source
+        if  (!@json["storage"].nil? and !@json["storage"]["muf"].nil?)
+          @json["storage"]["muf"]["source"] || "data/muf.yaml"
+        else
+          "data/muf.yaml"
+        end
+
+
+      end
+
+
 
 
 

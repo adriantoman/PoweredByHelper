@@ -359,7 +359,11 @@ command :test do |c|
     config_file = options[:config]
     fail "Please provide link to config file" unless (File.exist?(config_file))
     helper = PowerByHelper::Pwb.new(config_file,options[:test])
-    helper.migration
+    helper.gooddata_login(@@api_debug)
+    helper.init_persistent_storage
+    helper.init_maintenance_storage
+    helper.init_user_storage
+    helper.execute_muf_sychronization
   end
 
 
