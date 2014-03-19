@@ -15,6 +15,7 @@ The PoweredByHelper is tool create in Ruby, which should help you with provision
 * Disabling users in project
 * Changing user roles in project
 * Installation
+* MUF setting support
 
 The tool is tested under ruby version 1.9.3, so you need to have this version of ruby installed on your computer (Tool should work also under other versions of ruby, but they are not tested). You also need rubygems tool installed.When you have all required prerequisites, run following set if commands:
 
