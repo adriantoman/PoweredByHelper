@@ -357,9 +357,14 @@ module PowerByHelper
                 d.task_id = data["task_id"]
                 @@log.debug "Maintenance task #{id} - received positive response"
               elsif (d.status == MaintenanceData.PROCESSING_PARTIAL_TASK_CREATED and status == MaintenanceData.OK)
+
                 d.status = MaintenanceData.OK
                 d.task_id = data["task_id"]
                 @@log.debug "Maintenance task #{id} - received positive response"
+              elsif (d.status == MaintenanceData.START and status == MaintenanceData.OK)
+                d.status = MaintenanceData.OK
+              elsif (d.status == MaintenanceData.START and status == MaintenanceData.ERROR)
+                d.status = MaintenanceData.ERROR
               elsif (status == MaintenanceData.ERROR)
                 d.status = MaintenanceData.ERROR
                 @@log.debug "Maintenance task #{id} - received negative response (ERROR)"

@@ -343,9 +343,32 @@ command :execute_partial_metadata do |c|
     helper.init_maintenance_storage
     helper.execute_partial_metadata(options[:token])
   end
-
-
 end
+
+
+command :execute_key_value_set do |c|
+
+  c.desc 'Config file path'
+  c.flag [:config]
+
+  c.desc 'Key'
+  c.flag [:key]
+
+  c.desc 'Value'
+  c.flag [:value]
+
+
+  c.action do |global_options,options,args|
+    config_file = options[:config]
+    fail "Please provide link to config file" unless (File.exist?(config_file))
+    helper = PowerByHelper::Pwb.new(config_file,options[:test])
+    helper.migration
+    helper.gooddata_login(@@api_debug)
+    helper.init_maintenance_storage
+    helper.create_update_key_value(options[:key],options[:value])
+  end
+end
+
 
 command :test do |c|
 

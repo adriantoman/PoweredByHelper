@@ -132,6 +132,15 @@ module PowerByHelper
     end
 
 
+    def create_update_key_value(key,value)
+      @@log.info "Starting key/value update"
+      @maintenance.create_update_key_value(key,value)
+      @@log.info "Key/value update finished"
+    end
+
+
+
+
     def execute_partial_metadata(token)
       @@log.info "Starting partial metadata execution"
       @maintenance.execute_partial_metadata(token)
