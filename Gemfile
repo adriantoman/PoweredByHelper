@@ -8,4 +8,11 @@ gem 'gooddata', '~> 0.5.16'
 gem 'net_dav', '~> 0.5.0'
 gem 'pry', '~> 0.9.12.6'
 gem 'rubyzip', '< 1.0.0'
+gem 'yard', '~> 0.8.7.3'
+gem 'yard-rspec', '~> 0.1'
 
+group :test do
+  gem 'coveralls', '~> 0.7.0'
+  gem 'rspec', '~> 2.14.1'
+  gem 'simplecov', '~> 0.8.2'
+end
