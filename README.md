@@ -3,6 +3,15 @@
 ##Description
 The PoweredByHelper is tool create in Ruby, which should help you with provisioning of large numbers of projects. The source code of the tool can be found here: https://github.com/adriantoman/PoweredByHelper.
 
+
+## Status
+
+[![Dependency Status](https://gemnasium.com/adriantoman/PoweredByHelper.png)](https://gemnasium.com/adriantoman/PoweredByHelper)
+[![Code Climate](https://codeclimate.com/github/adriantoman/PoweredByHelper.png)](https://codeclimate.com/github/adriantoman/PoweredByHelper)
+[![Build Status](https://travis-ci.org/adriantoman/PoweredByHelper.png)](https://travis-ci.org/adriantoman/PoweredByHelper)
+[![Coverage Status](https://coveralls.io/repos/adriantoman/PoweredByHelper/badge.png)](https://coveralls.io/r/adriantoman/PoweredByHelper)
+[![Build Status](https://travis-ci.org/adriantoman/PoweredByHelper.png)](https://travis-ci.org/adriantoman/PoweredByHelper)
+
 ##Currently supported features are:
 
 * Project provisioning
