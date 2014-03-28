@@ -29,11 +29,22 @@ module PowerByHelper
     def load_data_structure
       Persistent.init_muf
       @file_project_mapping = {}
+
+      #In case of remote file location, lets download file to local first
+      if (Settings.deployment_mufs_type == "webdav")
+        Helper.download_files_from_webdav_by_pattern(Settings.deployment_mufs_remote_dir + Settings.deployment_mufs_file_pattern,Settings.deployment_mufs_source_dir)
+        data_file_path = Settings.default_project_data_file_name
+      end
+
+
+      fail "kokos"
+
+
       #Lets create list of files which are availible for muf provisioning
 
       Persistent.project_data.each do |p|
         file_name = Helper.replace_custom_parameters(p.ident,Settings.deployment_mufs_file_pattern)
-        if (File.exists?(file_name))
+        if (File.exists?(Settings.deployment_mufs_source_dir + file_name))
           @file_project_mapping[p.ident] = {"project" => p,"file" => file_name}
         end
       end

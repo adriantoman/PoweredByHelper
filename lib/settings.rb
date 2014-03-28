@@ -156,6 +156,29 @@ module PowerByHelper
         deployment_mufs["file_pattern"]
       end
 
+
+
+
+
+      def deployment_mufs_source_dir
+        if (deployment_mufs["source_dir"].nil?)
+          "source/mufs/"
+        else
+          deployment_mufs["source_dir"]
+        end
+      end
+
+
+      def deployment_mufs_remote_dir
+        if (deployment_mufs["remote_dir"].nil?)
+          ""
+        else
+          deployment_mufs["remote_dir"]
+        end
+      end
+
+
+
       def deployment_mufs_user_id_field
         deployment_mufs["user_id_field"] || "login"
       end
@@ -167,6 +190,24 @@ module PowerByHelper
           deployment_mufs["use_cache"]
         end
       end
+
+      def deployment_mufs_type
+        if (deployment_mufs["type"].nil?)
+          "local"
+        else
+          deployment_mufs["type"]
+        end
+      end
+
+      def deployment_mufs_webdav_folder_target
+        if (deployment_mufs["webdav_folder_target"].nil?)
+          "loaded/"
+        else
+          deployment_mufs["webdav_folder_target"]
+        end
+      end
+
+
 
       def deployment_mufs_muf
         deployment_mufs["muf"]
@@ -253,8 +294,6 @@ module PowerByHelper
         else
           "data/muf.yaml"
         end
-
-
       end
 
 

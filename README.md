@@ -247,6 +247,11 @@ use any other tool for muf settings.**
 * **file_patter** (required) - the file patter for finding connection between project and muf file
 * **user_id_field** (required) - the name of column in each of the muf files, which contains user login
 * **empty_value** - (TRUE) - the substitution for empty value, because empty value is valid Gooddata value, so you need to use something which is not present in your dataset
+* **type** - (local/webdav) - you can specify, if you want to download the files from webdav before each run
+* **remote_dir** - this is the folder on webdav, in which the tooo will be searching for the pattern
+* **source_dir** - this is the folder, when the tool will be looking for muf files. Also in case of webdav download, the files will be downloaded in to this folder
+* **webdav_folder_target** - this is the folder, where the file will be moved after the successfull run
+
 * **use_cache** (required) - (true/false) - this will enable or disable usage of cache files.
   * mufs - the section containing the definition of each specific muf
     * **attribute** - this field need to contain the ID of the attribute object (more info about this can be found in the article linked at the begining of the muf section)

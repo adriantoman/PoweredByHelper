@@ -155,6 +155,7 @@ module PowerByHelper
 
 
     def execute_muf_compare
+      move_remote_mufs_files
       init_muf_storage
       @muf.compare
     end
@@ -175,6 +176,14 @@ module PowerByHelper
         Helper.move_file_to_other_folder(Settings.deployment_user_project_synchronization["source"],Settings.deployment_user_project_synchronization_move_after_processing)
       end
     end
+
+    def move_remote_mufs_files
+      if (Settings.deployment_mufs_type == "webdav" and !Settings.deployment_mufs_webdav_folder_target.nil?)
+        Helper.move_all_files_to_other_folder(Settings.deployment_mufs_remote_dir + Settings.deployment_mufs_file_pattern,Settings.deployment_mufs_webdav_folder_target)
+      end
+    end
+
+
 
 
     def delete_all_projects(force)

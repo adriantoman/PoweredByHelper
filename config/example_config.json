@@ -4,7 +4,8 @@
         "login": "GOODDATA_LOGIN (domain admin)",
         "password": "GOODDATA_PASSWORD",
         "server": "https://na1.gooddata.com",
-        "webdav": "https://na1-di.gooddata.com"
+        "webdav": "https://na1-di.gooddata.com",
+        "webdav_storage": "https://na1-di.gooddata.com/project-uploads/PID/"
     },
     "deployment":{
         "project":{
@@ -102,6 +103,29 @@
                 },
                 "notification_message":"Welcome to new PROJECT_NAME project"
             }
+        },
+        "mufs":{
+            "file_pattern":"muf_file_%ID%.csv",
+            "type":"webdav",
+            "remote_dir": "waiting/mufs/",
+            "source_dir": "mufs/",
+            "webdav_folder_target":"loaded/",
+            "user_id_field":"login",
+            "empty_value":"TRUE",
+            "use_cache":true,
+            "muf":[
+                {
+                    "attribute" : "904",
+                    "elements" : "905",
+                    "csv_header": "attribute1"
+                },
+                {
+                    "attribute" : "906",
+                    "elements" : "907",
+                    "csv_header": "attribute2"
+                }
+
+            ]
         }
     }
 }

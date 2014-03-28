@@ -98,7 +98,7 @@ command :provision do |c|
     helper.etl_provisioning
     helper.user_synchronization
     helper.move_remote_user_files
-
+    helper.move_remote_mufs_files
   end
 end
 
