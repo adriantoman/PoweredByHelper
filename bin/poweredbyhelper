@@ -167,6 +167,8 @@ command :dry_run do |c|
     helper.gooddata_login(@@api_debug)
     helper.init_persistent_storage
     helper.init_user_storage
+    helper.execute_muf_compare
+
 
 
     puts "------- Project provisioning part -------".colorize( :light_blue )
@@ -253,6 +255,51 @@ command :dry_run do |c|
       end
       puts "------- USER provisioning part - project -------".colorize(:light_blue )
     end
+
+    # MUF Sections
+
+    puts "------- MUF provisioning part -------\n".colorize( :light_blue )
+
+    PowerByHelper::Persistent.muf_projects.each do |muf_project|
+      puts "Mufs in project: #{muf_project.pid} - ID: #{muf_project.ident}".colorize( :green )
+      muf_project.muf_logins.each do |muf_login|
+        if (muf_login.ok?)
+            puts "  Muf for login #{muf_login.login} was not changed.".colorize( :green )
+        elsif (muf_login.create?)
+           puts "  Muf for login #{muf_login.login} is new.".colorize(:light_red)
+           muf_login.mufs.each do |muf|
+            puts "    Muf for attribute #{muf.attribute} has this settings #{muf.new_values.values.join(",")}".colorize(:light_red)
+           end
+        elsif (muf_login.to_delete)
+          puts "  Muf for login #{muf_login.login} will be deleted.".colorize(:red)
+        elsif (muf_login.changed?)
+          puts "  Muf for login #{muf_login.login} will be changed.".colorize(:light_red)
+          muf_login.mufs.each do |muf|
+            if (!muf.same?)
+              muf_values = muf.values
+              muf_values_new = muf.new_values
+              muf_values = muf_values.values.sort
+              muf_values_new = muf_values_new.values.sort
+
+              added_values = muf_values_new - muf_values
+              removed_values = muf_values - muf_values_new
+              same_values = muf_values & muf_values_new
+
+              puts "    Muf for attribute #{muf.attribute} has this values:".colorize(:light_red)
+              puts "       Same values: #{same_values.join(",")}".colorize(:light_red) if !same_values.empty?
+              puts "       Added values: #{added_values.join(",")}".colorize(:red) if !added_values.empty?
+              puts "       Removed values: #{removed_values.join(",")}".colorize(:red) if !removed_values.empty?
+            end
+          end
+        end
+
+      end
+    end
+
+    puts "------- MUF provisioning part -------\n".colorize( :light_blue )
+
+
+
   end
 
 

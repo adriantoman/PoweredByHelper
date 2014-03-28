@@ -154,9 +154,10 @@ module PowerByHelper
     end
 
 
-
-
-
+    def execute_muf_compare
+      init_muf_storage
+      @muf.compare
+    end
 
     def move_remote_project_files
        if (Settings.deployment_project_data_type == "webdav" and !Settings.deployment_project_data_move_after_processing.nil?)
