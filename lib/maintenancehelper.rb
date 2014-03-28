@@ -98,9 +98,9 @@ module PowerByHelper
       result = GoodData.get("/gdc/projects/#{maintenance_data.project_pid}/dataload/metadata")
       values = {}
       result["metadataItems"]["items"].each do |e|
-        key = e["metadataItem"]["key"]
-        value = e["metadataItem"]["value"]
-        values[key] = value
+        key_temp = e["metadataItem"]["key"]
+        value_temp = e["metadataItem"]["value"]
+        values[key_temp] = value_temp
       end
       json =
         {"metadataItem" =>
