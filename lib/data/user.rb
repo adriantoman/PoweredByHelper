@@ -221,8 +221,8 @@ module PowerByHelper
         user_project_data_for_one_pid.each do |user_project_data|
           if (!@muf_collection.nil?)
             @muf_project = @muf_collection.find_muf_project_by_pid(pid)
-            @muf_login = @muf_project.find_login_by_login(user_project_data.login)
-            @muf_collection.work(@muf_project,@muf_login)
+            @muf_login = @muf_project.find_login_by_login(user_project_data.login) if !@muf_project.nil?
+            @muf_collection.work(@muf_project,@muf_login) if !@muf_login.nil?
           end
           UserHelper.invite_user(user_project_data)
           UserHelper.add_user(user_project_data)

@@ -33,7 +33,7 @@ module PowerByHelper
       #In case of remote file location, lets download file to local first
       if (Settings.deployment_mufs_type == "webdav")
         Helper.download_files_from_webdav_by_pattern(Settings.deployment_mufs_remote_dir + Settings.deployment_mufs_file_pattern,Settings.deployment_mufs_source_dir)
-        data_file_path = Settings.default_project_data_file_name
+        #data_file_path = Settings.default_project_data_file_name
       end
 
       #Lets create list of files which are availible for muf provisioning
@@ -44,6 +44,10 @@ module PowerByHelper
           @file_project_mapping[p.ident] = {"project" => p,"file" => file_name}
         end
       end
+
+
+      pp @file_project_mapping
+
       if (Settings.deployment_mufs_use_cache)
         Persistent.load_mufs
       else
