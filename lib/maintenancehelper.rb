@@ -20,10 +20,10 @@ module PowerByHelper
 
 
 
-    def self.execute_maql(maintenance_data,maql)
+    def self.execute_maql(maintenance_data,maql_source)
       maql = {
           "manage" => {
-              "maql" => maql
+              "maql" => maql_source
           }
 
       }
