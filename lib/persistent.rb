@@ -147,7 +147,7 @@ module PowerByHelper
 
       def load_project
         if (File.exists?(Settings.storage_project_source))
-          FasterCSV.foreach(Settings.storage_project_source, :headers => true,:quote_char => '"') do |csv_obj|
+          FasterCSV.foreach(Settings.storage_project_source, :headers => true,:quote_char => '"',:skip_blanks => true) do |csv_obj|
             Persistent.change_project_status(csv_obj["ident"],csv_obj["status"],csv_obj)
           end
         end
@@ -155,7 +155,7 @@ module PowerByHelper
 
       def load_maintenance
         if (File.exists?(Settings.storage_maintenance_source))
-          FasterCSV.foreach(Settings.storage_maintenance_source, :headers => true,:quote_char => '"') do |csv_obj|
+          FasterCSV.foreach(Settings.storage_maintenance_source, :headers => true,:quote_char => '"',:skip_blanks => true) do |csv_obj|
             Persistent.change_maintenance_status(csv_obj["ident"],csv_obj["status"],csv_obj)
           end
         end
@@ -165,7 +165,7 @@ module PowerByHelper
 
       def load_user
         if (File.exists?(Settings.storage_user_source))
-          FasterCSV.foreach(Settings.storage_user_source, :headers => true,:quote_char => '"') do |csv_obj|
+          FasterCSV.foreach(Settings.storage_user_source, :headers => true,:quote_char => '"',:skip_blanks => true) do |csv_obj|
             if (csv_obj["admin"] == "false")
               csv_obj["admin"] = false
             elsif (csv_obj["admin"] == "true")
@@ -178,7 +178,7 @@ module PowerByHelper
 
       def load_user_project
         if (File.exists?(Settings.storage_user_project_source))
-          FasterCSV.foreach(Settings.storage_user_project_source, :headers => true,:quote_char => '"') do |csv_obj|
+          FasterCSV.foreach(Settings.storage_user_project_source, :headers => true,:quote_char => '"',:skip_blanks => true) do |csv_obj|
             if (csv_obj["notification"] == "false")
               csv_obj["notification"] = false
             elsif (csv_obj["notification"] == "true")
@@ -199,13 +199,13 @@ module PowerByHelper
 
       def load_etl
         if (File.exists?(Settings.storage_etl_source))
-          FasterCSV.foreach(Settings.storage_etl_source, :headers => true,:quote_char => '"') do |csv_obj|
+          FasterCSV.foreach(Settings.storage_etl_source, :headers => true,:quote_char => '"',:skip_blanks => true) do |csv_obj|
             Persistent.change_etl_status(csv_obj["project_pid"],csv_obj["status"],csv_obj)
           end
         end
 
         if (File.exists?(Settings.storage_schedules_source))
-          FasterCSV.foreach(Settings.storage_schedules_source, :headers => true,:quote_char => '"') do |csv_obj|
+          FasterCSV.foreach(Settings.storage_schedules_source, :headers => true,:quote_char => '"',:skip_blanks => true) do |csv_obj|
             Persistent.change_schedule_status(csv_obj["project_pid"],csv_obj["ident"],csv_obj["status"],csv_obj)
           end
         end
