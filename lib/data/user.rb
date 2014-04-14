@@ -53,7 +53,7 @@ module PowerByHelper
       Persistent.init_roles
 
       password_mapping = user_creation_mapping["password"] || "password"
-      admin_mapping = user_creation_mapping["admin"] || "admin"
+      admin_mapping = user_creation_mapping["admin"] || user_creation_mapping["super_admin"] || "admin"
 
 
       # Clean deleted domain users
