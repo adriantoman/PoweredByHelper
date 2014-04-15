@@ -45,9 +45,6 @@ module PowerByHelper
         end
       end
 
-
-      pp @file_project_mapping
-
       if (Settings.deployment_mufs_use_cache)
         Persistent.load_mufs
       else

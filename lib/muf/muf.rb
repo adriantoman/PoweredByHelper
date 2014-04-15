@@ -54,7 +54,18 @@ module PowerByHelper
 
 
     def create_gooddata_muf_representation(pid)
-      values = @new_values.keys.map {|k| "[#{k}]"}.join(",")
+      @new_values.each_pair do |key,value|
+        if (key.nil?)
+          @@log.warn "The #{value} cannot be found in data loaded to project #{pid} - SKIPPING"
+        end
+      end
+      values = @new_values.keys.map do |k|
+        if (!k.nil?)
+          "[#{k}]"
+        end
+      end
+      values.delete_if {|k| k.nil?}
+      values = values.join(",")
       "[#{Helper.get_element_attribute_url(pid,@attribute)}] IN (#{values})"
     end
 
