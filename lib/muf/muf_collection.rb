@@ -38,7 +38,7 @@ module PowerByHelper
 
       #Lets create list of files which are availible for muf provisioning
 
-      Persistent.project_data.each do |p|
+      Persistent.project_data.find_all{|project| project.status == ProjectData.OK}.each do |p|
         file_name = Helper.replace_custom_parameters(p.ident,Settings.deployment_mufs_file_pattern)
         if (File.exists?(Settings.deployment_mufs_source_dir + file_name))
           @file_project_mapping[p.ident] = {"project" => p,"file" => file_name}
