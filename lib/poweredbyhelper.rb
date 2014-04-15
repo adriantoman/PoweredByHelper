@@ -149,15 +149,19 @@ module PowerByHelper
 
     def execute_muf_sychronization
       init_muf_storage
-      @muf.compare
-      @muf.work
+      if (!@muf.nil?)
+        @muf.compare
+        @muf.work
+      end
     end
 
 
     def execute_muf_compare
       move_remote_mufs_files
       init_muf_storage
-      @muf.compare
+      if (!@muf.nil?)
+        @muf.compare
+      end
     end
 
     def move_remote_project_files
