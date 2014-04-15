@@ -184,7 +184,7 @@ module PowerByHelper
       end
 
       def deployment_mufs_use_cache
-        if (deployment_mufs["use_cache"].nil?)
+        if ((!deployment_mufs.nil?) or (deployment_mufs["use_cache"].nil?))
           true
         else
           deployment_mufs["use_cache"]
@@ -192,7 +192,7 @@ module PowerByHelper
       end
 
       def deployment_mufs_type
-        if (deployment_mufs["type"].nil?)
+        if ((!deployment_mufs.nil?) or (deployment_mufs["type"].nil?))
           "local"
         else
           deployment_mufs["type"]
@@ -202,7 +202,7 @@ module PowerByHelper
 
 
       def deployment_mufs_webdav_folder_target
-        if (deployment_mufs["webdav_folder_target"].nil?)
+        if ((!deployment_mufs.nil?) or (deployment_mufs["webdav_folder_target"].nil?))
           "loaded/"
         else
           deployment_mufs["webdav_folder_target"]
