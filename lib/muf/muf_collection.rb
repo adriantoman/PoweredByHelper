@@ -67,7 +67,7 @@ module PowerByHelper
         end
         Settings.deployment_mufs_muf.each do |muf_setting|
           muf_project.load_element_lookup(muf_setting["attribute"],muf_setting["elements"]) if !muf_project.lookup_loaded?(muf_setting["attribute"])
-          FasterCSV.foreach(Settings.deployment_mufs_source_dir + v["file"], :headers => true,:quote_char => '"') do |csv_obj|
+          FasterCSV.foreach(Settings.deployment_mufs_source_dir + v["file"], :headers => true,:quote_char => '"',:skip_blanks => true) do |csv_obj|
             if (!Helper.blank?(csv_obj[Settings.deployment_mufs_user_id_field]))
               if (!Helper.blank?(csv_obj[muf_setting["csv_header"]]))
                 # Lets try if the login has already something set up
