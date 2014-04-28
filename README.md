@@ -24,6 +24,7 @@ The PoweredByHelper is tool create in Ruby, which should help you with provision
 * Disabling users in project
 * Changing user roles in project
 * Installation
+* MUF setting support
 
 The tool is tested under ruby version 1.9.3, so you need to have this version of ruby installed on your computer (Tool should work also under other versions of ruby, but they are not tested). You also need rubygems tool installed.When you have all required prerequisites, run following set if commands:
 
@@ -217,7 +218,77 @@ Example:
                 "notification_message":"Welcome to new TWC project"
             }
         }
-```        
+```
+
+#### Mandatory user filters (MUFs)
+This part of deployment section is used for enabling the Mandatory user filters. This is new feature implemented in version 0.3.0 of Powered By Helper tool. If you want to start with mandatory user filters,
+     I strongly advice you to start in here: https://developer.gooddata.com/article/lets-get-started-with-mandatory-user-filters. The current implementation of PWB tool implements only the IN type of MUF.
+
+The MUFs are configured by set of files, when each file represent the MUF setting for on particular project. Connection between project and muf file, is done by file_patter setting. In this setting
+   you can specify the patter, by which the PBH will identify muf file for particular project.
+
+So for example, when I have in file_patter setting this: mufs/muf_file_%ID%.csv and I have project Id: 0001, the PBH will be looking in folder mufs for file named muf_file_0001.csv. In file_patter you can use
+ any of project specific custom parameters  (%custom1%,%custom2%,etc).
+
+The MUF file, need to have specific format. It need to be CSV file. There need to be always column, which is containing user login name. It will also contain column, which is representing desired MUF value.
+
+For example the CSV file could look like this:
+
+```csv
+"login","attribute1","attribute2"
+"adrian.toman+testing1@gooddata.com","Karel","Zientek"
+"adrian.toman+testing1@gooddata.com","Petr","Novak"
+"adrian.toman+testing2@gooddata.com","Adrian","Novak"
+"adrian.toman+testing2@gooddata.com","Petr","Tichy"
+```
+
+This file is representing setting for two mufs. It will set attribute1 and attribute2 (the attribute1 and attribute2 settings need to be present in config.json file) for specific logins. As you can see, you can
+apply multiple values for one muf. In this example we are settings two MUFs for one login. Each row, represent one MUF value. If you don't have same number of MUF values for each attribute, you can use
+the keyword "TRUE" (this can be changed by empty_value settings). The TRUE value is used as EMPTY value and I will not be used for MUF setting.
+
+One of the key settings is cache settings. If this value is set to false, the PBH will download all existing MUF values from Gooddata and it will compare them to your current settings. The tool will do it
+every time you execute the provisioning command. Sadly download of all mufs from platform, can be very time consuming task, so in case that you are not using the cache, you need to count with very long provisioning
+runs. I always suggest that you used the false setting for first run of provisioning of MUFS. This way, if you have any mufs already set up in project, you can continue with current settings. Even if the setting is set to false,
+the cache file is created, but it is not used. So if you use false settings at the beginning and after that you continue with true settings, everything should work fine. **If you are using the cache file, you cannot
+use any other tool for muf settings.**
+
+
+* **file_patter** (required) - the file patter for finding connection between project and muf file
+* **user_id_field** (required) - the name of column in each of the muf files, which contains user login
+* **empty_value** - (TRUE) - the substitution for empty value, because empty value is valid Gooddata value, so you need to use something which is not present in your dataset
+* **type** - (local/webdav) - you can specify, if you want to download the files from webdav before each run
+* **remote_dir** - this is the folder on webdav, in which the tooo will be searching for the pattern
+* **source_dir** - this is the folder, when the tool will be looking for muf files. Also in case of webdav download, the files will be downloaded in to this folder
+* **webdav_folder_target** - this is the folder, where the file will be moved after the successfull run
+
+* **use_cache** (required) - (true/false) - this will enable or disable usage of cache files.
+  * mufs - the section containing the definition of each specific muf
+    * **attribute** - this field need to contain the ID of the attribute object (more info about this can be found in the article linked at the begining of the muf section)
+    * **elemenets** - this field need to contain the ID of elements set, which contain values loaded in GD. This is here, because of attributes with different label. (more info about this can be found in the article linked at the begining of the muf section)
+    * **csv_header** - this field need to contain the name of column in muf_file which will contain the values for muf.
+
+Example:
+```json
+      "mufs":{
+                 "file_pattern":"mufs/muf_file_%ID%.csv",
+                 "user_id_field":"login",
+                 "empty_value":"TRUE",
+                 "use_cache":true,
+                 "muf":[
+                     {
+                         "attribute" : "904",
+                         "elements" : "905",
+                         "csv_header": "attribute1"
+                     },
+                     {
+                         "attribute" : "906",
+                         "elements" : "907",
+                         "csv_header": "attribute2"
+                     }
+
+                 ]
+             }
+```             
 
 ##Execution
 The execution part of the tools is quite strait forward. After you have successfully configured the application you can run it.

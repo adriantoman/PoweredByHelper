@@ -150,6 +150,78 @@ module PowerByHelper
       end
 
 
+      def deployment_mufs
+        @json["deployment"]["mufs"]
+      end
+
+      def deployment_mufs_file_pattern
+        deployment_mufs["file_pattern"]
+      end
+
+
+
+
+
+      def deployment_mufs_source_dir
+        if (deployment_mufs["source_dir"].nil?)
+          "source/mufs/"
+        else
+          deployment_mufs["source_dir"]
+        end
+      end
+
+
+      def deployment_mufs_remote_dir
+        if (deployment_mufs["remote_dir"].nil?)
+          ""
+        else
+          deployment_mufs["remote_dir"]
+        end
+      end
+
+
+
+      def deployment_mufs_user_id_field
+        deployment_mufs["user_id_field"] || "login"
+      end
+
+      def deployment_mufs_use_cache
+        if ((deployment_mufs.nil?) or (deployment_mufs["use_cache"].nil?))
+          true
+        else
+          deployment_mufs["use_cache"]
+        end
+      end
+
+      def deployment_mufs_type
+        if ((deployment_mufs.nil?) or (deployment_mufs["type"].nil?))
+          "local"
+        else
+          deployment_mufs["type"]
+        end
+      end
+
+
+
+      def deployment_mufs_webdav_folder_target
+        if ((deployment_mufs.nil?) or (deployment_mufs["webdav_folder_target"].nil?))
+          "loaded/"
+        else
+          deployment_mufs["webdav_folder_target"]
+        end
+      end
+
+
+
+      def deployment_mufs_muf
+        deployment_mufs["muf"]
+      end
+
+      def deployment_mufs_empty_value
+        deployment_mufs["empty_value"] || "TRUE"
+      end
+
+
       def provisioning
         @json["provisioning"]
       end
@@ -218,6 +290,17 @@ module PowerByHelper
 
 
       end
+
+
+      def storage_muf_source
+        if  (!@json["storage"].nil? and !@json["storage"]["muf"].nil?)
+          @json["storage"]["muf"]["source"] || "data/muf.yaml"
+        else
+          "data/muf.yaml"
+        end
+      end
+
+
 
 
 

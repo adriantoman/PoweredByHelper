@@ -71,6 +71,36 @@ module PowerByHelper
         load_maintenance()
       end
 
+      def init_muf()
+        @muf_projects = []
+      end
+
+
+
+
+      def load_mufs()
+        if (File.exists?(Settings.storage_muf_source))
+          $/="\n\n"
+          File.open(Settings.storage_muf_source, "r").each do |object|
+            @muf_projects << YAML::load(object)
+          end
+        end
+        # We need to invalid elements cache, because it was possible that project was changed in mean time
+        @muf_projects.each do |muf_project|
+          muf_project.elements_lookup.clear
+        end
+      end
+
+      def store_mufs
+        @@log.info "The MUF storage has be saved"
+        File.open(Settings.storage_muf_source, "w") do |file|
+          @muf_projects.each do |project|
+            file.puts YAML::dump(project)
+            file.puts ""
+          end
+        end
+      end
+
 
 
 
@@ -147,7 +177,7 @@ module PowerByHelper
 
       def load_project
         if (File.exists?(Settings.storage_project_source))
-          FasterCSV.foreach(Settings.storage_project_source, :headers => true,:quote_char => '"',:skip_blanks => true) do |csv_obj|
+          FasterCSV.foreach(Settings.storage_project_source, :headers => true,:quote_char => '"') do |csv_obj|
             Persistent.change_project_status(csv_obj["ident"],csv_obj["status"],csv_obj)
           end
         end
@@ -155,7 +185,7 @@ module PowerByHelper
 
       def load_maintenance
         if (File.exists?(Settings.storage_maintenance_source))
-          FasterCSV.foreach(Settings.storage_maintenance_source, :headers => true,:quote_char => '"',:skip_blanks => true) do |csv_obj|
+          FasterCSV.foreach(Settings.storage_maintenance_source, :headers => true,:quote_char => '"') do |csv_obj|
             Persistent.change_maintenance_status(csv_obj["ident"],csv_obj["status"],csv_obj)
           end
         end
@@ -165,7 +195,7 @@ module PowerByHelper
 
       def load_user
         if (File.exists?(Settings.storage_user_source))
-          FasterCSV.foreach(Settings.storage_user_source, :headers => true,:quote_char => '"',:skip_blanks => true) do |csv_obj|
+          FasterCSV.foreach(Settings.storage_user_source, :headers => true,:quote_char => '"') do |csv_obj|
             if (csv_obj["admin"] == "false")
               csv_obj["admin"] = false
             elsif (csv_obj["admin"] == "true")
@@ -178,7 +208,7 @@ module PowerByHelper
 
       def load_user_project
         if (File.exists?(Settings.storage_user_project_source))
-          FasterCSV.foreach(Settings.storage_user_project_source, :headers => true,:quote_char => '"',:skip_blanks => true) do |csv_obj|
+          FasterCSV.foreach(Settings.storage_user_project_source, :headers => true,:quote_char => '"') do |csv_obj|
             if (csv_obj["notification"] == "false")
               csv_obj["notification"] = false
             elsif (csv_obj["notification"] == "true")
@@ -199,13 +229,13 @@ module PowerByHelper
 
       def load_etl
         if (File.exists?(Settings.storage_etl_source))
-          FasterCSV.foreach(Settings.storage_etl_source, :headers => true,:quote_char => '"',:skip_blanks => true) do |csv_obj|
+          FasterCSV.foreach(Settings.storage_etl_source, :headers => true,:quote_char => '"') do |csv_obj|
             Persistent.change_etl_status(csv_obj["project_pid"],csv_obj["status"],csv_obj)
           end
         end
 
         if (File.exists?(Settings.storage_schedules_source))
-          FasterCSV.foreach(Settings.storage_schedules_source, :headers => true,:quote_char => '"',:skip_blanks => true) do |csv_obj|
+          FasterCSV.foreach(Settings.storage_schedules_source, :headers => true,:quote_char => '"') do |csv_obj|
             Persistent.change_schedule_status(csv_obj["project_pid"],csv_obj["ident"],csv_obj["status"],csv_obj)
           end
         end
@@ -329,6 +359,7 @@ module PowerByHelper
                 d.task_id = data["task_id"]
                 @@log.debug "Maintenance task #{id} - received positive response"
               elsif (d.status == MaintenanceData.PROCESSING_PARTIAL_TASK_CREATED and status == MaintenanceData.OK)
+
                 d.status = MaintenanceData.OK
                 d.task_id = data["task_id"]
                 @@log.debug "Maintenance task #{id} - received positive response"
@@ -618,6 +649,11 @@ module PowerByHelper
       def get_user_by_login(login)
         @user_data.find{|e| e.login == login}
       end
+
+      def get_user_by_profile_id(profile_id)
+        @user_data.find{|e| e.uri == profile_id}
+      end
+
 
 
       def get_users_by_admin

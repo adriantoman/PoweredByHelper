@@ -22,10 +22,10 @@ module PowerByHelper
 
 
 
-    def self.execute_maql(maintenance_data,maql)
+    def self.execute_maql(maintenance_data,maql_source)
       maql = {
           "manage" => {
-              "maql" => maql
+              "maql" => maql_source
           }
 
       }
@@ -93,9 +93,54 @@ module PowerByHelper
         @@log.warn "Unknown error - The maql could not be applied on project #{maintenance_data.project_pid} and returned 500. Reason: #{response["message"]}"
         return nil
       end
+    end
+
+    def self.create_update_value(maintenance_data,key,value)
+      # TO DO  - add pagging
+      result = GoodData.get("/gdc/projects/#{maintenance_data.project_pid}/dataload/metadata")
+      values = {}
+      result["metadataItems"]["items"].each do |e|
+        key_temp = e["metadataItem"]["key"]
+        value_temp = e["metadataItem"]["value"]
+        values[key_temp] = value_temp
+      end
+      json =
+        {"metadataItem" =>
+              {"key" => key,
+              "value" => value}
+        }
+
+      begin
+        result = nil
+        if values.has_key?(key)
+          result = GoodData.put("/gdc/projects/#{maintenance_data.project_pid}/dataload/metadata/#{key}", json)
+        else
+          result = GoodData.post("/gdc/projects/#{maintenance_data.project_pid}/dataload/metadata", json)
+        end
+        return result
+      rescue RestClient::BadRequest => e
+        response = JSON.load(e.response)
+        @@log.warn "The key/value storage could not be change for project #{maintenance_data.project_pid}. Reason: #{response["error"]["message"]}"
+        return nil
+      rescue RestClient::InternalServerError => e
+        response = JSON.load(e.response)
+        @@log.warn "The key/value storage could not be change for project #{maintenance_data.project_pid} and returned 500. Reason: #{response["error"]["message"]}"
+        return nil
+      rescue => e
+        pp e
+        response = JSON.load(e.response)
+        @@log.warn "Unknown error - The key/value storage could not be change for project #{maintenance_data.project_pid} and returned 500. Reason: #{response["message"]}"
+        return nil
+      end
+
+
+
+
+
 
 
     end
+
 
 
 

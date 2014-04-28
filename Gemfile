@@ -10,6 +10,7 @@ gem 'pry', '~> 0.9.12.6'
 gem 'rubyzip', '< 1.0.0'
 gem 'yard', '~> 0.8.7.3'
 gem 'yard-rspec', '~> 0.1'
+gem "state_machine"
 
 group :test do
   gem 'coveralls', '~> 0.7.0'

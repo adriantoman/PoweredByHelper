@@ -55,6 +55,7 @@ module PowerByHelper
     def self.replace_custom_parameters(ident,value)
       params = Persistent.project_custom_params.find{|p| p.keys.first == ident}
       changed_value = value
+      changed_value = changed_value.gsub("%ID%",ident)
       params.values.first.each do |param_value|
         changed_value = changed_value.gsub("%#{param_value.keys.first}%",param_value.values.first)
       end
@@ -90,6 +91,41 @@ module PowerByHelper
 
     end
 
+
+    def self.download_files_from_webdav_by_pattern(url,target_folder)
+      user =      Settings.connection["login"]
+      password =  Settings.connection["password"]
+
+      pattern =  url.match(/[^\/]*$/)[0]
+      # Lets remove special %% characters
+      pattern.gsub!(/%[^%]*%/,'.*')
+
+      adress = Settings.connection_webdav_storage + url.match(/(.*\/)[^\/]*$/)[1]
+
+      dav = Net::DAV.new(adress, :curl => false)
+      dav.verify_server = false # Ignore server verification
+      dav.credentials(user, password)
+
+      # Create directory if it not exists
+      FileUtils.mkdir_p target_folder if !Dir.exists?(target_folder)
+
+      exist = false
+      dav.find('.',:recursive=>false,:filename=> /#{pattern}/) do |item|
+        @@log.info "Downloading file #{item.url}"
+        filename = item.url.to_s.match(/[^\/]*$/)[0]
+        File.open("#{target_folder}#{filename}", 'w') { |file| file.write(item.content) }
+        exist = true
+      end
+      if exist
+        @@log.info "Download completed!"
+      else
+        @@log.info "There was not file to download, using old version!"
+      end
+
+    end
+
+
+
     def self.move_file_to_other_folder(source,target)
       user =      Settings.connection["login"]
       password =  Settings.connection["password"]
@@ -103,6 +139,32 @@ module PowerByHelper
         dav.move(source,target)
       end
     end
+
+    def self.move_all_files_to_other_folder(url,target)
+      user =      Settings.connection["login"]
+      password =  Settings.connection["password"]
+
+      pattern =  url.match(/[^\/]*$/)[0]
+      # Lets remove special %% characters
+      pattern.gsub!(/%[^%]*%/,'.*')
+
+      adress = Settings.connection_webdav_storage + url.match(/(.*\/)[^\/]*$/)[1]
+
+      dav = Net::DAV.new(adress, :curl => false)
+      dav.verify_server = false # Ignore server verification
+      dav.credentials(user, password)
+
+      pp adress
+      pp pattern
+
+      dav.find('.',:recursive=>false,:filename=> /#{pattern}/) do |item|
+        filename = item.url.to_s.match(/[^\/]*$/)[0]
+
+        @@log.info "Moving file #{adress + filename} to #{Settings.connection_webdav_storage + target + filename}"
+        dav.move(adress + filename,Settings.connection_webdav_storage + target + filename)
+      end
+    end
+
 
     def self.check_file_on_webdav(source)
       user =      Settings.connection["login"]
@@ -120,6 +182,73 @@ module PowerByHelper
       end
       exist
     end
+
+    def self.get_element_object_url(pid,id)
+      "/gdc/md/#{pid}/obj/#{id}/elements"
+    end
+
+    def self.get_element_attribute_url(pid,id)
+      "/gdc/md/#{pid}/obj/#{id}"
+    end
+
+    def self.object_exists?(url)
+      begin
+        @@log.debug "Checking existence of url #{url}"
+        response = GoodData.get(url)
+        return true
+      rescue RestClient::BadRequest => e
+        @@log.warn "The object #{url} don't exists in current project"
+        return false
+      rescue RestClient::InternalServerError => e
+        @@log.warn "There was internal server error when retrieving #{url} "
+        return false
+      end
+
+
+
+
+    end
+
+    def self.create_update_filter(login,expression,pid,uri = nil)
+      filter = {
+          "userFilter" => {
+              "content" => {
+                  "expression" => expression
+              },
+              "meta" => {
+                  "category" => "userFilter",
+                  "title" => "Filter for login: #{login} and pid: #{pid} by PBH"
+              }
+          }
+      }
+      if (uri.nil?)
+        result = GoodData.post("/gdc/md/#{pid}/obj",filter )
+      else
+        result = GoodData.post(uri,filter)
+      end
+      result["uri"]
+    end
+
+    def self.apply_filter(login,filter_url)
+      user_data = Persistent.get_user_by_login(login)
+      user_filter = {
+          "userFilters" => {
+              "items" => [
+                  {
+                      "user" => user_data.uri,
+                      "userFilters" => [ filter_url ]
+                  }
+              ]
+          }
+      }
+      GoodData.post "/gdc/md/#{pid}/userfilters", user_filter
+    end
+
+
+
+
+
+
 
 
 
