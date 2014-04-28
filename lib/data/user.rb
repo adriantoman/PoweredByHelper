@@ -144,10 +144,10 @@ module PowerByHelper
           @@log.warn "Project with ID #{ident} don't exist. Skipping user #{csv_obj[user_synchronization_mapping["login"]].downcase} invitation"
         end
       end
-
       # Find all admin users and make them admin in all of the projects - merge this information with persistent storage
       admin_users = Persistent.get_users_by_admin
       projects = Persistent.get_projects
+
       admin_users.each do |admin_data|
         projects.each do |p|
           Persistent.change_user_project_status(admin_data.login,p.project_pid,UserProjectData.NEW,
@@ -172,8 +172,6 @@ module PowerByHelper
       end
 
       @@log.info "Persistent storage for user provisioning initialized"
-
-
   end
 
 
@@ -322,18 +320,6 @@ module PowerByHelper
 
     def self.DISABLED
       "DISABLED"
-    end
-
-    def self.MUF_CHANGE_START
-      "MUF_CHANGE_START"
-    end
-
-    def self.MUF_USER_DISABLED
-      "MUF_USER_DISABLED"
-    end
-
-    def self.MUF_SET
-      "MUF_SET"
     end
 
     def initialize(status,data)

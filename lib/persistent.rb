@@ -175,7 +175,7 @@ module PowerByHelper
 
       def load_project
         if (File.exists?(Settings.storage_project_source))
-          FasterCSV.foreach(Settings.storage_project_source, :headers => true,:quote_char => '"') do |csv_obj|
+          FasterCSV.foreach(Settings.storage_project_source, :headers => true,:quote_char => '"',:skip_blanks => true) do |csv_obj|
             Persistent.change_project_status(csv_obj["ident"],csv_obj["status"],csv_obj)
           end
         end
@@ -183,7 +183,7 @@ module PowerByHelper
 
       def load_maintenance
         if (File.exists?(Settings.storage_maintenance_source))
-          FasterCSV.foreach(Settings.storage_maintenance_source, :headers => true,:quote_char => '"') do |csv_obj|
+          FasterCSV.foreach(Settings.storage_maintenance_source, :headers => true,:quote_char => '"', :skip_blanks => true) do |csv_obj|
             Persistent.change_maintenance_status(csv_obj["ident"],csv_obj["status"],csv_obj)
           end
         end
@@ -193,7 +193,7 @@ module PowerByHelper
 
       def load_user
         if (File.exists?(Settings.storage_user_source))
-          FasterCSV.foreach(Settings.storage_user_source, :headers => true,:quote_char => '"') do |csv_obj|
+          FasterCSV.foreach(Settings.storage_user_source, :headers => true,:quote_char => '"', :skip_blanks => true) do |csv_obj|
             if (csv_obj["admin"] == "false")
               csv_obj["admin"] = false
             elsif (csv_obj["admin"] == "true")
@@ -206,7 +206,7 @@ module PowerByHelper
 
       def load_user_project
         if (File.exists?(Settings.storage_user_project_source))
-          FasterCSV.foreach(Settings.storage_user_project_source, :headers => true,:quote_char => '"') do |csv_obj|
+          FasterCSV.foreach(Settings.storage_user_project_source, :headers => true,:quote_char => '"', :skip_blanks => true) do |csv_obj|
             if (csv_obj["notification"] == "false")
               csv_obj["notification"] = false
             elsif (csv_obj["notification"] == "true")
@@ -227,13 +227,13 @@ module PowerByHelper
 
       def load_etl
         if (File.exists?(Settings.storage_etl_source))
-          FasterCSV.foreach(Settings.storage_etl_source, :headers => true,:quote_char => '"') do |csv_obj|
+          FasterCSV.foreach(Settings.storage_etl_source, :headers => true,:quote_char => '"', :skip_blanks => true) do |csv_obj|
             Persistent.change_etl_status(csv_obj["project_pid"],csv_obj["status"],csv_obj)
           end
         end
 
         if (File.exists?(Settings.storage_schedules_source))
-          FasterCSV.foreach(Settings.storage_schedules_source, :headers => true,:quote_char => '"') do |csv_obj|
+          FasterCSV.foreach(Settings.storage_schedules_source, :headers => true,:quote_char => '"', :skip_blanks => true) do |csv_obj|
             Persistent.change_schedule_status(csv_obj["project_pid"],csv_obj["ident"],csv_obj["status"],csv_obj)
           end
         end
@@ -454,17 +454,6 @@ module PowerByHelper
             if (up.project_pid == project_pid and up.login == login )
               if (up.status == status)
                 @@log.debug "Login=#{login} Project_pid=#{project_pid} same status - no work done"
-              elsif (up.status == UserProjectData.MUF_CHANGE_START and status == UserProjectData.MUF_USER_DISABLED)
-                @@log.debug "Login=#{login} Project_pid=#{project_pid} project_user was MUF_CHANGE_START received MUF_USER_DISABLED - now MUF_USER_DISABLED"
-                up.status = UserProjectData.MUF_USER_DISABLED
-              elsif (up.status == UserProjectData.MUF_USER_DISABLED and status == UserProjectData.MUF_SET)
-                @@log.debug "Login=#{login} Project_pid=#{project_pid} project_user was MUF_USER_DISABLED received MUF_SET - now MUF_SET"
-                up.status = UserProjectData.MUF_SET
-              elsif (up.status == UserProjectData.MUF_SET and status == UserProjectData.OK)
-                @@log.debug "Login=#{login} Project_pid=#{project_pid} project_user was MUF_SET received OK - now OK"
-                up.status = UserProjectData.MUF_OK
-              elsif (up.status == UserProjectData.MUF_CHANGE_START or up.status == UserProjectData.MUF_USER_DISABLED or UserProjectData.MUF_SET)
-                @@log.debug "Login=#{login} Project_pid=#{project_pid} project_user was #{up.status} received #{status} - now #{up.status}"
               elsif (up.status == UserProjectData.TO_DISABLE and status == UserProjectData.OK)
                 @@log.debug "Login=#{login} Project_pid=#{project_pid} project-user was TO_DISABLE now it is OK"
                 up.status = UserProjectData.OK
