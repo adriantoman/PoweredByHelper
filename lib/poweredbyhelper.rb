@@ -224,6 +224,14 @@ module PowerByHelper
     end
 
 
+    def run_custom_code(code)
+      eval(code)
+    end
+
+
+
+
+
 
 
 

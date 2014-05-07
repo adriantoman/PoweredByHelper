@@ -53,3 +53,7 @@ Version v0.3.0
 Version v0.3.1
     Features:
         It is now possible to update key/value storage in batch opperation by PBH tool
+Version v0.3.2
+    Features:
+        It is now possible to run custom code in PGH context
+

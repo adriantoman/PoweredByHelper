@@ -417,6 +417,35 @@ command :execute_key_value_set do |c|
 end
 
 
+
+command :execute_code do |c|
+  c.desc 'Config file path'
+  c.flag [:config]
+
+  c.desc 'Code file'
+  c.flag [:code_file]
+
+
+  c.action do |global_options,options,args|
+    config_file = options[:config]
+    fail "Please provide link to config file" unless (File.exist?(config_file))
+    fail "The code file don't exist" unless (File.exist?(options[:code_file]))
+    code = File.read(options[:code_file])
+    helper = PowerByHelper::Pwb.new(config_file,options[:test])
+    helper.gooddata_login(@@api_debug)
+    helper.init_persistent_storage
+    helper.init_etl_persistent_storage
+    helper.init_user_storage
+    helper.run_custom_code(code)
+
+  end
+
+
+
+
+end
+
+
 command :test do |c|
 
   c.desc 'Config file path'
@@ -431,9 +460,10 @@ command :test do |c|
     helper = PowerByHelper::Pwb.new(config_file,options[:test])
     helper.gooddata_login(@@api_debug)
     helper.init_persistent_storage
-    helper.init_maintenance_storage
+    helper.init_etl_persistent_storage
     helper.init_user_storage
-    helper.execute_muf_sychronization
+
+
   end
 
 
