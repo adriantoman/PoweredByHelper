@@ -57,6 +57,7 @@ switch [:v,:verbose]
 pre do |global_options,command,options,args|
   next true if command.nil?
   @running = false
+  @not_delete = false
   @@log = Logger.new("log/provision.log",'daily') if !global_options[:debug]
   @@log = Logger.new(STDOUT) if global_options[:debug]
   @@log.level = Logger::INFO
@@ -65,8 +66,8 @@ pre do |global_options,command,options,args|
 
   if File.exists?('running.pid')
     @running = true
-    puts "Another process is running"
-    exit
+    @not_delete = true
+    exit_now! "Another process is running"
   end
   FileUtils.touch('running.pid')
 end
@@ -475,7 +476,7 @@ on_error do |exception|
   @@log ||= Logger.new(STDOUT)
   @@log.level = Logger::INFO
   @@log.error exception.backtrace
-  FileUtils.rm_f('running.pid')
+  FileUtils.rm_f('running.pid') if !@not_delete
   if exception.is_a?(SystemExit) && exception.status == 0
     @@log.error exception.inspect
     false
