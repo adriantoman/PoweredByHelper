@@ -59,4 +59,7 @@ Version v0.3.2
 Version v0.3.3
     Bug fix:
         Fixed problem with running.pid key file. The file was deleted after second run of the PBH tool
+Version v0.3.4
+    Bug fix:
+        Change way how the project-user entity is handled. Moved from array to hash. Preparing collection for user provisioning is now more then 100x times faster
 

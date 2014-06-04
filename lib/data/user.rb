@@ -14,9 +14,6 @@
 # DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
 # WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-
-
-
 module PowerByHelper
 
 
@@ -26,154 +23,152 @@ module PowerByHelper
     end
 
     def load_data_structure()
+        user_creation_mapping = Settings.deployment_user_creation["mapping"]
+        user_synchronization_mapping = Settings.deployment_user_project_synchronization["mapping"]
 
-      user_creation_mapping = Settings.deployment_user_creation["mapping"]
-      user_synchronization_mapping = Settings.deployment_user_project_synchronization["mapping"]
+        user_creation_file_name = Settings.deployment_user_creation["source"]
+        user_project_creation_file_name = Settings.deployment_user_project_synchronization["source"]
 
-      user_creation_file_name = Settings.deployment_user_creation["source"]
-      user_project_creation_file_name = Settings.deployment_user_project_synchronization["source"]
-
-      #In case of remote file location, lets download file to local first
-      if (Settings.deployment_user_creation_type == "webdav")
-        Helper.download_file_from_webdav(user_creation_file_name,Settings.default_user_data_file_name)
-        user_creation_file_name = Settings.default_user_data_file_name
-      end
-
-      if (Settings.deployment_user_project_synchronization_type == "webdav")
-        Helper.download_file_from_webdav(user_project_creation_file_name,Settings.default_user_project_synchronization_data_file_name)
-        user_project_creation_file_name = Settings.default_user_project_synchronization_data_file_name
-      end
-
-      #Checks
-      fail "User data file don't exists" unless File.exists?(user_creation_file_name)
-      fail "User project data file don't exists" unless File.exists?(user_project_creation_file_name)
-      fail "User creation mapping don't have all necessery fields" unless user_creation_mapping.has_key?("login") and user_creation_mapping.has_key?("first_name") and user_creation_mapping.has_key?("last_name")
-      fail "User project synchronization  mapping don't have all necessery fields" unless user_synchronization_mapping.has_key?("ident") and user_synchronization_mapping.has_key?("login") and user_synchronization_mapping.has_key?("role") and user_synchronization_mapping.has_key?("notification")
-
-      #Initializations
-      Persistent.init_user
-      Persistent.init_roles
-
-      password_mapping = user_creation_mapping["password"] || "password"
-      admin_mapping = user_creation_mapping["admin"] || user_creation_mapping["super_admin"] || "admin"
-
-
-      # Clean deleted domain users
-      Persistent.user_data.each do |user|
-        Persistent.change_user_status(user.login,UserData.TO_DISABLE,nil)
-      end
-
-      # Load info about users - domain file - representing users which should be in domain and merge it with info in Persistent storage
-      FasterCSV.foreach(user_creation_file_name, {:headers => true, :skip_blanks => true}) do |csv_obj|
-
-        user_password = ""
-
-        if (csv_obj[password_mapping].nil? or csv_obj[password_mapping] == "")
-          user_password = rand(10000000000000).to_s
-        else
-          user_password = csv_obj[password_mapping]
+        #In case of remote file location, lets download file to local first
+        if (Settings.deployment_user_creation_type == "webdav")
+          Helper.download_file_from_webdav(user_creation_file_name,Settings.default_user_data_file_name)
+          user_creation_file_name = Settings.default_user_data_file_name
         end
 
-        user_admin = false
-        user_admin_role = "adminRole"
-        if (!Helper.blank?(csv_obj[admin_mapping]))
-          # The admin mapping field could contain 0/1 ... the user is automaticaly admin
-          if (csv_obj[admin_mapping].to_s == "1")
-            user_admin = true
-          elsif (csv_obj[admin_mapping].to_s == "0")
-            user_admin = false
-            # The admin mapping field could contain gooddata role -> user will be created with this role
-          elsif (Helper.roles.include?(csv_obj[admin_mapping].to_s))
-            user_admin = true
-            user_admin_role = csv_obj[admin_mapping].to_s
+        if (Settings.deployment_user_project_synchronization_type == "webdav")
+          Helper.download_file_from_webdav(user_project_creation_file_name,Settings.default_user_project_synchronization_data_file_name)
+          user_project_creation_file_name = Settings.default_user_project_synchronization_data_file_name
+        end
+
+        #Checks
+        fail "User data file don't exists" unless File.exists?(user_creation_file_name)
+        fail "User project data file don't exists" unless File.exists?(user_project_creation_file_name)
+        fail "User creation mapping don't have all necessery fields" unless user_creation_mapping.has_key?("login") and user_creation_mapping.has_key?("first_name") and user_creation_mapping.has_key?("last_name")
+        fail "User project synchronization  mapping don't have all necessery fields" unless user_synchronization_mapping.has_key?("ident") and user_synchronization_mapping.has_key?("login") and user_synchronization_mapping.has_key?("role") and user_synchronization_mapping.has_key?("notification")
+
+        #Initializations
+        Persistent.init_user
+        Persistent.init_roles
+
+        password_mapping = user_creation_mapping["password"] || "password"
+        admin_mapping = user_creation_mapping["admin"] || user_creation_mapping["super_admin"] || "admin"
+
+        # Clean deleted domain users
+        Persistent.user_data.each do |user|
+          Persistent.change_user_status(user.login,UserData.TO_DISABLE,nil)
+        end
+
+        # Load info about users - domain file - representing users which should be in domain and merge it with info in Persistent storage
+        FasterCSV.foreach(user_creation_file_name, {:headers => true, :skip_blanks => true}) do |csv_obj|
+
+          user_password = ""
+
+          if (csv_obj[password_mapping].nil? or csv_obj[password_mapping] == "")
+            user_password = rand(10000000000000).to_s
           else
-            fail "Role provided for one user in domain file is invalid #{csv_obj[user_creation_mapping["login"]].downcase.strip} role: #{csv_obj[admin_mapping].to_s}"
-          end
-        end
-        sso_provider = ""
-        if (!Helper.blank?(user_creation_mapping["sso_provider"]))
-          sso_provider = csv_obj[user_creation_mapping["sso_provider"]]
-        end
-
-        data = {
-                "login" => csv_obj[user_creation_mapping["login"]].downcase.strip,
-                "first_name" => csv_obj[user_creation_mapping["first_name"]],
-                "last_name" => csv_obj[user_creation_mapping["last_name"]],
-                "password" => user_password,
-                "admin" => user_admin,
-                "admin_role" => user_admin_role,
-                "status" => UserData.NEW,
-                "sso_provider" => sso_provider
-              }
-
-        Persistent.change_user_status(csv_obj[user_creation_mapping["login"]].downcase.strip,UserData.NEW,data)
-      end
-
-      # Cleaning - mark all user_project mappings as disabled
-      Persistent.user_project_data.each do |user_project_data|
-        Persistent.change_user_project_status(user_project_data.login,user_project_data.project_pid,UserProjectData.TO_DISABLE,nil)
-      end
-
-
-      # Load info about user-project mapping and merge it with information from Persistent Storage
-      FasterCSV.foreach(user_project_creation_file_name, {:headers => true, :skip_blanks => true}) do |csv_obj|
-
-        ident = csv_obj[user_synchronization_mapping["ident"]]
-
-        project_pid = Persistent.get_project_by_ident(ident)
-
-        if (!project_pid.nil?)
-
-          project_pid = project_pid.project_pid
-
-          role = csv_obj[user_synchronization_mapping["role"]]
-          check = Helper.roles.find{|r| r.downcase == role.downcase}
-          fail "This role does not exist in Gooddata" if check.nil?
-
-          login = csv_obj[user_synchronization_mapping["login"]].downcase.strip
-          notification = csv_obj[user_synchronization_mapping["notification"]].to_s == "1" ? true : false
-          internal_role = "external"
-          if (!user_synchronization_mapping["internal_role"].nil?)
-            internal_role = csv_obj[user_synchronization_mapping["internal_role"]].downcase
+            user_password = csv_obj[password_mapping]
           end
 
-          Persistent.change_user_project_status(login,project_pid,UserProjectData.NEW,
-                                                {"login" => login,"project_pid" => project_pid, "notification" => notification, "internal_role" => internal_role,"role" => role}
-          )
+          user_admin = false
+          user_admin_role = "adminRole"
+          if (!Helper.blank?(csv_obj[admin_mapping]))
+            # The admin mapping field could contain 0/1 ... the user is automaticaly admin
+            if (csv_obj[admin_mapping].to_s == "1")
+              user_admin = true
+            elsif (csv_obj[admin_mapping].to_s == "0")
+              user_admin = false
+              # The admin mapping field could contain gooddata role -> user will be created with this role
+            elsif (Helper.roles.include?(csv_obj[admin_mapping].to_s))
+              user_admin = true
+              user_admin_role = csv_obj[admin_mapping].to_s
+            else
+              fail "Role provided for one user in domain file is invalid #{csv_obj[user_creation_mapping["login"]].downcase.strip} role: #{csv_obj[admin_mapping].to_s}"
+            end
+          end
+          sso_provider = ""
+          if (!Helper.blank?(user_creation_mapping["sso_provider"]))
+            sso_provider = csv_obj[user_creation_mapping["sso_provider"]]
+          end
 
+          data = {
+                  "login" => csv_obj[user_creation_mapping["login"]].downcase.strip,
+                  "first_name" => csv_obj[user_creation_mapping["first_name"]],
+                  "last_name" => csv_obj[user_creation_mapping["last_name"]],
+                  "password" => user_password,
+                  "admin" => user_admin,
+                  "admin_role" => user_admin_role,
+                  "status" => UserData.NEW,
+                  "sso_provider" => sso_provider
+                }
 
-        else
-          @@log.warn "Project with ID #{ident} don't exist. Skipping user #{csv_obj[user_synchronization_mapping["login"]].downcase} invitation"
+          Persistent.change_user_status(csv_obj[user_creation_mapping["login"]].downcase.strip,UserData.NEW,data)
         end
-      end
-      # Find all admin users and make them admin in all of the projects - merge this information with persistent storage
-      admin_users = Persistent.get_users_by_admin
-      projects = Persistent.get_projects
 
-      admin_users.each do |admin_data|
-        projects.each do |p|
-          Persistent.change_user_project_status(admin_data.login,p.project_pid,UserProjectData.NEW,
-                                                {"login" => admin_data.login,"project_pid" => p.project_pid, "notification" => false, "internal_role" => "internal", "role" =>  admin_data.admin_role}
-          )
+
+        # Cleaning - mark all user_project mappings as disabled
+        Persistent.user_project_data.values.each do |user_project_data|
+          Persistent.change_user_project_status(user_project_data.login,user_project_data.project_pid,UserProjectData.TO_DISABLE,nil)
         end
-      end
 
 
 
-      # We are supporting disable feature on projects
-      # DISABLED project for us is project, in which all users (except of users with role_internal == internal) are disabled
-      projects_to_disable = Persistent.get_projects_by_status(ProjectData.DISABLED)
-      Persistent.user_project_data.each do |user_project|
-        temp = projects_to_disable.find do |p|
-          p.project_pid == user_project.project_pid
+
+        # Load info about user-project mapping and merge it with information from Persistent Storage
+        FasterCSV.foreach(user_project_creation_file_name, {:headers => true, :skip_blanks => true}) do |csv_obj|
+
+          ident = csv_obj[user_synchronization_mapping["ident"]]
+
+          project_pid = Persistent.get_project_by_ident(ident)
+
+          if (!project_pid.nil?)
+
+            project_pid = project_pid.project_pid
+
+            role = csv_obj[user_synchronization_mapping["role"]]
+            check = Helper.roles.find{|r| r.downcase == role.downcase}
+            fail "This role does not exist in Gooddata" if check.nil?
+
+            login = csv_obj[user_synchronization_mapping["login"]].downcase.strip
+            notification = csv_obj[user_synchronization_mapping["notification"]].to_s == "1" ? true : false
+            internal_role = "external"
+            if (!user_synchronization_mapping["internal_role"].nil?)
+              internal_role = csv_obj[user_synchronization_mapping["internal_role"]].downcase
+            end
+
+            Persistent.change_user_project_status(login,project_pid,UserProjectData.NEW,
+                                                  {"login" => login,"project_pid" => project_pid, "notification" => notification, "internal_role" => internal_role,"role" => role}
+            )
+
+
+          else
+            @@log.warn "Project with ID #{ident} don't exist. Skipping user #{csv_obj[user_synchronization_mapping["login"]].downcase} invitation"
+          end
         end
-        is_disabled = temp.nil? ? false : true
-        if (is_disabled and user_project.internal_role != "internal")
-          Persistent.change_user_project_status(user_project.login,user_project.project_pid,UserProjectData.TO_DISABLE_BY_PROJECT,nil)
-        end
-      end
 
-      @@log.info "Persistent storage for user provisioning initialized"
+        # Find all admin users and make them admin in all of the projects - merge this information with persistent storage
+        admin_users = Persistent.get_users_by_admin
+        projects = Persistent.get_projects
+        admin_users.each do |admin_data|
+          projects.each do |p|
+            Persistent.change_user_project_status(admin_data.login,p.project_pid,UserProjectData.NEW,
+                                                  {"login" => admin_data.login,"project_pid" => p.project_pid, "notification" => false, "internal_role" => "internal", "role" =>  admin_data.admin_role}
+            )
+          end
+        end
+
+        # We are supporting disable feature on projects
+        # DISABLED project for us is project, in which all users (except of users with role_internal == internal) are disabled
+        projects_to_disable = Persistent.get_projects_by_status(ProjectData.DISABLED)
+        Persistent.user_project_data.values.each do |user_project|
+          temp = projects_to_disable.find do |p|
+            p.project_pid == user_project.project_pid
+          end
+          is_disabled = temp.nil? ? false : true
+          if (is_disabled and user_project.internal_role != "internal")
+            Persistent.change_user_project_status(user_project.login,user_project.project_pid,UserProjectData.TO_DISABLE_BY_PROJECT,nil)
+          end
+        end
+        @@log.info "Persistent storage for user provisioning initialized"
   end
 
 
@@ -213,11 +208,11 @@ module PowerByHelper
     def manage_user_project(muf_collection)
       @muf_collection = muf_collection
       # With new MUF functionality, I want to add users by project basis
-      project_pids = Persistent.user_project_data.map{|p| p.project_pid}
+      project_pids = Persistent.user_project_data.values.map{|p| p.project_pid}
       project_pids.uniq!
       # Let find all projects pids, which need to by changed somehow and iterate through project list
       project_pids.each do |pid|
-        user_project_data_for_one_pid = Persistent.user_project_data.find_all{|pd| pd.project_pid == pid}
+        user_project_data_for_one_pid = Persistent.user_project_data.values.find_all{|pd| pd.project_pid == pid}
         user_project_data_for_one_pid.each do |user_project_data|
           if (!@muf_collection.nil?)
             @muf_project = @muf_collection.find_muf_project_by_pid(pid)
@@ -229,14 +224,7 @@ module PowerByHelper
           UserHelper.disable_user(user_project_data)
           UserHelper.update_user(user_project_data)
         end
-
-
-
       end
-
-
-
-
     end
   end
 

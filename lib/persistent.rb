@@ -14,9 +14,6 @@
 # DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
 # WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-
-
-
 module PowerByHelper
 
   class Persistent
@@ -55,7 +52,7 @@ module PowerByHelper
       def init_user()
         if (@user_data.nil?)
           @user_data = []
-          @user_project_data = []
+          @user_project_data = Hash.new()
           load_user()
           load_user_project()
         end
@@ -168,7 +165,7 @@ module PowerByHelper
           FileUtils.mkdir_p File.dirname(Settings.storage_user_project_source) if !File.exists?(Settings.storage_user_project_source)
           FasterCSV.open(Settings.storage_user_project_source, 'w',:quote_char => '"') do |csv|
             csv << UserProjectData.header
-            @user_project_data.each do |d|
+            @user_project_data.values.each do |d|
               csv << d.to_a
             end
           end
@@ -444,78 +441,76 @@ module PowerByHelper
 
 
       def change_user_project_status(login,project_pid,status,data)
-        user_check = @user_project_data.find{|up| up.project_pid == project_pid and up.login == login }
-        if (user_check.nil?)
-          @user_project_data.push(UserProjectData.new(status,data))
+        user_check = nil
+        if (!@user_project_data.include?("#{project_pid}-#{login}"))
+          @user_project_data["#{project_pid}-#{login}"] = UserProjectData.new(status,data)
         else
-          @user_project_data.collect! do |up|
-            if (up.project_pid == project_pid and up.login == login )
-              if (up.status == status)
-                @@log.debug "Login=#{login} Project_pid=#{project_pid} same status - no work done"
-              elsif (up.status == UserProjectData.TO_DISABLE and status == UserProjectData.OK)
-                @@log.debug "Login=#{login} Project_pid=#{project_pid} project-user was TO_DISABLE now it is OK"
-                up.status = UserProjectData.OK
-              elsif (up.status == UserProjectData.TO_DISABLE and status == UserProjectData.NEW)
-                @@log.debug "Login=#{login} Project_pid=#{project_pid} project-user was TO_DISABLE now it is NEW - it is in source file - setting for OK"
-                if (up.role != data["role"])
-                  up.status = UserProjectData.CHANGED
-                  up.role = data["role"]
-                else
-                  up.status = UserProjectData.OK
-                end
-              elsif (up.status == UserProjectData.TO_DISABLE and status == UserProjectData.DISABLED)
-                @@log.debug "Login=#{login} Project_pid=#{project_pid} project-user was TO_DISABLE now it is DISABLED"
-                up.status = UserProjectData.DISABLED
-              elsif (up.status == UserProjectData.OK and status == UserProjectData.TO_DISABLE)
-                @@log.debug "Login=#{login} Project_pid=#{project_pid} project-user was OK now it is TO_DISABLE"
-                up.status = UserProjectData.TO_DISABLE
-              elsif (up.status == UserProjectData.NEW and status == UserProjectData.TO_DISABLE)
-                @@log.debug "Login=#{login} Project_pid=#{project_pid} project-user was NEW now it is TO_DISABLE - leaving NEW"
-                up.status = UserProjectData.NEW
-              elsif (up.status == UserProjectData.DISABLED and status == UserProjectData.TO_DISABLE)
-                @@log.debug "Login=#{login} Project_pid=#{project_pid} project-user was DISABLED requested status change to TO_DISABLE - leaving in DISABLE"
-                up.status = UserProjectData.DISABLED
-              elsif (up.status == UserProjectData.DISABLED and status == UserProjectData.NEW)
-                @@log.debug "Login=#{login} Project_pid=#{project_pid} project-user was DISABLED requested status change to NEW - setting status to CHANGE "
-                up.role = data["role"]
-                up.status = UserProjectData.CHANGED
-              elsif (up.status == UserProjectData.OK and status == UserProjectData.CHANGED)
-                @@log.debug "Login=#{login} Project_pid=#{project_pid} project-user was OK now it is CHANGED"
+          up = @user_project_data["#{project_pid}-#{login}"]
+          if (up.project_pid == project_pid and up.login == login )
+            if (up.status == status)
+              @@log.debug "Login=#{login} Project_pid=#{project_pid} same status - no work done"
+            elsif (up.status == UserProjectData.TO_DISABLE and status == UserProjectData.OK)
+              @@log.debug "Login=#{login} Project_pid=#{project_pid} project-user was TO_DISABLE now it is OK"
+              up.status = UserProjectData.OK
+            elsif (up.status == UserProjectData.TO_DISABLE and status == UserProjectData.NEW)
+              @@log.debug "Login=#{login} Project_pid=#{project_pid} project-user was TO_DISABLE now it is NEW - it is in source file - setting for OK"
+              if (up.role != data["role"])
                 up.status = UserProjectData.CHANGED
                 up.role = data["role"]
-              elsif (up.status == UserProjectData.CHANGED and status == UserProjectData.NEW)
-                @@log.debug "Login=#{login} Project_pid=#{project_pid} project-user was CHANGED, leaving CHANGED"
-                up.status = UserProjectData.CHANGED
-              elsif (up.status == UserProjectData.CHANGED and status == UserProjectData.OK)
-                @@log.debug "Login=#{login} Project_pid=#{project_pid} project was CHANGED now it is OK"
-                up.status = UserProjectData.OK
-              elsif (up.status == UserProjectData.OK and status == UserProjectData.NEW)
-                @@log.debug "Login=#{login} Project_pid=#{project_pid} project-user was OK now it is NEW - leaving OK"
-                up.status = UserProjectData.OK
-              elsif (up.status == UserProjectData.NEW and status == UserProjectData.OK)
-                @@log.debug "Login=#{login} Project_pid=#{project_pid} project-user was NEW now it is OK"
-                up.notification_send = data["notification_send"] if !data.nil?
-                up.status = UserProjectData.OK
-              elsif (up.status == UserProjectData.OK and status == UserProjectData.TO_DISABLE_BY_PROJECT)
-                @@log.debug "Login=#{login} Project_pid=#{project_pid} project-user was OK now it is TO_DISABLE_BY_PROJECT"
-                up.status = UserProjectData.TO_DISABLE_BY_PROJECT
-              elsif (up.status == UserProjectData.CHANGED and status == UserProjectData.TO_DISABLE_BY_PROJECT)
-                @@log.debug "Login=#{login} Project_pid=#{project_pid} project-user was CHANGED now it is TO_DISABLE_BY_PROJECT - leaving DISABLED"
-                up.status = UserProjectData.DISABLED
-              elsif (up.status == UserProjectData.TO_DISABLE_BY_PROJECT and status == UserProjectData.DISABLED)
-                @@log.debug "Login=#{login} Project_pid=#{project_pid} project-user was TO_DISABLE_BY_PROJECT now it is DISABLED"
-                up.status = UserProjectData.DISABLED
-              elsif (up.status == UserProjectData.TO_DISABLE and status == UserProjectData.TO_DISABLE_BY_PROJECT)
-                @@log.debug "Login=#{login} Project_pid=#{project_pid} project-user was TO_DISABLE we get TO_DISABLE_BY_PROJECT now it is DISABLED"
-                up.status = UserProjectData.TO_DISABLE
-              elsif (up.status == UserProjectData.DISABLED and status == UserProjectData.TO_DISABLE_BY_PROJECT)
-                @@log.debug "Login=#{login} Project_pid=#{project_pid} project-user was DISABLED we get TO_DISABLE_BY_PROJECT now it is DISABLED"
-                up.status = UserProjectData.DISABLED
               else
-                fail "Unsuported status change - #{up.status} #{status}"
+                up.status = UserProjectData.OK
               end
+            elsif (up.status == UserProjectData.TO_DISABLE and status == UserProjectData.DISABLED)
+              @@log.debug "Login=#{login} Project_pid=#{project_pid} project-user was TO_DISABLE now it is DISABLED"
+              up.status = UserProjectData.DISABLED
+            elsif (up.status == UserProjectData.OK and status == UserProjectData.TO_DISABLE)
+              @@log.debug "Login=#{login} Project_pid=#{project_pid} project-user was OK now it is TO_DISABLE"
+              up.status = UserProjectData.TO_DISABLE
+            elsif (up.status == UserProjectData.NEW and status == UserProjectData.TO_DISABLE)
+              @@log.debug "Login=#{login} Project_pid=#{project_pid} project-user was NEW now it is TO_DISABLE - leaving NEW"
+              up.status = UserProjectData.NEW
+            elsif (up.status == UserProjectData.DISABLED and status == UserProjectData.TO_DISABLE)
+              @@log.debug "Login=#{login} Project_pid=#{project_pid} project-user was DISABLED requested status change to TO_DISABLE - leaving in DISABLE"
+              up.status = UserProjectData.DISABLED
+            elsif (up.status == UserProjectData.DISABLED and status == UserProjectData.NEW)
+              @@log.debug "Login=#{login} Project_pid=#{project_pid} project-user was DISABLED requested status change to NEW - setting status to CHANGE "
+              up.role = data["role"]
+              up.status = UserProjectData.CHANGED
+            elsif (up.status == UserProjectData.OK and status == UserProjectData.CHANGED)
+              @@log.debug "Login=#{login} Project_pid=#{project_pid} project-user was OK now it is CHANGED"
+              up.status = UserProjectData.CHANGED
+              up.role = data["role"]
+            elsif (up.status == UserProjectData.CHANGED and status == UserProjectData.NEW)
+              @@log.debug "Login=#{login} Project_pid=#{project_pid} project-user was CHANGED, leaving CHANGED"
+              up.status = UserProjectData.CHANGED
+            elsif (up.status == UserProjectData.CHANGED and status == UserProjectData.OK)
+              @@log.debug "Login=#{login} Project_pid=#{project_pid} project was CHANGED now it is OK"
+              up.status = UserProjectData.OK
+            elsif (up.status == UserProjectData.OK and status == UserProjectData.NEW)
+              @@log.debug "Login=#{login} Project_pid=#{project_pid} project-user was OK now it is NEW - leaving OK"
+              up.status = UserProjectData.OK
+            elsif (up.status == UserProjectData.NEW and status == UserProjectData.OK)
+              @@log.debug "Login=#{login} Project_pid=#{project_pid} project-user was NEW now it is OK"
+              up.notification_send = data["notification_send"] if !data.nil?
+              up.status = UserProjectData.OK
+            elsif (up.status == UserProjectData.OK and status == UserProjectData.TO_DISABLE_BY_PROJECT)
+              @@log.debug "Login=#{login} Project_pid=#{project_pid} project-user was OK now it is TO_DISABLE_BY_PROJECT"
+              up.status = UserProjectData.TO_DISABLE_BY_PROJECT
+            elsif (up.status == UserProjectData.CHANGED and status == UserProjectData.TO_DISABLE_BY_PROJECT)
+              @@log.debug "Login=#{login} Project_pid=#{project_pid} project-user was CHANGED now it is TO_DISABLE_BY_PROJECT - leaving DISABLED"
+              up.status = UserProjectData.DISABLED
+            elsif (up.status == UserProjectData.TO_DISABLE_BY_PROJECT and status == UserProjectData.DISABLED)
+              @@log.debug "Login=#{login} Project_pid=#{project_pid} project-user was TO_DISABLE_BY_PROJECT now it is DISABLED"
+              up.status = UserProjectData.DISABLED
+            elsif (up.status == UserProjectData.TO_DISABLE and status == UserProjectData.TO_DISABLE_BY_PROJECT)
+              @@log.debug "Login=#{login} Project_pid=#{project_pid} project-user was TO_DISABLE we get TO_DISABLE_BY_PROJECT now it is DISABLED"
+              up.status = UserProjectData.TO_DISABLE
+            elsif (up.status == UserProjectData.DISABLED and status == UserProjectData.TO_DISABLE_BY_PROJECT)
+              @@log.debug "Login=#{login} Project_pid=#{project_pid} project-user was DISABLED we get TO_DISABLE_BY_PROJECT now it is DISABLED"
+              up.status = UserProjectData.DISABLED
+            else
+              fail "Unsuported status change - #{up.status} #{status}"
             end
-            up
           end
         end
       end
@@ -712,7 +707,7 @@ module PowerByHelper
 
       def delete_user_project_by_project_pid(project_pid)
         init_user if @user_project_data.nil?
-        @user_project_data.delete_if {|up| up.project_pid == project_pid}
+        @user_project_data.delete_if {|key,up| up.project_pid == project_pid}
       end
 
     end
