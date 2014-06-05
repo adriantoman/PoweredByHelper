@@ -300,6 +300,22 @@ module PowerByHelper
         end
       end
 
+      def monitoring
+        @json["monitoring"]
+      end
+
+      def monitoring_from
+        if  (!@json["monitoring"].nil? and !@json["monitoring"]["from"].nil?)
+          @json["monitoring"]["from"]
+        end
+      end
+
+      def monitoring_to
+        if  (!@json["monitoring"].nil? and !@json["monitoring"]["to"].nil?)
+          @json["monitoring"]["to"]
+        end
+      end
+
 
 
 

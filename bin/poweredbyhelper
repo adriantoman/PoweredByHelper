@@ -39,6 +39,7 @@ require 'colorize'
 require "net/dav"
 require "curb"
 require "zip/zip"
+require "pony"
 
 
 
@@ -477,6 +478,9 @@ on_error do |exception|
   @@log.level = Logger::INFO
   @@log.error exception.backtrace
   FileUtils.rm_f('running.pid') if !@not_delete
+  if (!Settings.monitoring.nil?)
+    Pony.mail(:to => Settings.monitoring_to,:from => Settings.monitoring_from, :subject => "PBH Error", :body => "Error: #{exception.backtrace}" )
+  end
   if exception.is_a?(SystemExit) && exception.status == 0
     @@log.error exception.inspect
     false
