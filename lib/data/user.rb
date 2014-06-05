@@ -124,9 +124,9 @@ module PowerByHelper
 
             project_pid = project_pid.project_pid
 
-            role = csv_obj[user_synchronization_mapping["role"]]
+            role = csv_obj[user_synchronization_mapping["role"]] || "dashboardOnlyRole"
             check = Helper.roles.find{|r| r.downcase == role.downcase}
-            fail "This role does not exist in Gooddata" if check.nil?
+            role = "dashboardOnlyRole" if check.nil?
 
             login = csv_obj[user_synchronization_mapping["login"]].downcase.strip
             notification = csv_obj[user_synchronization_mapping["notification"]].to_s == "1" ? true : false
@@ -138,8 +138,6 @@ module PowerByHelper
             Persistent.change_user_project_status(login,project_pid,UserProjectData.NEW,
                                                   {"login" => login,"project_pid" => project_pid, "notification" => notification, "internal_role" => internal_role,"role" => role}
             )
-
-
           else
             @@log.warn "Project with ID #{ident} don't exist. Skipping user #{csv_obj[user_synchronization_mapping["login"]].downcase} invitation"
           end

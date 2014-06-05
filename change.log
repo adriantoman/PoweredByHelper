@@ -62,4 +62,8 @@ Version v0.3.3
 Version v0.3.4
     Bug fix:
         Change way how the project-user entity is handled. Moved from array to hash. Preparing collection for user provisioning is now more then 100x times faster
+Version v0.3.5
+    Feature:
+        The default role for invite is dashboardOnly. In case that role is not filled in, the user is invited with this role.
+
 
