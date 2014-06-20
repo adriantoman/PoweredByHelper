@@ -41,7 +41,9 @@ module PowerByHelper
     end
 
     def create_backup
-      MaintenanceHelper.create_backup
+      if (Settings.backup.nil?)
+        MaintenanceHelper.create_backup(Settings.backup_folder,Settings.backup_filename)
+      end
     end
 
 

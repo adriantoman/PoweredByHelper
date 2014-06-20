@@ -134,23 +134,22 @@ module PowerByHelper
       end
     end
 
-    def self.create_backup
-      if (!Settings.backup.nil? and Settings.backup != "")
-        res = nil
-        processed_files = []
-        Zip::ZipFile.open(Settings.backup_folder + Settings.backup_filename + "_#{DateTime.now.to_s}.zip", Zip::ZipFile::CREATE) do |zipfile|
-          Dir[File.join("data/", '**','**')].each do |file|
-            temp = processed_files.find{|f| f == file}
-            if (temp.nil?)
-              unless File.directory?(file)
-                zipfile.add(file.sub(dir,''), file)
-                processed_files.push(file)
-              end
+    def self.create_backup(folder,filename)
+      res = nil
+      processed_files = []
+      Zip::ZipFile.open(folder + filename + "_#{DateTime.now.to_s}.zip", Zip::ZipFile::CREATE) do |zipfile|
+        Dir[File.join("data/", '**','**')].each do |file|
+          temp = processed_files.find{|f| f == file}
+          if (temp.nil?)
+            unless File.directory?(file)
+              zipfile.add(file.sub(dir,''), file)
+              processed_files.push(file)
             end
           end
         end
       end
     end
+  end
 
 
 
