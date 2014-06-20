@@ -92,6 +92,7 @@ command :provision do |c|
     fail "Please provide link to config file" unless (File.exist?(config_file))
     helper = PowerByHelper::Pwb.new(config_file,options[:test])
     helper.migration
+    helper.create_backup
     helper.gooddata_login(@@api_debug)
     helper.init_persistent_storage
     helper.project_provisioning

@@ -40,6 +40,10 @@ module PowerByHelper
       end
     end
 
+    def create_backup
+      MaintenanceHelper.create_backup
+    end
+
 
     def gooddata_login(debug = false)
       login = Settings.connection["login"]

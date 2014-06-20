@@ -316,6 +316,19 @@ module PowerByHelper
         end
       end
 
+      def backup
+        @json["backup"]
+      end
+
+      def backup_filename
+        @json["backup"]["filename"]
+      end
+
+      def backup_folder
+        @json["backup"]["folder"]
+      end
+
+
 
 
 
