@@ -150,15 +150,4 @@ module PowerByHelper
       end
     end
   end
-
-
-
-
-
-
-
-
-
-
-  end
 end
