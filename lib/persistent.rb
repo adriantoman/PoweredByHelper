@@ -508,6 +508,9 @@ module PowerByHelper
             elsif (up.status == UserProjectData.DISABLED and status == UserProjectData.TO_DISABLE_BY_PROJECT)
               @@log.debug "Login=#{login} Project_pid=#{project_pid} project-user was DISABLED we get TO_DISABLE_BY_PROJECT now it is DISABLED"
               up.status = UserProjectData.DISABLED
+            elsif (up.status == UserProjectData.CHANGED and status == UserProjectData.TO_DISABLE)
+              @@log.debug "Login=#{login} Project_pid=#{project_pid} project-user was CHANGED we get TO_DISABLE now it is TO_DISABLE"
+              up.status = UserProjectData.TO_DISABLE
             else
               fail "Unsuported status change - #{up.status} #{status}"
             end
