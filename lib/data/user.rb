@@ -120,7 +120,7 @@ module PowerByHelper
 
           project_pid = Persistent.get_project_by_ident(ident)
 
-          if (!project_pid.nil?)
+          if (!project_pid.nil? and !csv_obj[user_synchronization_mapping["login"]].nil? )
 
             project_pid = project_pid.project_pid
 
@@ -138,6 +138,8 @@ module PowerByHelper
             Persistent.change_user_project_status(login,project_pid,UserProjectData.NEW,
                                                   {"login" => login,"project_pid" => project_pid, "notification" => notification, "internal_role" => internal_role,"role" => role}
             )
+          elsif (csv_obj[user_synchronization_mapping["login"]].nil?)
+            @@log.warn "One of the lines has empty login"
           else
             @@log.warn "Project with ID #{ident} don't exist. Skipping user #{csv_obj[user_synchronization_mapping["login"]].downcase} invitation"
           end
