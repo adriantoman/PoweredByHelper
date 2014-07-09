@@ -179,18 +179,17 @@ module PowerByHelper
         if (p.status == ProjectData.DISABLED)
           disabled_at = DateTime.strptime(p.disabled_at,"%Y-%m-%d %H:%M:%S")
           store_period = Integer(Settings.deployment_project_disable_duration) || 30
-
           if ((DateTime.now - disabled_at) > store_period)
             delete_project(p)
           end
+          Persistent.store_project
         end
 
         if (p.status == ProjectData.TO_DISABLE)
           # Here we only mark project as disabled, users will be disabled in user provisioning part
           Persistent.change_project_status(p.ident,ProjectData.DISABLED,nil)
-
+          Persistent.store_project
         end
-        Persistent.store_project
       end
     end
 

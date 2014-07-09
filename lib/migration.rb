@@ -69,12 +69,10 @@ module PowerByHelper
 
         @@log.info "Migration from v0.1 to v0.2 sucessfully FINISHED"
       end
+    end
 
 
-
-
-
-
+    def migrationB
 
     end
 

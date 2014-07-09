@@ -71,5 +71,9 @@ Version v0.3.6
 Version v0.3.7
     Feature:
         Added possibility to backup PBH datasource before run
+Version v0.3.8
+    Bug fix:
+        Fixed incosistenci in project disable phase
+        Few minor bug fixes and code refactorings
 
 
