@@ -75,5 +75,10 @@ Version v0.3.8
     Bug fix:
         Fixed incosistenci in project disable phase
         Few minor bug fixes and code refactorings
+Version v0.3.9
+    Bug fix:
+        Fixed error with error handling
+
+
 
 
