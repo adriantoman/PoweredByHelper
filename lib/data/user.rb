@@ -131,7 +131,7 @@ module PowerByHelper
             login = csv_obj[user_synchronization_mapping["login"]].downcase.strip
             notification = csv_obj[user_synchronization_mapping["notification"]].to_s == "1" ? true : false
             internal_role = "external"
-            if (!user_synchronization_mapping["internal_role"].nil?)
+            if (!user_synchronization_mapping["internal_role"].nil? & !csv_obj[user_synchronization_mapping["internal_role"]].nil?)
               internal_role = csv_obj[user_synchronization_mapping["internal_role"]].downcase
             end
 
