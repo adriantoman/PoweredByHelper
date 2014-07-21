@@ -20,7 +20,7 @@ module PowerByHelper
 
     class << self
 
-      attr_accessor :project_data,:etl_data,:schedule_data,:user_data,:maintenance_data,:roles,:user_project_data,:project_custom_params,:custom_params_names
+      attr_accessor :project_data,:etl_data,:schedule_data,:user_data,:maintenance_data,:roles,:user_project_data,:project_custom_params,:custom_params_names,:muf_projects
       # project section
 
       def init_project()

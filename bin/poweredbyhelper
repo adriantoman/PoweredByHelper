@@ -262,40 +262,41 @@ command :dry_run do |c|
     # MUF Sections
 
     puts "------- MUF provisioning part -------\n".colorize( :light_blue )
+    if (!PowerByHelper::Persistent.muf_projects.nil?)
+      PowerByHelper::Persistent.muf_projects.each do |muf_project|
+        puts "Mufs in project: #{muf_project.pid} - ID: #{muf_project.ident}".colorize( :green )
+        muf_project.muf_logins.each do |muf_login|
+          if (muf_login.ok?)
+              puts "  Muf for login #{muf_login.login} was not changed.".colorize( :green )
+          elsif (muf_login.create?)
+             puts "  Muf for login #{muf_login.login} is new.".colorize(:light_red)
+             muf_login.mufs.each do |muf|
+              puts "    Muf for attribute #{muf.attribute} has this settings #{muf.new_values.values.join(",")}".colorize(:light_red)
+             end
+          elsif (muf_login.to_delete)
+            puts "  Muf for login #{muf_login.login} will be deleted.".colorize(:red)
+          elsif (muf_login.changed?)
+            puts "  Muf for login #{muf_login.login} will be changed.".colorize(:light_red)
+            muf_login.mufs.each do |muf|
+              if (!muf.same?)
+                muf_values = muf.values
+                muf_values_new = muf.new_values
+                muf_values = muf_values.values.sort
+                muf_values_new = muf_values_new.values.sort
 
-    PowerByHelper::Persistent.muf_projects.each do |muf_project|
-      puts "Mufs in project: #{muf_project.pid} - ID: #{muf_project.ident}".colorize( :green )
-      muf_project.muf_logins.each do |muf_login|
-        if (muf_login.ok?)
-            puts "  Muf for login #{muf_login.login} was not changed.".colorize( :green )
-        elsif (muf_login.create?)
-           puts "  Muf for login #{muf_login.login} is new.".colorize(:light_red)
-           muf_login.mufs.each do |muf|
-            puts "    Muf for attribute #{muf.attribute} has this settings #{muf.new_values.values.join(",")}".colorize(:light_red)
-           end
-        elsif (muf_login.to_delete)
-          puts "  Muf for login #{muf_login.login} will be deleted.".colorize(:red)
-        elsif (muf_login.changed?)
-          puts "  Muf for login #{muf_login.login} will be changed.".colorize(:light_red)
-          muf_login.mufs.each do |muf|
-            if (!muf.same?)
-              muf_values = muf.values
-              muf_values_new = muf.new_values
-              muf_values = muf_values.values.sort
-              muf_values_new = muf_values_new.values.sort
+                added_values = muf_values_new - muf_values
+                removed_values = muf_values - muf_values_new
+                same_values = muf_values & muf_values_new
 
-              added_values = muf_values_new - muf_values
-              removed_values = muf_values - muf_values_new
-              same_values = muf_values & muf_values_new
-
-              puts "    Muf for attribute #{muf.attribute} has this values:".colorize(:light_red)
-              puts "       Same values: #{same_values.join(",")}".colorize(:light_red) if !same_values.empty?
-              puts "       Added values: #{added_values.join(",")}".colorize(:red) if !added_values.empty?
-              puts "       Removed values: #{removed_values.join(",")}".colorize(:red) if !removed_values.empty?
+                puts "    Muf for attribute #{muf.attribute} has this values:".colorize(:light_red)
+                puts "       Same values: #{same_values.join(",")}".colorize(:light_red) if !same_values.empty?
+                puts "       Added values: #{added_values.join(",")}".colorize(:red) if !added_values.empty?
+                puts "       Removed values: #{removed_values.join(",")}".colorize(:red) if !removed_values.empty?
+              end
             end
           end
-        end
 
+        end
       end
     end
 
@@ -480,9 +481,9 @@ on_error do |exception|
   @@log.error exception.backtrace
   @@log.error exception.message
   FileUtils.rm_f('running.pid') if !@not_delete
-  if (!Settings.nil? and !Settings.monitoring.nil?)
+  if (!$monitoring_mail_target.nil? and !$monitoring_mail_source.nil?)
     @@log.error "Sending mail"
-    Pony.mail(:to => Settings.monitoring_to,:from => Settings.monitoring_from, :subject => "PBH Error", :body => "Error: #{exception.backtrace}" )
+    Pony.mail(:to => $monitoring_mail_target,:from => $monitoring_mail_source, :subject => "PBH Error", :body => "Error: #{exception.backtrace}" )
   end
   if exception.is_a?(SystemExit) && exception.status == 0
     @@log.error exception.inspect

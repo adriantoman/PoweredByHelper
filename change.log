@@ -78,6 +78,11 @@ Version v0.3.8
 Version v0.3.9
     Bug fix:
         Fixed error with error handling
+Version v0.3.10
+    Bug fix:
+        Another changes to Error handling
+        Fixed bug in Dry run
+
 
 
 

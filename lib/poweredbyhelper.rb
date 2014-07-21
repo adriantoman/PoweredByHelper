@@ -38,6 +38,12 @@ module PowerByHelper
         json = JSON.load( f )
         Settings.load(json)
       end
+
+      #Global mail setting - for notification about fail
+      if (!Settings.monitoring.nil?)
+        $monitoring_mail_target = Settings.monitoring_to
+        $monitoring_mail_source = Settings.monitoring_from
+      end
     end
 
     def create_backup
