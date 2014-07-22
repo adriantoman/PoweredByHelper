@@ -63,6 +63,11 @@ module PowerByHelper
       GoodData.connect(login,password,server,{:webdav_server => Settings.connection_webdav,:headers => {"X-GDC-CC-PRIORITY-MODE" => 'NORMAL'}})
     end
 
+    def check_directories_on_webdav
+      Helper.check_directories_on_webdav()
+    end
+
+
     def init_persistent_storage
       @projects = Project.new() if (!Settings.deployment_project.nil? and !Settings.deployment_project.empty?)
     end
@@ -181,7 +186,7 @@ module PowerByHelper
     def move_remote_project_files
        if (Settings.deployment_project_data_type == "webdav" and !Settings.deployment_project_data_move_after_processing.nil?)
          filename = Settings.deployment_project_data_file_name.split("/").last
-         @@log.info "Moving file #{"processing/" + filename} to #{Settings.deployment_project_data_move_after_processing}"
+         @@log.info "If exists moving file #{"processing/" + filename} to #{Settings.deployment_project_data_move_after_processing}"
          Helper.move_file_to_other_folder("processing/" + filename,Settings.deployment_project_data_move_after_processing)
        end
     end
@@ -189,13 +194,13 @@ module PowerByHelper
     def move_remote_user_files
       if (Settings.deployment_user_creation_type == "webdav" and !Settings.deployment_user_creation_move_after_processing.nil?)
         filename = Settings.deployment_user_creation["source"].split("/").last
-        @@log.info "Moving file #{"processing/" + filename} to #{Settings.deployment_user_creation_move_after_processing}"
+        @@log.info "If exists moving file #{"processing/" + filename} to #{Settings.deployment_user_creation_move_after_processing}"
         Helper.move_file_to_other_folder("processing/" + filename,Settings.deployment_user_creation_move_after_processing)
       end
 
       if (Settings.deployment_user_project_synchronization_type == "webdav" and !Settings.deployment_user_project_synchronization_move_after_processing.nil?)
         filename = Settings.deployment_user_project_synchronization["source"].split("/").last
-        @@log.info "Moving file #{"processing/" + filename} to #{Settings.deployment_user_project_synchronization_move_after_processing}"
+        @@log.info "If exists moving file #{"processing/" + filename} to #{Settings.deployment_user_project_synchronization_move_after_processing}"
         Helper.move_file_to_other_folder("processing/" + filename,Settings.deployment_user_project_synchronization_move_after_processing)
       end
     end
@@ -249,13 +254,6 @@ module PowerByHelper
     def test
       Helper.check_directories_on_webdav()
     end
-
-
-
-
-
-
-
 
 
 

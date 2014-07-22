@@ -94,6 +94,7 @@ command :provision do |c|
     helper.migration
     helper.create_backup
     helper.gooddata_login(@@api_debug)
+    helper.check_directories_on_webdav
     helper.init_persistent_storage
     helper.project_provisioning
     helper.move_remote_project_files
