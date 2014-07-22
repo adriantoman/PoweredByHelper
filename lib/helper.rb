@@ -183,6 +183,27 @@ module PowerByHelper
       exist
     end
 
+    def self.check_directories_on_webdav()
+      list_of_folders = ["waiting","loaded","processing"]
+      folders = []
+      user =      Settings.connection["login"]
+      password =  Settings.connection["password"]
+
+      adress = Settings.connection_webdav_storage
+
+      dav = Net::DAV.new(adress, :curl => false)
+      dav.verify_server = false # Ignore server verification
+      dav.credentials(user, password)
+
+      list_of_folders.each do |folder|
+        if (!dav.exists?(folder))
+          dav.mkdir(folder)
+        end
+      end
+    end
+
+
+
     def self.get_element_object_url(pid,id)
       "/gdc/md/#{pid}/obj/#{id}/elements"
     end

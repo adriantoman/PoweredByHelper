@@ -180,18 +180,23 @@ module PowerByHelper
 
     def move_remote_project_files
        if (Settings.deployment_project_data_type == "webdav" and !Settings.deployment_project_data_move_after_processing.nil?)
-         @@log.info "Moving file #{Settings.deployment_project_data_file_name} to #{Settings.deployment_project_data_move_after_processing}"
-         Helper.move_file_to_other_folder(Settings.deployment_project_data_file_name,Settings.deployment_project_data_move_after_processing)
+         filename = Settings.deployment_project_data_file_name.split("/").last
+         @@log.info "Moving file #{"processing/" + filename} to #{Settings.deployment_project_data_move_after_processing}"
+         Helper.move_file_to_other_folder("processing/" + filename,Settings.deployment_project_data_move_after_processing)
        end
     end
 
     def move_remote_user_files
       if (Settings.deployment_user_creation_type == "webdav" and !Settings.deployment_user_creation_move_after_processing.nil?)
-        Helper.move_file_to_other_folder(Settings.deployment_user_creation["source"],Settings.deployment_user_creation_move_after_processing)
+        filename = Settings.deployment_user_creation["source"].split("/").last
+        @@log.info "Moving file #{"processing/" + filename} to #{Settings.deployment_user_creation_move_after_processing}"
+        Helper.move_file_to_other_folder("processing/" + filename,Settings.deployment_user_creation_move_after_processing)
       end
 
       if (Settings.deployment_user_project_synchronization_type == "webdav" and !Settings.deployment_user_project_synchronization_move_after_processing.nil?)
-        Helper.move_file_to_other_folder(Settings.deployment_user_project_synchronization["source"],Settings.deployment_user_project_synchronization_move_after_processing)
+        filename = Settings.deployment_user_project_synchronization["source"].split("/").last
+        @@log.info "Moving file #{"processing/" + filename} to #{Settings.deployment_user_project_synchronization_move_after_processing}"
+        Helper.move_file_to_other_folder("processing/" + filename,Settings.deployment_user_project_synchronization_move_after_processing)
       end
     end
 
@@ -240,6 +245,10 @@ module PowerByHelper
       eval(code)
     end
 
+
+    def test
+      Helper.check_directories_on_webdav()
+    end
 
 
 

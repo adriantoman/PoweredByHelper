@@ -82,6 +82,12 @@ Version v0.3.10
     Bug fix:
         Another changes to Error handling
         Fixed bug in Dry run
+Version v0.3.11
+    Feature:
+        The files for projects, users and user_project mapping are moved to processing folder when grabbed by the tool. This will help in case that tool is running very long and you need to update files on webdav faster.
+        This feature is not working for MUFs yet (TO-DO)
+
+
 
 
 

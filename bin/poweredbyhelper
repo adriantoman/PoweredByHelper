@@ -463,10 +463,7 @@ command :test do |c|
     fail "Please provide link to config file" unless (File.exist?(config_file))
     helper = PowerByHelper::Pwb.new(config_file,options[:test])
     helper.gooddata_login(@@api_debug)
-    helper.init_persistent_storage
-    helper.init_etl_persistent_storage
-    helper.init_user_storage
-
+    helper.test
 
   end
 

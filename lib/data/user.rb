@@ -31,12 +31,30 @@ module PowerByHelper
 
         #In case of remote file location, lets download file to local first
         if (Settings.deployment_user_creation_type == "webdav")
-          Helper.download_file_from_webdav(user_creation_file_name,Settings.default_user_data_file_name)
+          remote_filename = user_creation_file_name.split("/").last
+          if (Helper.check_file_on_webdav("processing/" + remote_filename))
+            @@log.info "Found file in processing folder #{remote_filename}, reusing"
+            Helper.download_file_from_webdav("processing/" + remote_filename,Settings.default_user_data_file_name)
+          else
+            @@log.info "Downloading file #{user_creation_file_name}"
+            Helper.download_file_from_webdav(user_creation_file_name,Settings.default_user_data_file_name)
+            @@log.info "Moving file to #{"processing/" + remote_filename}"
+            Helper.move_file_to_other_folder(user_creation_file_name,"processing/" + remote_filename)
+          end
           user_creation_file_name = Settings.default_user_data_file_name
         end
 
         if (Settings.deployment_user_project_synchronization_type == "webdav")
-          Helper.download_file_from_webdav(user_project_creation_file_name,Settings.default_user_project_synchronization_data_file_name)
+          remote_filename = user_project_creation_file_name.split("/").last
+          if (Helper.check_file_on_webdav("processing/" + remote_filename))
+            @@log.info "Found file in processing folder #{remote_filename}, reusing"
+            Helper.download_file_from_webdav("processing/" + remote_filename,Settings.default_user_project_synchronization_data_file_name)
+          else
+            @@log.info "Downloading file #{user_project_creation_file_name}"
+            Helper.download_file_from_webdav(user_project_creation_file_name,Settings.default_user_project_synchronization_data_file_name)
+            @@log.info "Moving file to #{"processing/" + remote_filename}"
+            Helper.move_file_to_other_folder(user_project_creation_file_name,"processing/" + remote_filename)
+          end
           user_project_creation_file_name = Settings.default_user_project_synchronization_data_file_name
         end
 
@@ -169,7 +187,7 @@ module PowerByHelper
           end
         end
         @@log.info "Persistent storage for user provisioning initialized"
-  end
+    end
 
 
     def create_new_users

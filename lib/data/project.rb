@@ -32,10 +32,17 @@ module PowerByHelper
 
       #In case of remote file location, lets download file to local first
       if (Settings.deployment_project_data_type == "webdav")
-        Helper.download_file_from_webdav(data_file_path,Settings.default_project_data_file_name)
+        remote_filename = data_file_path.split("/").last
+        if (Helper.check_file_on_webdav("processing/" + remote_filename))
+          @@log.info "Found file in processing folder #{remote_filename}, reusing"
+          Helper.download_file_from_webdav("processing/" + remote_filename,Settings.default_project_data_file_name)
+        else
+          @@log.info "Downloading file #{data_file_path}"
+          Helper.download_file_from_webdav(data_file_path,Settings.default_project_data_file_name)
+          Helper.move_file_to_other_folder(data_file_path,"processing/" + remote_filename)
+        end
         data_file_path = Settings.default_project_data_file_name
       end
-
       fail "Project data file don't exists" unless File.exists?(data_file_path)
       fail "Project mapping don't have all necessery fields" unless data_mapping.has_key?("project_name") and data_mapping.has_key?("ident")
       fail "You have not specified template for project creation. Project would have been created empty" if Helper.blank?(Settings.deployment_project["template"])
@@ -72,7 +79,6 @@ module PowerByHelper
       end
 
       @@log.info "Persistent storage for project provisioning initialized"
-
     end
 
 
