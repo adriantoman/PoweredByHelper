@@ -86,6 +86,13 @@ Version v0.3.11
     Feature:
         The files for projects, users and user_project mapping are moved to processing folder when grabbed by the tool. This will help in case that tool is running very long and you need to update files on webdav faster.
         This feature is not working for MUFs yet (TO-DO)
+Version v0.3.12
+    Feature:
+        Added automatic creation of processing folder
+Version v0.3.13
+    Feature:
+        Added validation of input files. The validation is executed before the project and user creation. It should catch most of the validity problems
+
 
 
 

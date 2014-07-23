@@ -64,6 +64,15 @@ module PowerByHelper
         fail "User creation mapping don't have all necessery fields" unless user_creation_mapping.has_key?("login") and user_creation_mapping.has_key?("first_name") and user_creation_mapping.has_key?("last_name")
         fail "User project synchronization  mapping don't have all necessery fields" unless user_synchronization_mapping.has_key?("ident") and user_synchronization_mapping.has_key?("login") and user_synchronization_mapping.has_key?("role") and user_synchronization_mapping.has_key?("notification")
 
+        if (Validation.validate_user_file(user_creation_file_name))
+          fail "The validation of user creation file has failed. Please fix the source file and run the tool again"
+        end
+
+
+        if (Validation.validate_user_project_file(user_project_creation_file_name))
+          fail "The validation of user project creation file has failed. Please fix the source file and run the tool again"
+        end
+
         #Initializations
         Persistent.init_user
         Persistent.init_roles

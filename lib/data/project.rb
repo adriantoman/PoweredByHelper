@@ -48,6 +48,12 @@ module PowerByHelper
       fail "You have not specified template for project creation. Project would have been created empty" if Helper.blank?(Settings.deployment_project["template"])
       fail "You have not specified token for project creation." if Helper.blank?(Settings.deployment_project["token"])
 
+
+
+      if (Validation.validate_project_file(data_file_path))
+        fail "The validation of project file has failed. Please fix the source file and run the tool again"
+      end
+
       Persistent.init_project
       Persistent.init_project_custom_params
 

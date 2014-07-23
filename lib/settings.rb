@@ -55,6 +55,11 @@ module PowerByHelper
         @json["deployment"]["project"]["data"]["file_name"]
       end
 
+      def deployment_project_data_mapping
+        @json["deployment"]["project"]["data"]["mapping"]
+      end
+
+
       def default_project_data_file_name
         "source/projects.csv"
       end
@@ -112,6 +117,11 @@ module PowerByHelper
         @json["deployment"]["user"]["creation"]
       end
 
+      def deployment_user_creation_mapping
+        @json["deployment"]["user"]["creation"]["mapping"]
+      end
+
+
       def deployment_user_creation_type
         if (!@json["deployment"]["user"].nil? and !@json["deployment"]["user"]["creation"].nil?)
           @json["deployment"]["user"]["creation"]["type"] || "local"
@@ -130,6 +140,10 @@ module PowerByHelper
 
       def deployment_user_project_synchronization
         @json["deployment"]["user"]["project_synchronization"]
+      end
+
+      def deployment_user_project_synchronization_mapping
+        @json["deployment"]["user"]["project_synchronization"]["mapping"]
       end
 
       def deployment_user_project_synchronization_type

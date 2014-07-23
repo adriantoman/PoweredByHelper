@@ -27,6 +27,7 @@ require 'yaml'
 %w(settings helper persistent userhelper maintenancehelper migration).each {|a| require "#{a}"}
 %w(project etl user maintenance).each {|a| require "data/#{a}"}
 %w(muf_collection muf muf_project muf_login).each {|a| require "muf/#{a}"}
+require "validation"
 
 module PowerByHelper
 
