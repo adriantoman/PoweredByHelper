@@ -59,8 +59,8 @@ module PowerByHelper
       password = Settings.connection["password"]
       server = Settings.connection_server
       fail "Please put Gooddata Login and Password into the config file" if Helper.blank?(login) or Helper.blank?(password)
-      GoodData.logger = @@log
-      GoodData.logger.level = Logger::DEBUG if debug
+      #GoodData.logger = @@log
+      #GoodData.logger.level = Logger::DEBUG if debug
       GoodData.connect(login,password,server,{:webdav_server => Settings.connection_webdav,:headers => {"X-GDC-CC-PRIORITY-MODE" => 'NORMAL'}})
     end
 
@@ -236,7 +236,7 @@ module PowerByHelper
         Persistent.store_project
         Persistent.store_etl
         Persistent.store_schedules
-        Persistent.store_user_project
+        #Persistent.store_user_project
       end
     end
 
@@ -244,6 +244,8 @@ module PowerByHelper
       @@log.info "Checking if migration is needed"
       @migration = Migration.new
       @migration.migrationA()
+      @migration.migrationB()
+      @migration.migrationC()
     end
 
 

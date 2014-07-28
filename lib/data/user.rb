@@ -36,7 +36,6 @@ module PowerByHelper
             @@log.info "Found file in processing folder #{remote_filename}, reusing"
             Helper.download_file_from_webdav("processing/" + remote_filename,Settings.default_user_data_file_name)
           else
-            @@log.info "Downloading file #{user_creation_file_name}"
             Helper.download_file_from_webdav(user_creation_file_name,Settings.default_user_data_file_name)
             @@log.info "Moving file to #{"processing/" + remote_filename}"
             Helper.move_file_to_other_folder(user_creation_file_name,"processing/" + remote_filename)
@@ -50,7 +49,6 @@ module PowerByHelper
             @@log.info "Found file in processing folder #{remote_filename}, reusing"
             Helper.download_file_from_webdav("processing/" + remote_filename,Settings.default_user_project_synchronization_data_file_name)
           else
-            @@log.info "Downloading file #{user_project_creation_file_name}"
             Helper.download_file_from_webdav(user_project_creation_file_name,Settings.default_user_project_synchronization_data_file_name)
             @@log.info "Moving file to #{"processing/" + remote_filename}"
             Helper.move_file_to_other_folder(user_project_creation_file_name,"processing/" + remote_filename)
@@ -132,11 +130,11 @@ module PowerByHelper
         end
 
 
-        # Cleaning - mark all user_project mappings as disabled
-        Persistent.user_project_data.values.each do |user_project_data|
-          Persistent.change_user_project_status(user_project_data.login,user_project_data.project_pid,UserProjectData.TO_DISABLE,nil)
+        Persistent.user_project_data.values.each do |v|
+          v.values.each do |user_project_data|
+            Persistent.change_user_project_status(user_project_data.login,user_project_data.project_pid,UserProjectData.TO_DISABLE,nil)
+          end
         end
-
 
 
 
@@ -235,24 +233,55 @@ module PowerByHelper
     def manage_user_project(muf_collection)
       @muf_collection = muf_collection
       # With new MUF functionality, I want to add users by project basis
-      project_pids = Persistent.user_project_data.values.map{|p| p.project_pid}
-      project_pids.uniq!
+      project_pids = Persistent.user_project_data.keys
+      #project_pids.uniq!
       # Let find all projects pids, which need to by changed somehow and iterate through project list
+      @threading_initial_collection = Queue.new
       project_pids.each do |pid|
-        user_project_data_for_one_pid = Persistent.user_project_data.values.find_all{|pd| pd.project_pid == pid}
-        user_project_data_for_one_pid.each do |user_project_data|
-          if (!@muf_collection.nil?)
-            @muf_project = @muf_collection.find_muf_project_by_pid(pid)
-            @muf_login = @muf_project.find_login_by_login(user_project_data.login) if !@muf_project.nil?
-            @muf_collection.work(@muf_project,@muf_login) if !@muf_login.nil?
+        if (!@muf_collection.nil?)
+          muf_project = @muf_collection.find_muf_project_by_pid(pid)
+        end
+        user_project_data_for_one_pid = Persistent.user_project_data[pid].values
+
+        @threading_initial_collection << {"muf_project" => muf_project,"user_project_data" => user_project_data_for_one_pid}
+      end
+
+      threads = []
+
+      number_of_threads = Settings.deployment_user_threads
+
+      number_of_threads.times do |i|
+        threads << Thread.new do
+          login = Settings.connection["login"]
+          password = Settings.connection["password"]
+          server = Settings.connection_server
+          GoodData.connect(login,password,server,{:webdav_server => Settings.connection_webdav})
+          until @threading_initial_collection.empty?
+            collection_element = @threading_initial_collection.pop(true) rescue nil
+            if collection_element
+              do_user_provisioning_work(collection_element["muf_project"],collection_element["user_project_data"])
+            end
           end
-          UserHelper.invite_user(user_project_data)
-          UserHelper.add_user(user_project_data)
-          UserHelper.disable_user(user_project_data)
-          UserHelper.update_user(user_project_data)
         end
       end
+      threads.each {|t| t.join}
     end
+
+
+
+    def do_user_provisioning_work(muf_project,user_project_data_for_one_pid)
+      user_project_data_for_one_pid.each do |user_project_data|
+        if (!muf_project.nil?)
+          muf_login = muf_project.find_login_by_login(user_project_data.login) if !muf_project.nil?
+          @muf_collection.work(muf_project,muf_login) if !muf_login.nil?
+        end
+        UserHelper.invite_user(user_project_data)
+        UserHelper.add_user(user_project_data)
+        UserHelper.disable_user(user_project_data)
+        UserHelper.update_user(user_project_data)
+      end
+    end
+
   end
 
 

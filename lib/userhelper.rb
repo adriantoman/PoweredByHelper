@@ -130,7 +130,7 @@ module PowerByHelper
           begin
             GoodData.post("/gdc/projects/#{user_project_data.project_pid}/invitations", request)
             Persistent.change_user_project_status(user_project_data.login,user_project_data.project_pid,UserProjectData.OK,{"notification_send" => true})
-            Persistent.store_user_project
+            Persistent.store_user_project(user_project_data.project_pid)
           rescue RestClient::BadRequest => e
             response = JSON.load(e.response)
             @@log.warn "User #{user_data_element.login} could not be invited to project #{user_project_data.project_pid}. Reason: #{response["error"]["message"]}"
@@ -154,7 +154,7 @@ module PowerByHelper
             @@log.info "Adding user #{user_data.login} to project #{user_project_data.project_pid} (#{user_project_data.role}) (without notification)"
             GoodData.post("/gdc/projects/#{user_project_data.project_pid}/users", request)
             Persistent.change_user_project_status(user_project_data.login,user_project_data.project_pid,UserProjectData.OK,nil)
-            Persistent.store_user_project
+            Persistent.store_user_project(user_project_data.project_pid)
           rescue RestClient::BadRequest => e
             response = JSON.load(e.response)
             @@log.warn "User #{user_project_data.login} could not be added to project #{user_project_data.project_pid}. Reason: #{response["error"]["message"]}"
@@ -177,13 +177,13 @@ module PowerByHelper
           @@log.info "Disabling user #{user_data.login} in project #{user_project_data.project_pid}"
           GoodData.post("/gdc/projects/#{user_project_data.project_pid}/users", request)
           Persistent.change_user_project_status(user_project_data.login,user_project_data.project_pid,UserProjectData.DISABLED,nil)
-          Persistent.store_user_project
+          Persistent.store_user_project(user_project_data.project_pid)
         elsif (user_project_data.status == UserProjectData.TO_DISABLE_BY_PROJECT and user_project_data.internal_role != "internal")
           request = create_user_request("DISABLED",user_data.uri)
           @@log.info "Disabling user #{user_data.login} in project #{user_project_data.project_pid}"
           GoodData.post("/gdc/projects/#{user_project_data.project_pid}/users", request)
           Persistent.change_user_project_status(user_project_data.login,user_project_data.project_pid,UserProjectData.DISABLED,nil)
-          Persistent.store_user_project
+          Persistent.store_user_project(user_project_data.project_pid)
         end
       rescue RestClient::BadRequest => e
         response = JSON.load(e.response)
@@ -203,7 +203,7 @@ module PowerByHelper
           @@log.info "Updating user #{user_data.login} in project #{user_project_data.project_pid} (role - #{user_project_data.role}, status - ENABLED)"
           GoodData.post("/gdc/projects/#{user_project_data.project_pid}/users", request)
           Persistent.change_user_project_status(user_project_data.login,user_project_data.project_pid,UserProjectData.OK,nil)
-          Persistent.store_user_project
+          Persistent.store_user_project(user_project_data.project_pid)
         rescue RestClient::BadRequest => e
           response = JSON.load(e.response)
           @@log.warn "User #{user_data.login} could not be updated or re-enabled in project #{user_project_data.project_pid}. Reason: #{response["error"]["message"]}"

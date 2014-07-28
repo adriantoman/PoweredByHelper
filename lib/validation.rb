@@ -40,7 +40,7 @@ module PowerByHelper
                   "type" => "string"
               },
               {
-                  "id" => "super_admin",
+                  "id" => "admin",
                   "type" => "enum",
                   "enum" => ["adminrole","connectorssystemrole","editorrole","dashboardonlyrole","unverifiedadminrole","readonlyuserrole","0","1"]
               }
@@ -56,7 +56,7 @@ module PowerByHelper
             },
             {
                 "id" => "login",
-                "type"  => "email",
+                "type"  => "string",
                 "min_size" => 1
             },
             {
@@ -84,9 +84,6 @@ module PowerByHelper
         if (definition["type"] =~ /email/ and !error)
           if (field.nil? or field.length == 0)
             message = "is empty"
-            error = true
-          elsif !(/^(([A-Za-z0-9]+_+)|([A-Za-z0-9]+\-+)|([A-Za-z0-9]+\.+)|([A-Za-z0-9]+\++))*[A-Z‌​a-z0-9]+@((\w+\-+)|(\w+\.))*\w{1,63}\.[a-zA-Z]{2,6}$/i =~ field)
-            message = "is not valid email adress"
             error = true
           end
         end
@@ -192,7 +189,7 @@ module PowerByHelper
                 error = true
               end
             else
-              fail "The source file don't have field #{Settings.deployment_user_project_synchronization_mapping[key]}"
+              fail "The source file don't have field #{key} - #{Settings.deployment_user_project_synchronization_mapping[key]}"
             end
           end
           line_number += 1

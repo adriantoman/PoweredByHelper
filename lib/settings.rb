@@ -107,6 +107,16 @@ module PowerByHelper
         @json["deployment"]["user"]
       end
 
+      def deployment_user_threads
+        if (!@json["deployment"]["user"].nil?)
+          @json["deployment"]["user"]["threads"] || 10
+        else
+          10
+        end
+
+
+      end
+
 
       def deployment_user_domain
         @json["deployment"]["user"]["domain"]
@@ -305,6 +315,17 @@ module PowerByHelper
 
       end
 
+      def storage_user_project_directory
+        if  (!@json["storage"].nil? and !@json["storage"]["user"].nil?)
+          @json["storage"]["user_project"]["directory"] || "data/user_project/"
+        else
+          "data/user_project/"
+        end
+
+
+      end
+
+
 
       def storage_muf_source
         if  (!@json["storage"].nil? and !@json["storage"]["muf"].nil?)
@@ -313,6 +334,15 @@ module PowerByHelper
           "data/muf.yaml"
         end
       end
+
+      def storage_muf_directory
+        if  (!@json["storage"].nil? and !@json["storage"]["muf"].nil?)
+          @json["storage"]["muf"]["directory"] || "data/muf/"
+        else
+          "data/muf/"
+        end
+      end
+
 
       def monitoring
         @json["monitoring"]
@@ -341,6 +371,9 @@ module PowerByHelper
       def backup_folder
         @json["backup"]["folder"]
       end
+
+
+
 
 
 

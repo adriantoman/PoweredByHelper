@@ -92,6 +92,7 @@ Version v0.3.12
 Version v0.3.13
     Feature:
         Added validation of input files. The validation is executed before the project and user creation. It should catch most of the validity problems
+Version v0.4.0
 
 
 

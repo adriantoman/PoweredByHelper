@@ -37,7 +37,6 @@ module PowerByHelper
           @@log.info "Found file in processing folder #{remote_filename}, reusing"
           Helper.download_file_from_webdav("processing/" + remote_filename,Settings.default_project_data_file_name)
         else
-          @@log.info "Downloading file #{data_file_path}"
           Helper.download_file_from_webdav(data_file_path,Settings.default_project_data_file_name)
           Helper.move_file_to_other_folder(data_file_path,"processing/" + remote_filename)
         end

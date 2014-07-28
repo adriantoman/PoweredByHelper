@@ -76,10 +76,12 @@ module PowerByHelper
 
 
       def load_mufs()
-        if (File.exists?(Settings.storage_muf_source))
-          $/="\n\n"
-          File.open(Settings.storage_muf_source, "r").each do |object|
-            @muf_projects << YAML::load(object)
+        if (Dir.exists?(Settings.storage_muf_directory))
+          Dir["#{Settings.storage_muf_directory}muf_*.yaml"].each do |file|
+            $/="\n\n"
+            File.open(file, "r").each do |object|
+              @muf_projects << YAML::load(object)
+            end
           end
         end
         # We need to invalid elements cache, because it was possible that project was changed in mean time
@@ -88,13 +90,11 @@ module PowerByHelper
         end
       end
 
-      def store_mufs
+      def store_mufs(project)
         @@log.info "The MUF storage has be saved"
-        File.open(Settings.storage_muf_source, "w") do |file|
-          @muf_projects.each do |project|
-            file.puts YAML::dump(project)
-            file.puts ""
-          end
+        File.open("#{Settings.storage_muf_directory}muf_#{project.pid}.yaml", "w") do |file|
+          file.puts YAML::dump(project)
+          file.puts ""
         end
       end
 
@@ -160,12 +160,12 @@ module PowerByHelper
       end
 
 
-      def store_user_project
+      def store_user_project(pid)
         if (!@user_project_data.nil?)
-          FileUtils.mkdir_p File.dirname(Settings.storage_user_project_source) if !File.exists?(Settings.storage_user_project_source)
-          FasterCSV.open(Settings.storage_user_project_source, 'w',:quote_char => '"') do |csv|
+          FileUtils.mkdir_p Settings.storage_user_project_directory if !Dir.exists?(Settings.storage_user_project_directory)
+          FasterCSV.open("#{Settings.storage_user_project_directory}user_project_#{pid}.csv", 'w',:quote_char => '"') do |csv|
             csv << UserProjectData.header
-            @user_project_data.values.each do |d|
+            @user_project_data[pid].values.each do |d|
               csv << d.to_a
             end
           end
@@ -204,23 +204,24 @@ module PowerByHelper
       end
 
       def load_user_project
-        if (File.exists?(Settings.storage_user_project_source))
-          FasterCSV.foreach(Settings.storage_user_project_source, :headers => true,:quote_char => '"') do |csv_obj|
-            if (csv_obj["notification"] == "false")
-              csv_obj["notification"] = false
-            elsif (csv_obj["notification"] == "true")
-              csv_obj["notification"] = true
+        if (Dir.exists?(Settings.storage_user_project_directory))
+          Dir["#{Settings.storage_user_project_directory}user_project_*.csv"].each do |file|
+            FasterCSV.foreach(file, :headers => true,:quote_char => '"') do |csv_obj|
+              if (csv_obj["notification"] == "false")
+                csv_obj["notification"] = false
+              elsif (csv_obj["notification"] == "true")
+                csv_obj["notification"] = true
+              end
+              if (csv_obj["notification_send"] == "false")
+                csv_obj["notification_send"] = false
+              elsif (csv_obj["notification_send"] == "true")
+                csv_obj["notification_send"] = true
+              end
+              Persistent.change_user_project_status(csv_obj["login"],csv_obj["project_pid"],csv_obj["status"],csv_obj)
             end
-
-            if (csv_obj["notification_send"] == "false")
-              csv_obj["notification_send"] = false
-            elsif (csv_obj["notification_send"] == "true")
-              csv_obj["notification_send"] = true
-            end
-            Persistent.change_user_project_status(csv_obj["login"],csv_obj["project_pid"],csv_obj["status"],csv_obj)
           end
         end
-      end
+     end
 
 
 
@@ -441,11 +442,17 @@ module PowerByHelper
 
 
       def change_user_project_status(login,project_pid,status,data)
-        user_check = nil
-        if (!@user_project_data.include?("#{project_pid}-#{login}"))
-          @user_project_data["#{project_pid}-#{login}"] = UserProjectData.new(status,data)
+        up = nil
+        if (@user_project_data.include?(project_pid))
+          if (@user_project_data[project_pid].include?(login))
+             up = @user_project_data[project_pid][login]
+          end
         else
-          up = @user_project_data["#{project_pid}-#{login}"]
+          @user_project_data[project_pid] = {}
+        end
+        if (up.nil?)
+          @user_project_data[project_pid][login] = UserProjectData.new(status,data)
+        else
           if (up.project_pid == project_pid and up.login == login )
             if (up.status == status)
               @@log.debug "Login=#{login} Project_pid=#{project_pid} same status - no work done"
@@ -710,7 +717,7 @@ module PowerByHelper
 
       def delete_user_project_by_project_pid(project_pid)
         init_user if @user_project_data.nil?
-        @user_project_data.delete_if {|key,up| up.project_pid == project_pid}
+        @user_project_data.delete_if {|key,up| key == project_pid}
       end
 
     end

@@ -51,10 +51,6 @@ module PowerByHelper
         load_mufs_from_gooddata()
       end
 
-      #pp Persistent.muf_projects
-      #fail "kokos"
-
-
       @file_project_mapping.each_pair do |k,v|
         muf_project = Persistent.muf_projects.find{|project| project.pid == v["project"].project_pid}
         if (muf_project.nil?)
@@ -158,15 +154,15 @@ module PowerByHelper
         @@log.error "The MUF process has failed"
         @@log.error e.message
       ensure
-       Persistent.store_mufs
+       Persistent.store_mufs(muf_project)
       end
     end
 
 
     # Lest finds all users which have some change in project
     def work_all
-      begin
-        Persistent.muf_projects.each do |muf_project|
+      Persistent.muf_projects.each do |muf_project|
+        begin
           muf_project.muf_logins.collect! do |muf_login|
             # Lets iterate through muf_logins and send them to Gooddata.
             if (muf_login.create?)
@@ -203,13 +199,14 @@ module PowerByHelper
               muf_login
             end
           end
+        rescue => e
+          @@log.error "The MUF process has failed"
+          @@log.error e.message
+        ensure
+          Persistent.store_mufs(muf_project)
         end
-      rescue => e
-        @@log.error "The MUF process has failed"
-        @@log.error e.message
-      ensure
-        Persistent.store_mufs
       end
+
     end
 
 
@@ -225,26 +222,31 @@ module PowerByHelper
           muf_structure = GoodData.get("/gdc/md/#{file_project["project"].project_pid}/userfilters?count=#{count}&offset=#{offset}")
           finished = true if offset + count > muf_structure["userFilters"]["length"]
           muf_structure["userFilters"]["items"].each do |item|
-            muf_login = MufLogin.new(Persistent.get_user_by_profile_id(item["user"]).login,item["user"],item["userFilters"][0])
-            # Need to fix it here ... can be multiple filters
-            user_definition_filter = GoodData.get(item["userFilters"][0])
-            expression = user_definition_filter["userFilter"]["content"]["expression"]
-            title = user_definition_filter["userFilter"]["meta"]["title"]
-            expressions = expression.split("AND")
-            expressions.each do |expression_element|
-              expression_element.strip!
-              if (expression_element != Settings.deployment_mufs_empty_value)
-                match = expression_element.match(/^\[(?<attribute>[^\s]*)\][^\[]*IN[^\[]*(?<elements>[^\s]*)\)/)
-                attribute_id = match[:attribute].match(/[^\/]*$/)[0]
-                elements = match[:elements].gsub(/[\[\]]/,"").split(",")
-                muf = Muf.new(attribute_id)
-                elements.each do |element|
-                  muf.add_value(element,nil)
+            user_data = Persistent.get_user_by_profile_id(item["user"])
+            if (!user_data.nil?)
+              muf_login = MufLogin.new(user_data.login,item["user"],item["userFilters"][0])
+              # Need to fix it here ... can be multiple filters
+              user_definition_filter = GoodData.get(item["userFilters"][0])
+              expression = user_definition_filter["userFilter"]["content"]["expression"]
+              title = user_definition_filter["userFilter"]["meta"]["title"]
+              expressions = expression.split("AND")
+              expressions.each do |expression_element|
+                expression_element.strip!
+                if (expression_element != Settings.deployment_mufs_empty_value)
+                  match = expression_element.match(/^\[(?<attribute>[^\s]*)\][^\[]*IN[^\[]*(?<elements>[^\s]*)\)/)
+                  attribute_id = match[:attribute].match(/[^\/]*$/)[0]
+                  elements = match[:elements].gsub(/[\[\]]/,"").split(",")
+                  muf = Muf.new(attribute_id)
+                  elements.each do |element|
+                    muf.add_value(element,nil)
+                  end
+                  muf_login.add_muf(muf)
                 end
-                muf_login.add_muf(muf)
               end
+              muf_project.add_login(muf_login)
+            else
+              @@log.warn "User #{item["user"]} is not in PBH internal storage"
             end
-            muf_project.add_login(muf_login)
           end
           offset += count
         end
