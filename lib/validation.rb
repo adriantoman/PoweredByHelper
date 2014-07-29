@@ -42,6 +42,7 @@ module PowerByHelper
               {
                   "id" => "admin",
                   "type" => "enum",
+                  "min_size" => 0,
                   "enum" => ["adminrole","connectorssystemrole","editorrole","dashboardonlyrole","unverifiedadminrole","readonlyuserrole","0","1"]
               }
           ]
@@ -62,6 +63,7 @@ module PowerByHelper
             {
                 "id" =>   "role",
                 "type" => "enum",
+                "min_size" => 1,
                 "enum" => ["adminrole","connectorssystemrole","editorrole","dashboardonlyrole","unverifiedadminrole","readonlyuserrole"]
             },
             {
@@ -98,8 +100,10 @@ module PowerByHelper
         if (definition["type"] =~ /enum/ and !error)
           enum = definition["enum"]
           if (field.nil? or field.length == 0)
-            message = "is empty"
-            error = true
+            if (definition["min_size"].nil? or definition["min_size"] > 0)
+              message = "is empty"
+              error = true
+            end
           elsif (!enum.include?(field.to_s.downcase))
             message = "is not in list of valid values"
             error = true

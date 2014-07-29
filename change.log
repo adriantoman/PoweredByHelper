@@ -93,6 +93,11 @@ Version v0.3.13
     Feature:
         Added validation of input files. The validation is executed before the project and user creation. It should catch most of the validity problems
 Version v0.4.0
+    Feature
+        Added multi-thread user_project synchronization
+Version v0.4.1
+    Fix
+        Fixed validation of enum type
 
 
 
