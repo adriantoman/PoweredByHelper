@@ -98,6 +98,9 @@ Version v0.4.0
 Version v0.4.1
     Fix
         Fixed validation of enum type
+Version v0.4.2
+    Fix
+        Fixed project deletion - the ETL storage was not initialized
 
 
 

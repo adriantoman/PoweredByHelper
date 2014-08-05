@@ -218,6 +218,7 @@ module PowerByHelper
         @@log.info "Deleting project #{project_data.project_name} (#{project_data.project_pid} - #{project_data.ident})"
         GoodData.delete("/gdc/projects/#{project_data.project_pid}")
         Persistent.init_user()
+        Persistent.init_etl()
         Persistent.delete_user_project_by_project_pid(project_data.project_pid)
         Persistent.delete_etl_by_project_pid(project_data.project_pid)
         Persistent.delete_project_by_project_pid(project_data.project_pid)
