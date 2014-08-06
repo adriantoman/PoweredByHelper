@@ -138,7 +138,7 @@ module PowerByHelper
       res = nil
       processed_files = []
       FileUtils.mkdir_p("backups/")
-      Zip::ZipFile.open(folder + filename + "_#{DateTime.now.strftime("%Y%m%dT%H%M")}.zip", Zip::ZipFile::CREATE) do |zipfile|
+      Zip::ZipFile.open(folder + filename + "_#{DateTime.now.strftime("%Y%m%dT%H%M%S")}.zip", Zip::ZipFile::CREATE) do |zipfile|
         Dir.glob("data/**/*").each do |file|
           unless File.directory?(file)
             zipfile.add(file.sub("data/",''), file)

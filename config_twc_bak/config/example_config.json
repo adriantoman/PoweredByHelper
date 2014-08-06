@@ -1,0 +1,131 @@
+    {
+    "customer":"CUSTOMER NAME",
+    "connection":{
+        "login": "GOODDATA_LOGIN (domain admin)",
+        "password": "GOODDATA_PASSWORD",
+        "server": "https://na1.gooddata.com",
+        "webdav": "https://na1-di.gooddata.com",
+        "webdav_storage": "https://na1-di.gooddata.com/project-uploads/PID/"
+    },
+    "deployment":{
+        "project":{
+            "token": "TOKEN",
+            "template":"TEMPLATE_LINK",
+            "delete":"disable_users_first",
+            "disable_duration":"30",
+            "data":{
+                "file_name":"SOURCE_PROJECT_FILENAME_LINK",
+                "mapping":{
+                    "ident":"project_id",
+                    "project_name":"project_name",
+                    "custom1":"custom1",
+                    "custom2":"custom2",
+                    "custom3":"custom3"
+                }
+            }
+        },
+    "etl":{
+        "prefix": "CUSTOMER_NAME_PREFIX_",
+        "process":{
+            "source":"LINK_TO_ETL_PROJECT_FOLDER"
+        },
+        "schedule":
+        [{
+            "ident":"1",
+            "graph_name":"NAME_OF_GRAPH",
+            "cron":"0 10 * * *",
+            "parameters":[
+                {
+                    "name":"PARAMETER_NAME",
+                    "value":"CUSTOM/%ID%/%custom1%/%custom2%"
+                }
+            ],
+            "secure_parameters":[
+                {
+                    "name":"PASSWORD",
+                    "value":"SECRET"
+                }
+            ]
+        },
+           {
+               "ident": "2",
+               "graph_name":"SECOND_NAME_OF_GRAPH",
+                "cron":"0 10 * * *",
+                "parameters":[
+                    {
+                        "name":"PARAMETER_NAME",
+                        "value":"CUSTOM/%ID%/%custom1%/%custom2%"
+                    }
+                ],
+                "secure_parameters":[
+                    {
+                        "name":"PASSWORD",
+                        "value":"SECRET"
+                    }
+                ]
+            }],
+        "notifications":[
+            {
+                "type":"success",
+                "email":"adrian.toman@gooddata.com",
+                "subject":"This is automatic notification",
+                "message":"The project has finished successfully"
+            },
+            {
+                "type":"error",
+                "email":"adrian.toman@gooddata.com",
+                "subject":"This is automatic notification",
+                "message":"Please note that the \"PROJECT\" project load ETL process (graph ${params.GRAPH}) that started at ${params.START_TIME} failed at ${params.FINISH_TIME} with following ERROR: \n ${params.ERROR_MESSAGE} \n Please inspect the ${params.LOG} for more details."
+            }
+        ]
+        },
+        "user":{
+            "domain" : "DOMAIN",
+            "creation":{
+                "source": "LINK_TO_USER_FILE",
+                "mapping":{
+                    "login":"login",
+                    "first_name":"firstname",
+                    "last_name":"lastname",
+                    "password":"password",
+                    "admin":"admin"
+                }
+
+            },
+            "project_synchronization":{
+                "source":"LINK_TO_USER_PROJECT_FILE",
+                "mapping":{
+                    "ident":"ID",
+                    "login":"login",
+                    "role":"gooddata_role",
+                    "notification":"notification",
+                    "internal_role":"internal_role"
+                },
+                "notification_message":"Welcome to new PROJECT_NAME project"
+            }
+        },
+        "mufs":{
+            "file_pattern":"muf_file_%ID%.csv",
+            "type":"webdav",
+            "remote_dir": "waiting/mufs/",
+            "source_dir": "mufs/",
+            "webdav_folder_target":"loaded/",
+            "user_id_field":"login",
+            "empty_value":"TRUE",
+            "use_cache":true,
+            "muf":[
+                {
+                    "attribute" : "904",
+                    "elements" : "905",
+                    "csv_header": "attribute1"
+                },
+                {
+                    "attribute" : "906",
+                    "elements" : "907",
+                    "csv_header": "attribute2"
+                }
+
+            ]
+        }
+    }
+}

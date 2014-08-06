@@ -165,8 +165,10 @@ module PowerByHelper
           FileUtils.mkdir_p Settings.storage_user_project_directory if !Dir.exists?(Settings.storage_user_project_directory)
           FasterCSV.open("#{Settings.storage_user_project_directory}user_project_#{pid}.csv", 'w',:quote_char => '"') do |csv|
             csv << UserProjectData.header
-            @user_project_data[pid].values.each do |d|
-              csv << d.to_a
+            if !(@user_project_data[pid].nil?)
+              @user_project_data[pid].values.each do |d|
+                csv << d.to_a
+              end
             end
           end
         end

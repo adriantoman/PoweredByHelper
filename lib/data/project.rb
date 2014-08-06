@@ -230,10 +230,9 @@ module PowerByHelper
         response = JSON.load(e.response)
         @@log.warn "Project #{project_data.project_pid} could not be deleted. Reason: #{response["error"]["message"]}"
       end
-      Persistent.store_user_project
+      Persistent.store_user_project(project_data.project_pid)
       Persistent.store_etl
       Persistent.store_project
-
     end
 
 

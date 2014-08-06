@@ -101,6 +101,9 @@ Version v0.4.1
 Version v0.4.2
     Fix
         Fixed project deletion - the ETL storage was not initialized
+Version v0.4.3
+    Fix
+        Fixed incorrectly working project deletion
 
 
 
