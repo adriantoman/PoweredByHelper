@@ -20,7 +20,7 @@ module PowerByHelper
 
     class << self
 
-      attr_accessor :project_data,:etl_data,:schedule_data,:user_data,:maintenance_data,:roles,:user_project_data,:project_custom_params,:custom_params_names,:muf_projects
+      attr_accessor :project_data,:etl_data,:schedule_data,:user_data,:maintenance_data,:roles,:user_project_data,:project_custom_params,:custom_params_names,:muf_projects,:ads_data
       # project section
 
       def init_project()
@@ -30,7 +30,7 @@ module PowerByHelper
 
       def init_project_custom_params
         @project_custom_params = []
-        @custom_params_names = []
+          @custom_params_names = []
         # Custom parametrs loading
         Settings.deployment_project["data"]["mapping"].each_pair do |key,value|
           if (key.include?("custom"))
@@ -70,6 +70,11 @@ module PowerByHelper
 
       def init_muf()
         @muf_projects = []
+      end
+
+      def init_ads()
+        @ads_data = []
+        load_ads()
       end
 
 
@@ -174,6 +179,19 @@ module PowerByHelper
         end
       end
 
+      def store_ads
+        if (!@ads_data.nil?)
+          FileUtils.mkdir_p File.dirname(Settings.storage_ads_source) if !File.exists?(Settings.storage_ads_source)
+          FasterCSV.open(Settings.storage_ads_source, 'w',:quote_char => '"') do |csv|
+            csv << AdsData.header
+            @ads_data.each do |d|
+              csv << d.to_a
+            end
+          end
+        end
+      end
+
+
       def load_project
         if (File.exists?(Settings.storage_project_source))
           FasterCSV.foreach(Settings.storage_project_source, :headers => true,:quote_char => '"') do |csv_obj|
@@ -186,6 +204,14 @@ module PowerByHelper
         if (File.exists?(Settings.storage_maintenance_source))
           FasterCSV.foreach(Settings.storage_maintenance_source, :headers => true,:quote_char => '"') do |csv_obj|
             Persistent.change_maintenance_status(csv_obj["ident"],csv_obj["status"],csv_obj)
+          end
+        end
+      end
+
+      def load_ads
+        if (File.exists?(Settings.storage_ads_source))
+          FasterCSV.foreach(Settings.storage_ads_source, :headers => true,:quote_char => '"') do |csv_obj|
+            Persistent.change_ads_status(csv_obj["project_pid"],csv_obj["status"],csv_obj)
           end
         end
       end
@@ -285,6 +311,11 @@ module PowerByHelper
         else
           @project_data.collect! do |d|
             if (d.ident == id )
+              if (!data.nil?)
+                if (data.include?("ads"))
+                    d.ads = data["ads"]
+                end
+              end
               # Project was loaded from persistent storage and now it is in source file - nothing to do
               if (d.status == status)
                 @@log.debug "Same status - do nothing"
@@ -335,6 +366,36 @@ module PowerByHelper
         end
 
       end
+
+
+      def change_ads_status(project_ident, status, data)
+        if (@ads_data.find{|p| p.project_ident == project_ident }.nil?)
+          @ads_data.push(AdsData.new(status,data))
+        else
+          ads_data.collect! do |d|
+            if (d.project_ident == project_ident )
+              # Project was loaded from persistent storage and now it is in source file - nothing to do
+              if (d.status == status)
+                @@log.debug "Same status - do nothing"
+              elsif (d.status == AdsData.NEW and status == AdsData.OK)
+                @@log.debug "ADS - setting status was NEW, received OK, final status OK"
+                d.ident = data["ident"]
+                d.status = AdsData.OK
+              elsif (d.status == AdsData.OK and status == AdsData.NEW)
+                @@log.debug "ADS - setting status was OK, received NEW, final status OK"
+                d.status = AdsData.OK
+              elsif (status == AdsData.DELETED)
+                @@log.debug "ADS - setting status was #{d.status}, received DELETED, final status DELETED"
+                d.status = AdsData.DELETED
+              else
+                fail "Non-supported transition from #{d.status} to #{status}"
+              end
+            end
+            d
+          end
+        end
+      end
+
 
 
       def change_maintenance_status(id, status, data)

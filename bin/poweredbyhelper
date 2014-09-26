@@ -99,6 +99,8 @@ command :provision do |c|
     helper.init_persistent_storage
     helper.project_provisioning
     helper.move_remote_project_files
+    helper.init_ads_storage
+    helper.ads_provisioning
     helper.init_etl_persistent_storage
     helper.etl_provisioning
     helper.user_synchronization
@@ -153,6 +155,30 @@ command :delete_users do |c|
 
 
 end
+
+command :delete_dss do |c|
+
+  c.desc 'Config file path'
+  c.flag [:config]
+
+  c.action do |global_options,options,args|
+
+    config_file = options[:config]
+    fail "Please provide link to config file" unless (File.exist?(config_file))
+    helper = PowerByHelper::Pwb.new(config_file,options[:test])
+    helper.gooddata_login(@@api_debug)
+    #GoodData.logger.level = Logger::DEBUG
+    response = GoodData.get("gdc/dss/instances")
+    response["dssInstances"]["items"].each do |dss|
+      #pp dss
+      #pp dss["dssInstance"]["links"]["self"]
+      #GoodData.delete(dss["dssInstance"]["links"]["self"])
+    end
+  end
+
+
+end
+
 
 
 command :dry_run do |c|
@@ -328,8 +354,8 @@ command :update_schedules do |c|
     helper.migration
     helper.gooddata_login(@@api_debug)
     helper.init_persistent_storage
+    helper.init_ads_storage
     helper.init_etl_persistent_storage
-
     helper.update_schedules
   end
 

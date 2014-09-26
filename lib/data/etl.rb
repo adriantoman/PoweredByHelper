@@ -157,29 +157,27 @@ module PowerByHelper
             end
           else
             # The setting for this schedule is in config file, schedule should be updated
-            begin
-              @@log.info "Updating schedule: #{schedule.schedule_id} ident:#{schedule.ident} for project #{schedule.project_pid}"
-              response = create_update_schedule(settings,schedule.project_pid,process.process_id,"#{project.ident}",schedule.schedule_id)
-              schedule_id = response["schedule"]["links"]["self"].split("/").last
-              Persistent.change_schedule_status(schedule.project_pid,schedule.ident,ScheduleData.SCHEDULE_CREATED,{"schedule_id" => schedule_id,"is_updated_schedule" => true})
-              @@log.info "Update successful"
+            if (!project.nil? and project.status == ProjectData.OK)
+              begin
+                @@log.info "Updating schedule: #{schedule.schedule_id} ident:#{schedule.ident} for project #{schedule.project_pid}"
+                response = create_update_schedule(settings,schedule.project_pid,process.process_id,"#{project.ident}",schedule.schedule_id)
+                schedule_id = response["schedule"]["links"]["self"].split("/").last
+                Persistent.change_schedule_status(schedule.project_pid,schedule.ident,ScheduleData.SCHEDULE_CREATED,{"schedule_id" => schedule_id,"is_updated_schedule" => true})
+                @@log.info "Update successful"
 
-              # We will execute the schedule right after it has been scheduled
-              if (!settings["force_execute"].nil? and settings["force_execute"])
-                restart(schedule.project_pid,schedule_id)
+                # We will execute the schedule right after it has been scheduled
+                if (!settings["force_execute"].nil? and settings["force_execute"])
+                  restart(schedule.project_pid,schedule_id)
+                end
+
+              rescue RestClient::BadRequest => e
+                response = JSON.load(e.response)
+                @@log.warn "Schedule #{schedule.project_pid} could not be updated. Reason: #{response["error"]["message"]}"
+              rescue RestClient::InternalServerError => e
+                response = JSON.load(e.response)
+                @@log.warn "Schedule #{schedule.project_pid} could not be updated. Reason: #{response["error"]["message"]}"
               end
-
-            rescue RestClient::BadRequest => e
-              response = JSON.load(e.response)
-              @@log.warn "Schedule #{schedule.project_pid} could not be updated. Reason: #{response["error"]["message"]}"
-            rescue RestClient::InternalServerError => e
-              response = JSON.load(e.response)
-              @@log.warn "Schedule #{schedule.project_pid} could not be updated. Reason: #{response["error"]["message"]}"
             end
-
-
-
-
           end
           Persistent.store_schedules
         end
@@ -326,6 +324,7 @@ module PowerByHelper
             }
         }
       }
+
 
       if (!schedule_settings["reschedule"].nil? and schedule_settings["reschedule"] !=  "" )
         if (schedule_settings["reschedule"].instance_of? Fixnum )

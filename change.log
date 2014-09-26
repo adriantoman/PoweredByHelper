@@ -107,6 +107,9 @@ Version v0.4.3
 Version v0.4.4
     Fix
         Fixed error when the confing json was missing the webdav_storage settings
+Version v0.4.5
+    Feature:
+        Added support of ADS provisioning
 
 
 

@@ -25,7 +25,7 @@ require 'state_machine'
 require 'yaml'
 
 %w(settings helper persistent userhelper maintenancehelper migration).each {|a| require "#{a}"}
-%w(project etl user maintenance).each {|a| require "data/#{a}"}
+%w(project etl user maintenance ads).each {|a| require "data/#{a}"}
 %w(muf_collection muf muf_project muf_login).each {|a| require "muf/#{a}"}
 require "validation"
 
@@ -90,6 +90,9 @@ module PowerByHelper
       @muf = MufCollection.new() if (!Settings.deployment_mufs.nil?)
     end
 
+    def init_ads_storage
+      @ads = Ads.new() if (!Settings.deployment_ads.nil?)
+    end
 
 
 
@@ -99,6 +102,11 @@ module PowerByHelper
         @projects.create_projects
         @projects.handle_projects_disable
       #end
+    end
+
+    def ads_provisioning
+      @@log.info "Ads storage not initialized - skipping ads provisioning" if @ads.nil?
+      @ads.provision_ads
     end
 
     def etl_provisioning

@@ -80,6 +80,15 @@ module PowerByHelper
         @json["deployment"]["project"]["disable_duration"] || 30
       end
 
+      def deployment_ads
+        @json["deployment"]["ads"] || nil
+      end
+
+      def deployment_ads_token
+        @json["deployment"]["ads"]["token"] || nil
+      end
+
+
 
       def deployment_source
         @json["deployment"]["source"]
@@ -303,6 +312,18 @@ module PowerByHelper
 
 
       end
+
+
+      def storage_ads_source
+        if  (!@json["storage"].nil? and !@json["storage"]["ads"].nil?)
+          @json["storage"]["ads"]["source"] || "data/ads.csv"
+        else
+          "data/ads.csv"
+        end
+
+
+      end
+
 
 
       def storage_user_project_source

@@ -20,7 +20,8 @@
                     "project_name":"project_name",
                     "custom1":"custom1",
                     "custom2":"custom2",
-                    "custom3":"custom3"
+                    "custom3":"custom3",
+                    "ads":"ads"
                 }
             }
         },
@@ -37,7 +38,8 @@
             "parameters":[
                 {
                     "name":"PARAMETER_NAME",
-                    "value":"CUSTOM/%ID%/%custom1%/%custom2%"
+                    "value":"CUSTOM/%ID%/%custom1%/%custom2%",
+                    "ads":"%ADS%"
                 }
             ],
             "secure_parameters":[
@@ -79,53 +81,56 @@
             }
         ]
         },
-        "user":{
-            "domain" : "DOMAIN",
-            "creation":{
-                "source": "LINK_TO_USER_FILE",
-                "mapping":{
-                    "login":"login",
-                    "first_name":"firstname",
-                    "last_name":"lastname",
-                    "password":"password",
-                    "super_admin":"admin"
-                }
-
-            },
-            "project_synchronization":{
-                "source":"LINK_TO_USER_PROJECT_FILE",
-                "mapping":{
-                    "ident":"ID",
-                    "login":"login",
-                    "role":"gooddata_role",
-                    "notification":"notification",
-                    "internal_role":"internal_role"
-                },
-                "notification_message":"Welcome to new PROJECT_NAME project"
+    "user":{
+        "domain" : "DOMAIN",
+        "creation":{
+            "source": "LINK_TO_USER_FILE",
+            "mapping":{
+                "login":"login",
+                "first_name":"firstname",
+                "last_name":"lastname",
+                "password":"password",
+                "super_admin":"admin"
             }
-        },
-        "mufs":{
-            "file_pattern":"muf_file_%ID%.csv",
-            "type":"webdav",
-            "remote_dir": "waiting/mufs/",
-            "source_dir": "mufs/",
-            "webdav_folder_target":"loaded/",
-            "user_id_field":"login",
-            "empty_value":"TRUE",
-            "use_cache":true,
-            "muf":[
-                {
-                    "attribute" : "904",
-                    "elements" : "905",
-                    "csv_header": "attribute1"
-                },
-                {
-                    "attribute" : "906",
-                    "elements" : "907",
-                    "csv_header": "attribute2"
-                }
 
-            ]
+        },
+        "project_synchronization":{
+            "source":"LINK_TO_USER_PROJECT_FILE",
+            "mapping":{
+                "ident":"ID",
+                "login":"login",
+                "role":"gooddata_role",
+                "notification":"notification",
+                "internal_role":"internal_role"
+            },
+            "notification_message":"Welcome to new PROJECT_NAME project"
         }
+    },
+    "ads":{
+        "token": "ASD_TOKEN"
+    },
+    "mufs":{
+        "file_pattern":"muf_file_%ID%.csv",
+        "type":"webdav",
+        "remote_dir": "waiting/mufs/",
+        "source_dir": "mufs/",
+        "webdav_folder_target":"loaded/",
+        "user_id_field":"login",
+        "empty_value":"TRUE",
+        "use_cache":true,
+        "muf":[
+            {
+                "attribute" : "904",
+                "elements" : "905",
+                "csv_header": "attribute1"
+            },
+            {
+                "attribute" : "906",
+                "elements" : "907",
+                "csv_header": "attribute2"
+            }
+
+        ]
     }
+}
 }

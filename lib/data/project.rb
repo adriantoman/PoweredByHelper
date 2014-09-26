@@ -64,7 +64,15 @@ module PowerByHelper
       end
 
       file_rows.each do |csv_obj|
-        Persistent.change_project_status(csv_obj[data_mapping["ident"]],ProjectData.NEW,{"ident" => csv_obj[data_mapping["ident"]], "project_name" => csv_obj[data_mapping["project_name"]], "summary" => csv_obj[data_mapping["summary"]]})
+        data = {
+              "ident" => csv_obj[data_mapping["ident"]],
+              "project_name" => csv_obj[data_mapping["project_name"]],
+              "summary" => csv_obj[data_mapping["summary"]]
+        }
+        if (data_mapping.include?("ads"))
+          data.merge!({"ads" => csv_obj[data_mapping["ads"]]})
+        end
+        Persistent.change_project_status(csv_obj[data_mapping["ident"]],ProjectData.NEW,data)
 
         #key value mapping
         param_values = []
@@ -160,7 +168,8 @@ module PowerByHelper
           @@log.info "Waiting - STOP"
         end
       end
-
+      # To make sure, that if disable project is enabled back, it will be stored in storage
+      Persistent.store_project
     end
 
 
@@ -269,7 +278,7 @@ module PowerByHelper
 
   class ProjectData
 
-    attr_accessor :ident,:project_pid,:project_name,:status,:summary,:to_delete,:disabled_at,:maintenance
+    attr_accessor :ident,:project_pid,:project_name,:status,:summary,:to_delete,:disabled_at,:maintenance,:ads
 
     def self.CREATED
       "CREATED"
@@ -311,6 +320,7 @@ module PowerByHelper
       @project_name = data["project_name"] if !data["project_name"].nil?
       @summary = data["summary"] if !data["summary"].nil?
       @disabled_at = data["disabled_at"] if !data["disabled_at"].nil?
+      @ads = data["ads"] if !data["ads"].nil?
       @@log.debug "Setting status to #{@status}"
     end
 
