@@ -183,15 +183,13 @@ module PowerByHelper
 
         # We are supporting disable feature on projects
         # DISABLED project for us is project, in which all users (except of users with role_internal == internal) are disabled
-        projects_to_disable = Persistent.get_projects_by_status(ProjectData.DISABLED)
-        Persistent.user_project_data.values.each do |v|
-          v.values.each do |user_project_data|
-            temp = projects_to_disable.find do |p|
-              p.project_pid == user_project_data.project_pid
-            end
-            is_disabled = temp.nil? ? false : true
-            if (is_disabled and user_project_data.internal_role != "internal")
-              Persistent.change_user_project_status(user_project_data.login,user_project_data.project_pid,UserProjectData.TO_DISABLE_BY_PROJECT,nil)
+        Persistent.get_projects_by_status(ProjectData.DISABLED).each do |project|
+          if Persistent.user_project_data.include?(project.project_pid)
+            @@log.info "DISABLED project #{project.project_pid} - disabling users"
+            Persistent.user_project_data[project.project_pid].values.each do |user_project|
+              if user_project.internal_role != "internal"
+                Persistent.change_user_project_status(user_project.login,user_project.project_pid,UserProjectData.TO_DISABLE_BY_PROJECT,nil)
+              end
             end
           end
         end
