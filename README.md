@@ -266,6 +266,9 @@ use any other tool for muf settings.**
     * **attribute** - this field need to contain the ID of the attribute object (more info about this can be found in the article linked at the begining of the muf section)
     * **elemenets** - this field need to contain the ID of elements set, which contain values loaded in GD. This is here, because of attributes with different label. (more info about this can be found in the article linked at the begining of the muf section)
     * **csv_header** - this field need to contain the name of column in muf_file which will contain the values for muf.
+    * **type** - this field has two possible values (in / over). The in is default value.
+    * **connection_point_of_access_dataset** - this values is used only with over type of muf.
+    * **connection_point_of_filtered_dataset** - this values is used only with over type of muf.
 
 Example:
 ```json

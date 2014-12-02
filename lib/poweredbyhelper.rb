@@ -26,7 +26,7 @@ require 'yaml'
 
 %w(settings helper persistent userhelper maintenancehelper migration).each {|a| require "#{a}"}
 %w(project etl user maintenance).each {|a| require "data/#{a}"}
-%w(muf_collection muf muf_project muf_login).each {|a| require "muf/#{a}"}
+%w(muf_collection muf muf_project muf_login muf_in muf_over).each {|a| require "muf/#{a}"}
 require "validation"
 
 module PowerByHelper
@@ -166,15 +166,6 @@ module PowerByHelper
       @maintenance.execute_partial_metadata(token)
       @@log.info "Partial metadata export execution finished"
     end
-
-    def execute_muf_sychronization
-      init_muf_storage
-      if (!@muf.nil?)
-        @muf.compare
-        @muf.work
-      end
-    end
-
 
     def execute_muf_compare
       move_remote_mufs_files

@@ -17,36 +17,41 @@
 
 module PowerByHelper
 
-  class Muf
+  class MufIn < Muf
 
-    attr_accessor :attribute,:element,:values,:filter_uri,:new_values,:type
-
-
+    # Possible type values :in, :over
     def initialize(attribute)
-      @attribute = attribute
-      @values = {}
-      @new_values = {}
+      super(attribute)
+      @type = :in
     end
 
-    def add_value(element_id,value)
-      @values[element_id] = value
-    end
-
-    def add_new_values(element_id,value)
-      @new_values[element_id] = value
-    end
-
-    def has_value?(element_id)
-      @values.has_key?(element_id)
-    end
 
     def same?
-      fail "Calling method from parent"
+      div1 = @values.keys - @new_values.keys
+      div2 = @new_values.keys - @values.keys
+
+      if (div1.empty? and div2.empty?)
+        return true
+      else
+        return false
+      end
     end
 
 
     def create_gooddata_muf_representation(pid)
-      fail "Calling method from parent"
+        @new_values.each_pair do |key,value|
+          if (key.nil?)
+            @@log.warn "The #{value} cannot be found in data loaded to project #{pid} - SKIPPING"
+          end
+        end
+        values = @new_values.keys.map do |k|
+          if (!k.nil?)
+            "[#{k}]"
+          end
+        end
+        values.delete_if {|k| k.nil?}
+        values = values.join(",")
+        "[#{Helper.get_element_attribute_url(pid,@attribute)}] IN (#{values})"
     end
 
 

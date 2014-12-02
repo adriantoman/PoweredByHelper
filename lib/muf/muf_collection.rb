@@ -37,7 +37,6 @@ module PowerByHelper
       end
 
       #Lets create list of files which are availible for muf provisioning
-
       Persistent.project_data.find_all{|project| project.status == ProjectData.OK}.each do |p|
         file_name = Helper.replace_custom_parameters(p.ident,Settings.deployment_mufs_file_pattern)
         if (File.exists?(Settings.deployment_mufs_source_dir + file_name))
@@ -70,12 +69,18 @@ module PowerByHelper
                   muf_login = MufLogin.new(csv_obj[Settings.deployment_mufs["user_id_field"]],Persistent.get_user_by_login(csv_obj[Settings.deployment_mufs["user_id_field"]]).uri,nil)
                   muf_project.add_login(muf_login)
                 end
-                muf = muf_login.find_muf_by_attribute(muf_setting["attribute"])
+                muf = muf_login.find_muf_by_attribute(muf_setting["attribute"],muf_setting["type"])
                 element_url = muf_project.find_element_by_value(muf_setting["attribute"],csv_obj[muf_setting["csv_header"]])
                 #Lets try to find, if muf exists for this attribute
                 if (muf.nil?)
                   # IF not, lets create MUF
-                  muf = Muf.new(muf_setting["attribute"])
+                  muf = nil
+                  if (muf_setting["type"].downcase == "over")
+                    fail "The connection_point_of_access_dataset or connection_point_of_filtered_dataset settting is missing, please at this settings to config file." if !muf_setting.include?("connection_point_of_filtered_dataset") or !muf_setting.include?("connection_point_of_access_dataset")
+                    muf = MufOver.new(muf_setting["attribute"],muf_setting["connection_point_of_access_dataset"],muf_setting["connection_point_of_filtered_dataset"])
+                  else
+                    muf = MufIn.new(muf_setting["attribute"])
+                  end
                   muf_login.add_muf(muf)
                 end
                 if (csv_obj[muf_setting["csv_header"]] != Settings.deployment_mufs_empty_value)
@@ -232,15 +237,26 @@ module PowerByHelper
               expressions = expression.split("AND")
               expressions.each do |expression_element|
                 expression_element.strip!
-                if (expression_element != Settings.deployment_mufs_empty_value)
-                  match = expression_element.match(/^\[(?<attribute>[^\s]*)\][^\[]*IN[^\[]*(?<elements>[^\s]*)\)/)
-                  attribute_id = match[:attribute].match(/[^\/]*$/)[0]
-                  elements = match[:elements].gsub(/[\[\]]/,"").split(",")
-                  muf = Muf.new(attribute_id)
-                  elements.each do |element|
-                    muf.add_value(element,nil)
-                  end
+                if (expression_element =~ /OVER/ )
+                  match = expression_element.match(/^\(\[(?<attribute>[^\]]*)\]=\[(?<attribute_value>[^\]]*)\]\)[\s]*OVER[\s]*\[(?<cp_of_access_dt>[^\]]*)\][\s]*TO[\s]*\[(?<cp_of_filtered_dt>[^\]]*)\]/)
+                  attribute_id = match[:attribute].split("/").last
+                  attribute_value = match[:attribute_value].split("=").last
+                  cp_of_access_dt = match[:cp_of_access_dt].split("/").last
+                  cp_of_filtered_dt = match[:cp_of_filtered_dt].split("/").last
+                  muf = MufOver.new(attribute_id,cp_of_access_dt,cp_of_filtered_dt)
+                  muf.add_value(attribute_value,nil)
                   muf_login.add_muf(muf)
+                else
+                  if (expression_element != Settings.deployment_mufs_empty_value)
+                    match = expression_element.match(/^\[(?<attribute>[^\s]*)\][^\[]*IN[^\[]*(?<elements>[^\s]*)\)/)
+                    attribute_id = match[:attribute].match(/[^\/]*$/)[0]
+                    elements = match[:elements].gsub(/[\[\]]/,"").split(",")
+                    muf = MufIn.new(attribute_id)
+                    elements.each do |element|
+                      muf.add_value(element,nil)
+                    end
+                    muf_login.add_muf(muf)
+                  end
                 end
               end
               muf_project.add_login(muf_login)

@@ -17,43 +17,39 @@
 
 module PowerByHelper
 
-  class Muf
+  class MufOver < Muf
 
-    attr_accessor :attribute,:element,:values,:filter_uri,:new_values,:type
-
-
-    def initialize(attribute)
-      @attribute = attribute
-      @values = {}
-      @new_values = {}
-    end
-
-    def add_value(element_id,value)
-      @values[element_id] = value
-    end
-
-    def add_new_values(element_id,value)
-      @new_values[element_id] = value
-    end
-
-    def has_value?(element_id)
-      @values.has_key?(element_id)
+    # Possible type values :in, :over
+    def initialize(attribute,cp_of_access_dt,cp_of_filtered_dt)
+      super(attribute)
+      @type = :over
+      @cp_of_access_dt = cp_of_access_dt
+      @cp_of_filtered_dt = cp_of_filtered_dt
     end
 
     def same?
-      fail "Calling method from parent"
+      div1 = @values.keys - @new_values.keys
+      div2 = @new_values.keys - @values.keys
+
+      if (div1.empty? and div2.empty?)
+        return true
+      else
+        return false
+      end
     end
 
 
     def create_gooddata_muf_representation(pid)
-      fail "Calling method from parent"
+      fail "The count of values for OVER muf need to be 1" if @new_values.count != 1
+
+      @new_values.each_pair do |key,value|
+        if (key.nil?)
+          @@log.warn "The #{value} cannot be found in data loaded to project #{pid} - SKIPPING"
+        end
+      end
+      value = @new_values.keys.first
+      "([#{Helper.get_element_attribute_url(pid,@attribute)}]=[#{value}]) OVER [#{Helper.get_element_attribute_url(pid,@cp_of_access_dt)}] TO [#{Helper.get_element_attribute_url(pid,@cp_of_filtered_dt)}]"
     end
-
-
-
-
-
-
 
   end
 

@@ -19,8 +19,8 @@ module PowerByHelper
       @mufs.push(muf)
     end
 
-    def find_muf_by_attribute(attribute_id)
-      @mufs.find{|muf| muf.attribute == attribute_id }
+    def find_muf_by_attribute(attribute_id,type)
+      @mufs.find{|muf| muf.attribute == attribute_id and (muf.type = type or (muf.type.nil? and type == :in))}
     end
 
     def get_gooddata_representation(pid)

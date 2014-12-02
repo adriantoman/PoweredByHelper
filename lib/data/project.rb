@@ -103,18 +103,22 @@ module PowerByHelper
       Persistent.project_data.each do |p|
 
         if (p.status == ProjectData.NEW)
+
+          project_template = Helper.replace_custom_parameters(p.ident,Settings.deployment_project["template"])
+          project_token = Helper.replace_custom_parameters(p.ident,Settings.deployment_project["token"])
+
           @@log.info "Creating project - #{p.project_name} (#{p.ident})"
 
           json = {
               'meta' => {
                   'title' => Settings.deployment_project_name_prefix +  p.project_name,
                   'summary' => p.summary || "",
-                  'projectTemplate' => Settings.deployment_project["template"]
+                  'projectTemplate' => project_template
               },
               'content' => {
                   'guidedNavigation' => 1,
                   'driver' => 'Pg',
-                  'authorizationToken' => Settings.deployment_project["token"]
+                  'authorizationToken' => project_token
               }
           }
 
