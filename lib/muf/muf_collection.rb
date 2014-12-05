@@ -240,7 +240,7 @@ module PowerByHelper
                 if (expression_element =~ /OVER/ )
                   match = expression_element.match(/^\(\[(?<attribute>[^\]]*)\]=\[(?<attribute_value>[^\]]*)\]\)[\s]*OVER[\s]*\[(?<cp_of_access_dt>[^\]]*)\][\s]*TO[\s]*\[(?<cp_of_filtered_dt>[^\]]*)\]/)
                   attribute_id = match[:attribute].split("/").last
-                  attribute_value = match[:attribute_value].split("=").last
+                  attribute_value = match[:attribute_value]
                   cp_of_access_dt = match[:cp_of_access_dt].split("/").last
                   cp_of_filtered_dt = match[:cp_of_filtered_dt].split("/").last
                   muf = MufOver.new(attribute_id,cp_of_access_dt,cp_of_filtered_dt)

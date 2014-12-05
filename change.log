@@ -110,6 +110,9 @@ Version v0.4.4
 Version v0.4.6
     Feature
         Added simple support for OVER Muf
+Version v0.4.7
+    Fix
+        Fixed bug with Over muf when not using cache
 
 
 
