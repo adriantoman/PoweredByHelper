@@ -485,9 +485,11 @@ on_error do |exception|
   end
   if exception.is_a?(SystemExit) && exception.status == 0
     @@log.error exception.inspect
+    puts exception.inspect
     false
   else
     @@log.error exception.inspect
+    puts exception.inspect
     false
   end
 end

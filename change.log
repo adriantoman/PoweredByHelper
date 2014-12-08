@@ -113,6 +113,10 @@ Version v0.4.6
 Version v0.4.7
     Fix
         Fixed bug with Over muf when not using cache
+Version v0.4.8
+    Fix
+        Added error message output to STDOUT
+
 
 
 
