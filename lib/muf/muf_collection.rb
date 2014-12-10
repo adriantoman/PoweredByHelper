@@ -71,13 +71,17 @@ module PowerByHelper
                 end
                 muf = muf_login.find_muf_by_attribute(muf_setting["attribute"],muf_setting["type"])
                 element_url = muf_project.find_element_by_value(muf_setting["attribute"],csv_obj[muf_setting["csv_header"]])
+                default_element_url = nil
+                if !muf_setting["default_element"].nil?
+                  default_element_url = muf_project.find_element_by_value(muf_setting["attribute"],muf_setting["default_element"])
+                end
                 #Lets try to find, if muf exists for this attribute
                 if (muf.nil?)
                   # IF not, lets create MUF
                   muf = nil
                   if (muf_setting["type"].downcase == "over")
                     fail "The connection_point_of_access_dataset or connection_point_of_filtered_dataset settting is missing, please at this settings to config file." if !muf_setting.include?("connection_point_of_filtered_dataset") or !muf_setting.include?("connection_point_of_access_dataset")
-                    muf = MufOver.new(muf_setting["attribute"],muf_setting["connection_point_of_access_dataset"],muf_setting["connection_point_of_filtered_dataset"])
+                    muf = MufOver.new(muf_setting["attribute"],muf_setting["connection_point_of_access_dataset"],muf_setting["connection_point_of_filtered_dataset"],{"default_element_url" => default_element_url})
                   else
                     muf = MufIn.new(muf_setting["attribute"])
                   end

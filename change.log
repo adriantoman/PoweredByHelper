@@ -116,6 +116,9 @@ Version v0.4.7
 Version v0.4.8
     Fix
         Added error message output to STDOUT
+Version v0.4.9
+    Feature
+        Added default element setting to MUF OVER creation. This MUF is created, when value which should be set to MUF is not present in GD.
 
 
 

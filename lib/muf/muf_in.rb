@@ -20,8 +20,8 @@ module PowerByHelper
   class MufIn < Muf
 
     # Possible type values :in, :over
-    def initialize(attribute)
-      super(attribute)
+    def initialize(attribute,options = {} )
+      super(attribute,options)
       @type = :in
     end
 

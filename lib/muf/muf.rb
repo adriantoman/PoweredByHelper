@@ -22,10 +22,11 @@ module PowerByHelper
     attr_accessor :attribute,:element,:values,:filter_uri,:new_values,:type
 
 
-    def initialize(attribute)
+    def initialize(attribute,options = {})
       @attribute = attribute
       @values = {}
       @new_values = {}
+      @option = options
     end
 
     def add_value(element_id,value)
@@ -45,7 +46,7 @@ module PowerByHelper
     end
 
 
-    def create_gooddata_muf_representation(pid)
+    def create_gooddata_muf_representation(pid,options = {})
       fail "Calling method from parent"
     end
 

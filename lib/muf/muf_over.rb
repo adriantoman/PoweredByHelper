@@ -20,8 +20,8 @@ module PowerByHelper
   class MufOver < Muf
 
     # Possible type values :in, :over
-    def initialize(attribute,cp_of_access_dt,cp_of_filtered_dt)
-      super(attribute)
+    def initialize(attribute,cp_of_access_dt,cp_of_filtered_dt,options = {})
+      super(attribute,options)
       @type = :over
       @cp_of_access_dt = cp_of_access_dt
       @cp_of_filtered_dt = cp_of_filtered_dt
@@ -44,11 +44,22 @@ module PowerByHelper
 
       @new_values.each_pair do |key,value|
         if (key.nil?)
-          @@log.warn "The #{value} cannot be found in data loaded to project #{pid} - SKIPPING"
+          if (!@options["default_element_url"].nil?)
+            @@log.info "The #{value} cannot be found in data loaded to project #{pid} - GENERATING DEFAULT MUF"
+          else
+            @@log.warn "The #{value} cannot be found in data loaded to project #{pid} and default values is not set - SKIPPING"
+          end
+
         end
       end
       value = @new_values.keys.first
-      "([#{Helper.get_element_attribute_url(pid,@attribute)}]=[#{value}]) OVER [#{Helper.get_element_attribute_url(pid,@cp_of_access_dt)}] TO [#{Helper.get_element_attribute_url(pid,@cp_of_filtered_dt)}]"
+      if (!value.nil?)
+        "([#{Helper.get_element_attribute_url(pid,@attribute)}]=[#{value}]) OVER [#{Helper.get_element_attribute_url(pid,@cp_of_access_dt)}] TO [#{Helper.get_element_attribute_url(pid,@cp_of_filtered_dt)}]"
+      else
+        if (!@option["default_element_url"].nil?)
+          "([#{Helper.get_element_attribute_url(pid,@attribute)}]=[#{@option["default_element_url"]}]) OVER [#{Helper.get_element_attribute_url(pid,@cp_of_access_dt)}] TO [#{Helper.get_element_attribute_url(pid,@cp_of_filtered_dt)}]"
+        end
+      end
     end
 
   end
