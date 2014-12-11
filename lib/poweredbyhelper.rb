@@ -198,7 +198,7 @@ module PowerByHelper
 
     def move_remote_mufs_files
       if (Settings.deployment_mufs_type == "webdav" and !Settings.Settings.deployment_mufs_remote_file.nil?)
-        filename = Settings.Settings.deployment_mufs_remote_file.split("/").last
+        filename = Settings.deployment_mufs_remote_file.split("/").last
         @@log.info "If exists moving file #{"processing/" + filename} to #{Settings.deployment_mufs_move_after_processing_to}"
         Helper.move_file_to_other_folder("processing/" + filename,Settings.deployment_mufs_move_after_processing_to)
       end
