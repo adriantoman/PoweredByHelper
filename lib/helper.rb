@@ -62,6 +62,17 @@ module PowerByHelper
       changed_value
     end
 
+    def self.delete_folder(folder)
+      user =      Settings.connection["login"]
+      password =  Settings.connection["password"]
+      adress = Settings.connection_webdav_storage
+
+      dav = Net::DAV.new(adress, :curl => false)
+      dav.verify_server = false # Ignore server verification
+      dav.credentials(user, password)
+      dav.delete(folder)
+    end
+
 
     def self.download_file_from_webdav(url,target)
       user =      Settings.connection["login"]
@@ -154,14 +165,11 @@ module PowerByHelper
       dav.verify_server = false # Ignore server verification
       dav.credentials(user, password)
 
-      pp adress
-      pp pattern
-
       dav.find('.',:recursive=>false,:filename=> /#{pattern}/) do |item|
         filename = item.url.to_s.match(/[^\/]*$/)[0]
 
-        @@log.info "Moving file #{adress + filename} to #{Settings.connection_webdav_storage + target + filename}"
-        dav.move(adress + filename,Settings.connection_webdav_storage + target + filename)
+        @@log.info "Moving file #{adress + filename} to #{Settings.connection_webdav_storage + target + "/" + filename}"
+        #dav.move(adress + filename,Settings.connection_webdav_storage + target + filename)
       end
     end
 
@@ -203,6 +211,22 @@ module PowerByHelper
         end
       end
     end
+
+
+    def self.check_directory_on_webdav?(folder)
+      user =      Settings.connection["login"]
+      password =  Settings.connection["password"]
+
+      if (!Settings.connection_webdav_storage.nil?)
+        adress = Settings.connection_webdav_storage
+
+        dav = Net::DAV.new(adress, :curl => false)
+        dav.verify_server = false # Ignore server verification
+        dav.credentials(user, password)
+        dav.exists?(folder)
+      end
+    end
+
 
 
 
@@ -265,6 +289,17 @@ module PowerByHelper
           }
       }
       GoodData.post "/gdc/md/#{pid}/userfilters", user_filter
+    end
+
+
+    def self.unzip_file(file,to)
+      Zip::ZipFile.open(file) do |zipfile|
+        zipfile.each do |f|
+          path = File.join(to,f.name)
+          FileUtils.mkdir_p(File.dirname(path))
+          zipfile.extract(f,path)
+        end
+      end
     end
 
 

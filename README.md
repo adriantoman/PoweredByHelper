@@ -303,6 +303,10 @@ The dry run will show you what will be done in standard run. You can executed it
 ```bash
 ruby bin/poweredbyhelper dry_run --config=config/config.json
 ```
+
+In case that you are using webdav as a source, the dry_run command, will move the file on webdav from source folder to processing folder. In the next run, the files will be taken from processing folder,
+instead of source folder. If you don't want to use files in processing folder, simply delete them.
+
 ###Provisioning
 
 This command will start the provisioning. Tool will not start if there is other execution running. The messages about progress will be posted to console

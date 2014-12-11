@@ -236,6 +236,10 @@ module PowerByHelper
       end
 
 
+      def deployment_mufs_move_after_processing_to
+        deployment_mufs["move_after_processing_to"]
+      end
+
 
       def deployment_mufs_muf
         deployment_mufs["muf"]
@@ -244,6 +248,15 @@ module PowerByHelper
       def deployment_mufs_empty_value
         deployment_mufs["empty_value"] || "TRUE"
       end
+
+      def deployment_mufs_remote_file
+        if ((deployment_mufs.nil?) or (deployment_mufs["remote_file"].nil?))
+          "mufs.zip"
+        else
+          deployment_mufs["remote_file"]
+        end
+      end
+
 
 
       def provisioning

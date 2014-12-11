@@ -167,6 +167,7 @@ command :dry_run do |c|
 
     config_file = options[:config]
     fail "Please provide link to config file" unless (File.exist?(config_file))
+    $dry_run = true
     helper = PowerByHelper::Pwb.new(config_file,options[:test])
     helper.migration
     helper.gooddata_login(@@api_debug)

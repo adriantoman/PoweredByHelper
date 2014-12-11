@@ -168,7 +168,6 @@ module PowerByHelper
     end
 
     def execute_muf_compare
-      move_remote_mufs_files
       init_muf_storage
       if (!@muf.nil?)
         @muf.compare
@@ -198,8 +197,10 @@ module PowerByHelper
     end
 
     def move_remote_mufs_files
-      if (Settings.deployment_mufs_type == "webdav" and !Settings.deployment_mufs_webdav_folder_target.nil?)
-        Helper.move_all_files_to_other_folder(Settings.deployment_mufs_remote_dir + Settings.deployment_mufs_file_pattern,Settings.deployment_mufs_webdav_folder_target)
+      if (Settings.deployment_mufs_type == "webdav" and !Settings.Settings.deployment_mufs_remote_file.nil?)
+        filename = Settings.Settings.deployment_mufs_remote_file.split("/").last
+        @@log.info "If exists moving file #{"processing/" + filename} to #{Settings.deployment_mufs_move_after_processing_to}"
+        Helper.move_file_to_other_folder("processing/" + filename,Settings.deployment_mufs_move_after_processing_to)
       end
     end
 

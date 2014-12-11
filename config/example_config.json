@@ -107,9 +107,9 @@
         "mufs":{
             "file_pattern":"muf_file_%ID%.csv",
             "type":"webdav",
-            "remote_dir": "waiting/mufs/",
-            "source_dir": "mufs/",
-            "webdav_folder_target":"loaded/",
+            "source_dir": "source/mufs/",
+            "remote_file": "waiting/mufs.zip",
+            "move_after_processing_to":"loaded/mufs.zip",
             "user_id_field":"login",
             "empty_value":"TRUE",
             "use_cache":true,

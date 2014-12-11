@@ -30,11 +30,32 @@ module PowerByHelper
       Persistent.init_muf
       @file_project_mapping = {}
 
-      #In case of remote file location, lets download file to local first
+      # #In case of remote file location, lets download file to local first
+      # if (Settings.deployment_mufs_type == "webdav")
+      #   Helper.download_files_from_webdav_by_pattern(Settings.deployment_mufs_remote_dir + Settings.deployment_mufs_file_pattern,Settings.deployment_mufs_source_dir)
+      #   #data_file_path = Settings.default_project_data_file_name
+      # end
+
+
       if (Settings.deployment_mufs_type == "webdav")
-        Helper.download_files_from_webdav_by_pattern(Settings.deployment_mufs_remote_dir + Settings.deployment_mufs_file_pattern,Settings.deployment_mufs_source_dir)
-        #data_file_path = Settings.default_project_data_file_name
+        remote_filename = Settings.deployment_mufs_remote_file.split("/").last
+        if (Helper.check_file_on_webdav("processing/" + remote_filename))
+          @@log.info "Found file in processing folder #{remote_filename}, reusing"
+          Helper.download_file_from_webdav("processing/" + remote_filename,Settings.deployment_mufs_source_dir + remote_filename)
+          FileUtils.rm Dir.glob(Settings.deployment_mufs_source_dir + "*.csv") if Dir.exists?(Settings.deployment_mufs_source_dir)
+          Helper.unzip_file(Settings.deployment_mufs_source_dir + remote_filename,Settings.deployment_mufs_source_dir)
+          FileUtils.rm(Settings.deployment_mufs_source_dir + remote_filename)
+        elsif (Helper.check_file_on_webdav(Settings.deployment_mufs_remote_file))
+          Helper.download_file_from_webdav(Settings.deployment_mufs_remote_file,Settings.deployment_mufs_source_dir + remote_filename)
+          FileUtils.rm Dir.glob(Settings.deployment_mufs_source_dir + "*.csv") if Dir.exists?(Settings.deployment_mufs_source_dir)
+          Helper.unzip_file(Settings.deployment_mufs_source_dir + remote_filename,Settings.deployment_mufs_source_dir)
+          FileUtils.rm(Settings.deployment_mufs_source_dir + remote_filename)
+          Helper.move_file_to_other_folder(Settings.deployment_mufs_remote_file,"processing/" + remote_filename)
+        end
       end
+
+      fail "Muf data folder don't exists" unless Dir.exists?(Settings.deployment_mufs_source_dir)
+
 
       #Lets create list of files which are availible for muf provisioning
       Persistent.project_data.find_all{|project| project.status == ProjectData.OK}.each do |p|
