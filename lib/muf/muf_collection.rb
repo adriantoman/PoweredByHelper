@@ -120,6 +120,16 @@ module PowerByHelper
           end
         end
       end
+      # Lets delete the MUF which don't have MUF source file present, but they were set in previous runs
+      Persistent.muf_projects.each do |muf_project|
+        # This mean, that project had some mufs but now it don't have any
+        project = Persistent.project_data.find_all{|project| project.ident == muf_project.ident}
+        if (!@file_project_mapping.include?(muf_project.ident) and project.status == ProjectData.OK)
+          muf_project.muf_logins.each do |muf_login|
+            muf_login.reset_muf
+          end
+        end
+      end
     end
 
 

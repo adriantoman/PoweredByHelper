@@ -123,6 +123,10 @@ Version v0.4.10
     Feature
         Change how the MUF files are downloaded from webdav. All MUF files need to be packed in one zip. This zip is then downloaded by the tool and unpacked locally. The OLD version was not working properly, so DON'T USE IT.
         Added remote_file parameter to MUFS section This specifies path to file on the webdav.
+Version v0.4.11
+    Fix
+        When the muf file was deleted from MUFs source, the MUFs were not deleted from source projects. Fixed
+
 
 
 

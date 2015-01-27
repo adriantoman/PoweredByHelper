@@ -38,6 +38,11 @@ module PowerByHelper
       end
     end
 
+    def clear_mufs
+      @mufs = []
+    end
+
+
     state_machine :state, :initial => :start do
       state :start
       state :create
