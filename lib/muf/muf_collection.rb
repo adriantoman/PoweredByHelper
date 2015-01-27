@@ -244,13 +244,13 @@ module PowerByHelper
 
     def load_mufs_from_gooddata()
       items = {}
-      @file_project_mapping.each_pair do |k,file_project|
+      Persistent.project_data.find_all{|project| project.status == ProjectData.OK}.each do |project|
         finished = false
-        muf_project = MufProject.new(file_project["project"].ident,file_project["project"].project_pid)
+        muf_project = MufProject.new(project.ident,project.project_pid)
         while (!finished)
           offset = 0
           count = 100
-          muf_structure = GoodData.get("/gdc/md/#{file_project["project"].project_pid}/userfilters?count=#{count}&offset=#{offset}")
+          muf_structure = GoodData.get("/gdc/md/#{project.project_pid}/userfilters?count=#{count}&offset=#{offset}")
           finished = true if offset + count > muf_structure["userFilters"]["length"]
           muf_structure["userFilters"]["items"].each do |item|
             user_data = Persistent.get_user_by_profile_id(item["user"])
