@@ -60,7 +60,7 @@ pre do |global_options,command,options,args|
   next true if command.nil?
   @running = false
   @not_delete = false
-  @@log = Logger.new("log/provision.log",'daily') if !global_options[:debug]
+  @@log = Logger.new("log/provision.log", 2160, 1) if !global_options[:debug]
   @@log = Logger.new(STDOUT) if global_options[:debug]
   @@log.level = Logger::INFO
   @@api_debug = global_options[:verbose] || false
