@@ -105,7 +105,7 @@ module PowerByHelper
       fail "Token reference is empty" if export_token == "" or export_token.nil?
 
       Persistent.maintenance_data.each do |m|
-        fail "I have found out, that there is unfinished task from different maintanence task" if MaintenanceData.PARTIAL_TASKS.find{|t| t == m.status}.nil? or MaintenanceData.STORAGE_TASKS.find{|t| t == m.status}.nil?
+        fail "I have found out, that there is unfinished task from different maintanence task" if MaintenanceData.PARTIAL_TASKS.find{|t| t == m.status}.nil?
       end
       #Test if some maintenance tasks are unfinished
       unfinished_tasks = Persistent.get_maintenance_by_status_not(MaintenanceData.OK)

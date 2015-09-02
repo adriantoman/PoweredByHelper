@@ -44,7 +44,7 @@ module PowerByHelper
 
       @new_values.each_pair do |key,value|
         if (key.nil?)
-          if (!@options["default_element_url"].nil?)
+          if (!@option["default_element_url"].nil?)
             @@log.info "The #{value} cannot be found in data loaded to project #{pid} - GENERATING DEFAULT MUF"
           else
             @@log.warn "The #{value} cannot be found in data loaded to project #{pid} and default values is not set - SKIPPING"
