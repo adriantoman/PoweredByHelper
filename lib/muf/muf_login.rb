@@ -2,15 +2,13 @@ module PowerByHelper
 
   class MufLogin
 
-    attr_accessor :login,:mufs,:user_muf_url
+    attr_accessor :login,:mufs
 
 
-    def initialize(login,user_profile_url,user_muf_url)
+    def initialize(login,user_profile_url)
       super()
       @login = login
       @user_profile_url = user_profile_url
-      @user_muf_url = user_muf_url
-      #@muf_url = muf_url
       @mufs = []
     end
 
@@ -23,13 +21,31 @@ module PowerByHelper
       @mufs.find{|muf| muf.attribute == attribute_id and (muf.type = type or (muf.type.nil? and type == :in))}
     end
 
-    def get_gooddata_representation(pid)
-      gooddata_compatible = []
-      @mufs.each do |muf|
-        gooddata_compatible.push(muf.create_gooddata_muf_representation(pid))
-      end
-      gooddata_compatible.join(" AND ")
-    end
+    # def get_gooddata_representation(pid)
+    #   output = []
+    #   grouped_mufs = @mufs.group_by{|m| m.type }
+    #   grouped_mufs.each_pair do |type,mufs_grouped_collection|
+    #     if (type == :in)
+    #       gooddata_compatible = []
+    #       mufs_grouped_collection.each do |muf|
+    #         gooddata_compatible.push(muf.create_gooddata_muf_representation(pid))
+    #       end
+    #       output << {
+    #           :uri => mufs_grouped_collection.first.muf_url,
+    #           :expression => gooddata_compatible.join(" AND ")
+    #       }
+    #     elsif (type == :over)
+    #       mufs_grouped_collection.each do |muf|
+    #         output <<
+    #             {
+    #               :uri =>   muf.muf_url,
+    #               :expression => muf.create_gooddata_muf_representation(pid)
+    #             }
+    #       end
+    #     end
+    #   end
+    #   output
+    # end
 
     def reset_muf
       @mufs.each do |muf|
@@ -47,21 +63,7 @@ module PowerByHelper
       state :start
       state :create
       state :ok
-      state :to_delete
       state :changed
-
-
-      event :to_delete do
-        transition :start => :to_delete,[:ok,:create] => :changed
-      end
-
-      event :same do
-        transition :start => :ok,[:to_delete,:create] => :changed
-      end
-
-      event :new do
-        transition :start => :create,[:ok,:to_delete] => :changed
-      end
 
       event :change do
         transition [:start,:ok,:create] => :changed

@@ -276,14 +276,14 @@ module PowerByHelper
       result["uri"]
     end
 
-    def self.apply_filter(login,filter_url)
+    def self.apply_filter(login,filters_url)
       user_data = Persistent.get_user_by_login(login)
       user_filter = {
           "userFilters" => {
               "items" => [
                   {
                       "user" => user_data.uri,
-                      "userFilters" => [ filter_url ]
+                      "userFilters" => filters_url
                   }
               ]
           }

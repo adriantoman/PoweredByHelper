@@ -19,14 +19,16 @@ module PowerByHelper
 
   class Muf
 
-    attr_accessor :attribute,:element,:values,:filter_uri,:new_values,:type
+    attr_accessor :attribute,:element,:values,:filter_uri,:new_values,:type,:muf_url
 
 
-    def initialize(attribute,options = {})
+    def initialize(attribute,muf_url,options = {})
+      super()
       @attribute = attribute
       @values = {}
       @new_values = {}
       @option = options
+      @muf_url = muf_url
     end
 
     def add_value(element_id,value)
@@ -48,6 +50,39 @@ module PowerByHelper
 
     def create_gooddata_muf_representation(pid,options = {})
       fail "Calling method from parent"
+    end
+
+
+    state_machine :state, :initial => :start do
+      state :start
+      state :create
+      state :ok
+      state :to_delete
+      state :changed
+
+
+      event :to_delete do
+        transition :start => :to_delete,[:ok,:create] => :changed
+      end
+
+      event :same do
+        transition :start => :ok,[:to_delete,:create] => :changed
+      end
+
+      event :new do
+        transition :start => :create,[:ok,:to_delete] => :changed
+      end
+
+      event :change do
+        transition [:start,:ok,:create] => :changed
+      end
+
+      event :clear do
+        transition all => :start
+      end
+
+
+
     end
 
 

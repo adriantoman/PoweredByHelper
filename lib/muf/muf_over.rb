@@ -20,8 +20,8 @@ module PowerByHelper
   class MufOver < Muf
 
     # Possible type values :in, :over
-    def initialize(attribute,cp_of_access_dt,cp_of_filtered_dt,options = {})
-      super(attribute,options)
+    def initialize(attribute,muf_url,cp_of_access_dt,cp_of_filtered_dt,options = {})
+      super(attribute,muf_url,options)
       @type = :over
       @cp_of_access_dt = cp_of_access_dt
       @cp_of_filtered_dt = cp_of_filtered_dt

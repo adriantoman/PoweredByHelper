@@ -87,7 +87,7 @@ module PowerByHelper
                 muf_login = muf_project.find_login_by_login(csv_obj[Settings.deployment_mufs["user_id_field"]])
                 if (muf_login.nil?)
                   #If muf_login don't exists, lets create one
-                  muf_login = MufLogin.new(csv_obj[Settings.deployment_mufs["user_id_field"]],Persistent.get_user_by_login(csv_obj[Settings.deployment_mufs["user_id_field"]]).uri,nil)
+                  muf_login = MufLogin.new(csv_obj[Settings.deployment_mufs["user_id_field"]],Persistent.get_user_by_login(csv_obj[Settings.deployment_mufs["user_id_field"]]).uri)
                   muf_project.add_login(muf_login)
                 end
                 muf = muf_login.find_muf_by_attribute(muf_setting["attribute"],muf_setting["type"])
@@ -102,9 +102,9 @@ module PowerByHelper
                   muf = nil
                   if (muf_setting["type"].downcase == "over")
                     fail "The connection_point_of_access_dataset or connection_point_of_filtered_dataset settting is missing, please at this settings to config file." if !muf_setting.include?("connection_point_of_filtered_dataset") or !muf_setting.include?("connection_point_of_access_dataset")
-                    muf = MufOver.new(muf_setting["attribute"],muf_setting["connection_point_of_access_dataset"],muf_setting["connection_point_of_filtered_dataset"],{"default_element_url" => default_element_url})
+                    muf = MufOver.new(muf_setting["attribute"],nil,muf_setting["connection_point_of_access_dataset"],muf_setting["connection_point_of_filtered_dataset"],{"default_element_url" => default_element_url})
                   else
-                    muf = MufIn.new(muf_setting["attribute"])
+                    muf = MufIn.new(muf_setting["attribute"],nil)
                   end
                   muf_login.add_muf(muf)
                 end
@@ -128,16 +128,15 @@ module PowerByHelper
         muf_project.muf_logins.each do |muf_login|
           muf_login.mufs.each do |muf|
             if (!muf.same?)
-
               if (muf.new_values.empty?)
-                muf_login.to_delete
+                muf.to_delete
               elsif (muf.values.empty?)
-                muf_login.new
+                muf.new
               else
-                muf_login.change
+                muf.change
                 end
             else
-              muf_login.same
+              muf.same
             end
           end
         end
@@ -147,39 +146,27 @@ module PowerByHelper
     # Lest finds all users which have some change in project
     def work(muf_project,muf_login)
       begin
-        # Lets iterate through muf_logins and send them to Gooddata.
-        if (muf_login.create?)
-          # Lets create the filter
-          @@log.info "Creating muf definition for login: #{muf_login.login}"
-          result_create = muf_project.create_update_filter(muf_login.login,muf_login.get_gooddata_representation(muf_project.pid))
-          # Lets apply it on user resource
-          @@log.info "Applying the created muf on login: #{muf_login.login}" if !result_create.nil?
-          result_apply = muf_project.apply_filter(muf_login.login,result_create) if !result_create.nil?
-          if (!result_apply.nil?)
-            muf_login.clear
-            muf_login.reset_muf
+        muf_login.mufs.each do |muf|
+          if (muf.create?)
+            # Lets create the filter
+            expression = muf.create_gooddata_muf_representation(muf_project.pid)
+            @@log.info "Creating muf definition for login: #{muf_login.login} and #{muf.attribute}"
+            muf.muf_url = muf_project.create_update_filter(muf_login.login,expression)
+            muf_login.change
+          elsif (muf.changed?)
+            @@log.info "Changing muf definition for login: #{muf_login.login} muf:#{muf.attribute}"
+            result = muf_project.create_update_filter(muf_login.login,muf.create_gooddata_muf_representation(muf_project.pid),muf.muf_url)
+          elsif (muf.to_delete?)
+            # Lets delete them muf
+            @@log.info "Deleting muf definition for login: #{muf_login.login} and attribute: #{muf.attribute}"
+            result_delete = muf_project.delete_filter(muf.muf_url)
+            muf_login.change
           end
-          muf_login
-        elsif (muf_login.changed?)
-          @@log.info "Changing muf definition for login: #{muf_login.login} muf:#{muf_login.user_muf_url}"
-          result = muf_project.create_update_filter(muf_login.login,muf_login.get_gooddata_representation(muf_project.pid),muf_login.user_muf_url)
-          if (!result.nil?)
-            muf_login.clear
-            muf_login.reset_muf
-          end
-          muf_login
-        elsif (muf_login.to_delete?)
-          # Lets delete them muf
-          @@log.info "Deleting muf definition for login: #{muf_login.login} url: #{muf_login.user_muf_url}"
-          result_delete = muf_project.delete_filter(muf_login.user_muf_url)
-          # End apply empty string
-          @@log.info "Changing muf-login connection to empty for login: #{muf_login.login} url: #{muf_login.user_muf_url}"
-          result_apply = muf_project.apply_filter(muf_login.login,"") if !result_delete.nil?
-          nil
-        else
+        end
+        if (muf_login.changed?)
+          @@log.info "Applying the muf on login: #{muf_login.login}"
+          muf_project.apply_filter(muf_login.login,muf_login.mufs.map{|muf| muf.muf_url})
           muf_login.clear
-          muf_login.reset_muf
-          muf_login
         end
       rescue => e
         @@log.error "The MUF process has failed"
@@ -191,6 +178,8 @@ module PowerByHelper
 
 
     # Lest finds all users which have some change in project
+    #OBSOLETE
+
     def work_all
       Persistent.muf_projects.each do |muf_project|
         begin
@@ -255,33 +244,37 @@ module PowerByHelper
           muf_structure["userFilters"]["items"].each do |item|
             user_data = Persistent.get_user_by_profile_id(item["user"])
             if (!user_data.nil?)
-              muf_login = MufLogin.new(user_data.login,item["user"],item["userFilters"][0])
-              # Need to fix it here ... can be multiple filters
-              user_definition_filter = GoodData.get(item["userFilters"][0])
-              expression = user_definition_filter["userFilter"]["content"]["expression"]
-              title = user_definition_filter["userFilter"]["meta"]["title"]
-              expressions = expression.split("AND")
-              expressions.each do |expression_element|
-                expression_element.strip!
-                if (expression_element =~ /OVER/ )
-                  match = expression_element.match(/^\(\[(?<attribute>[^\]]*)\]=\[(?<attribute_value>[^\]]*)\]\)[\s]*OVER[\s]*\[(?<cp_of_access_dt>[^\]]*)\][\s]*TO[\s]*\[(?<cp_of_filtered_dt>[^\]]*)\]/)
-                  attribute_id = match[:attribute].split("/").last
-                  attribute_value = match[:attribute_value]
-                  cp_of_access_dt = match[:cp_of_access_dt].split("/").last
-                  cp_of_filtered_dt = match[:cp_of_filtered_dt].split("/").last
-                  muf = MufOver.new(attribute_id,cp_of_access_dt,cp_of_filtered_dt)
-                  muf.add_value(attribute_value,nil)
-                  muf_login.add_muf(muf)
-                else
-                  if (expression_element != Settings.deployment_mufs_empty_value)
-                    match = expression_element.match(/^\[(?<attribute>[^\s]*)\][^\[]*IN[^\[]*(?<elements>[^\s]*)\)/)
-                    attribute_id = match[:attribute].match(/[^\/]*$/)[0]
-                    elements = match[:elements].gsub(/[\[\]]/,"").split(",")
-                    muf = MufIn.new(attribute_id)
-                    elements.each do |element|
-                      muf.add_value(element,nil)
-                    end
+              muf_login = MufLogin.new(user_data.login,item["user"])
+              in_muf_count = 0
+              item["userFilters"].each do |user_filter|
+                user_definition_filter = GoodData.get(user_filter)
+                expression = user_definition_filter["userFilter"]["content"]["expression"]
+                title = user_definition_filter["userFilter"]["meta"]["title"]
+                expressions = expression.split("AND")
+                expressions.each do |expression_element|
+                  expression_element.strip!
+                  if (expression_element =~ /OVER/ )
+                    match = expression_element.match(/^\(\[(?<attribute>[^\]]*)\]=\[(?<attribute_value>[^\]]*)\]\)[\s]*OVER[\s]*\[(?<cp_of_access_dt>[^\]]*)\][\s]*TO[\s]*\[(?<cp_of_filtered_dt>[^\]]*)\]/)
+                    attribute_id = match[:attribute].split("/").last
+                    attribute_value = match[:attribute_value]
+                    cp_of_access_dt = match[:cp_of_access_dt].split("/").last
+                    cp_of_filtered_dt = match[:cp_of_filtered_dt].split("/").last
+                    muf = MufOver.new(attribute_id,user_filter,cp_of_access_dt,cp_of_filtered_dt)
+                    muf.add_value(attribute_value,nil)
                     muf_login.add_muf(muf)
+                  else
+                    if (expression_element != Settings.deployment_mufs_empty_value)
+                      fail "The PBH helper is supporting only one IN muf for user" if in_muf_count > 1
+                      match = expression_element.match(/^\[(?<attribute>[^\s]*)\][^\[]*IN[^\[]*(?<elements>[^\s]*)\)/)
+                      attribute_id = match[:attribute].match(/[^\/]*$/)[0]
+                      elements = match[:elements].gsub(/[\[\]]/,"").split(",")
+                      muf = MufIn.new(attribute_id,user_filter)
+                      elements.each do |element|
+                        muf.add_value(element,nil)
+                      end
+                      muf_login.add_muf(muf)
+                      in_muf_count += 1
+                    end
                   end
                 end
               end

@@ -126,7 +126,9 @@ Version v0.4.10
 Version v0.4.11
     Fix
         When the muf file was deleted from MUFs source, the MUFs were not deleted from source projects. Fixed
-
+Version v0.4.12
+    Fix
+        ADded possibility to have multiple OVER filter
 
 
 
