@@ -60,7 +60,16 @@ pre do |global_options,command,options,args|
   next true if command.nil?
   @running = false
   @not_delete = false
-  @@log = Logger.new("log/provision.log",'daily') if !global_options[:debug]
+
+  def shift_log(filename, max_files=7)
+    (max_files-1).downto(0) do |i|
+      File.rename("#{filename}.#{i}", "#{filename}.#{i+1}") rescue nil
+    end
+    File.rename("#{filename}", "#{filename}.0") rescue nil
+  end
+  logfile='log/provision.log'
+  shift_log(logfile, 30 * 24)
+  @@log = Logger.new(logfile, false) if !global_options[:debug]
   @@log = Logger.new(STDOUT) if global_options[:debug]
   @@log.level = Logger::INFO
   @@api_debug = global_options[:verbose] || false
