@@ -23,7 +23,8 @@ rdoc
 pkg
 
 ## PROJECT::SPECIFIC
-Gemfile.lock
 
 # YARD
 .yardoc/
+
+log/
