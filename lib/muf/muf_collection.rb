@@ -95,7 +95,7 @@ module PowerByHelper
                 default_element_url = nil
                 if !muf_setting["default_element"].nil?
                   default_element_url = muf_project.find_element_by_value(muf_setting["attribute"],muf_setting["default_element"])
-                  muf.option.merge!({"default_element_url" => default_element_url})
+                  muf.option.merge!({"default_element_url" => default_element_url}) if !muf.nil?
                 end
                 #Lets try to find, if muf exists for this attribute
                 if (muf.nil?)
