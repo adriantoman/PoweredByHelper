@@ -298,7 +298,7 @@ module PowerByHelper
     def disable_schedule(project_pid,schedule_id)
       response = GoodData.get("/gdc/projects/#{project_pid}/schedules/#{schedule_id}")
       response["schedule"]["state"] = "DISABLED"
-      response["schedule"].reject!{|s| s == "nextExecutionTime" or s == "consecutiveFailedExecutionCount" or s == "links"}
+      response["schedule"].reject!{|s| s == "nextExecutionTime" or s == "consecutiveFailedExecutionCount" or s == "links" or s == "lastSuccessful" or s == "lastExecution" or s == "ownerLogin" }
       GoodData.put("/gdc/projects/#{project_pid}/schedules/#{schedule_id}", response)
     end
 

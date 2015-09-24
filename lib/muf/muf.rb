@@ -19,7 +19,7 @@ module PowerByHelper
 
   class Muf
 
-    attr_accessor :attribute,:element,:values,:filter_uri,:new_values,:type,:muf_url
+    attr_accessor :attribute,:element,:values,:filter_uri,:new_values,:type,:muf_url,:option
 
 
     def initialize(attribute,muf_url,options = {})
