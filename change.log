@@ -132,7 +132,9 @@ Version v0.4.12
 Version v0.4.13
     Fix
         Fixed problem with default filter + over muf combination
-
+Version v0.4.14
+    Feature
+        Added support for specifying identifiers when defining mufs
 
 
 

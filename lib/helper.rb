@@ -256,6 +256,21 @@ module PowerByHelper
 
     end
 
+    def self.identifier_to_object_url(pid,identifier)
+      begin
+        content = {
+            "identifierToUri" => [identifier]
+        }
+        result = GoodData.post("/gdc/md/#{pid}/identifiers",content)
+        result["identifiers"].find{|elements| elements["identifier"] == identifier }["uri"]
+      rescue RestClient::BadRequest => e
+        fail "The identifier don't exists in project #{pid}"
+      rescue RestClient::InternalServerError => e
+        fail "The identifier don't exists in project #{pid}"
+      end
+    end
+
+
     def self.create_update_filter(login,expression,pid,uri = nil)
       filter = {
           "userFilter" => {

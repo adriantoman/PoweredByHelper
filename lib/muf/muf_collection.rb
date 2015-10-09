@@ -76,9 +76,28 @@ module PowerByHelper
         if (muf_project.nil?)
           # If it don't exists, lets create one
           muf_project = MufProject.new(v["project"].project_pid,k)
-          Persitent.muf_projects.push(muf_project)
+          Persistent.muf_projects.push(muf_project)
         end
         Settings.deployment_mufs_muf.each do |muf_setting|
+          if (muf_setting.include?("label_identifier"))
+            obj_url = Helper.identifier_to_object_url(muf_project.pid,muf_setting["label_identifier"])
+            result = GoodData.get(obj_url)
+            attribute_url = result["attributeDisplayForm"]["content"]["formOf"]
+            muf_setting["attribute"] = attribute_url.split("/").last
+            elements_url = result["attributeDisplayForm"]["links"]["elements"]
+            muf_setting["elements"] = elements_url.split("/")[-2]
+          end
+
+          if (muf_setting.include?("connection_point_of_access_dataset_identifier"))
+            obj_url = Helper.identifier_to_object_url(muf_project.pid,muf_setting["connection_point_of_access_dataset_identifier"])
+            muf_setting["connection_point_of_access_dataset"] = obj_url.split("/").last
+          end
+
+          if (muf_setting.include?("connection_point_of_filtered_dataset_identifier"))
+            obj_url = Helper.identifier_to_object_url(muf_project.pid,muf_setting["connection_point_of_filtered_dataset_identifier"])
+            muf_setting["connection_point_of_filtered_dataset"] = obj_url.split("/").last
+          end
+
           muf_project.load_element_lookup(muf_setting["attribute"],muf_setting["elements"]) if !muf_project.lookup_loaded?(muf_setting["attribute"])
           FasterCSV.foreach(Settings.deployment_mufs_source_dir + v["file"], :headers => true,:quote_char => '"',:skip_blanks => true) do |csv_obj|
             if (!Helper.blank?(csv_obj[Settings.deployment_mufs_user_id_field]))
