@@ -75,7 +75,7 @@ module PowerByHelper
         muf_project = Persistent.muf_projects.find{|project| project.pid == v["project"].project_pid}
         if (muf_project.nil?)
           # If it don't exists, lets create one
-          muf_project = MufProject.new(v["project"].project_pid,k)
+          muf_project = MufProject.new(k,v["project"].project_pid)
           Persistent.muf_projects.push(muf_project)
         end
         Settings.deployment_mufs_muf.each do |muf_setting|
