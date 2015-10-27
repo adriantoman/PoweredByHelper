@@ -71,7 +71,6 @@ pre do |global_options,command,options,args|
   shift_log(logfile, 30 * 24)
   @@log = Logger.new(logfile, false) if !global_options[:debug]
   @@log = Logger.new(STDOUT) if global_options[:debug]
-  @@log.level = Logger::INFO
   @@api_debug = global_options[:verbose] || false
 
 

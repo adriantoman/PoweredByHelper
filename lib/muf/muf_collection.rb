@@ -256,8 +256,8 @@ module PowerByHelper
       Persistent.project_data.find_all{|project| project.status == ProjectData.OK}.each do |project|
         finished = false
         muf_project = MufProject.new(project.ident,project.project_pid)
+        offset = 0
         while (!finished)
-          offset = 0
           count = 100
           muf_structure = GoodData.get("/gdc/md/#{project.project_pid}/userfilters?count=#{count}&offset=#{offset}")
           finished = true if offset + count > muf_structure["userFilters"]["length"]

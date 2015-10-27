@@ -44,6 +44,11 @@ module PowerByHelper
       @muf_logins.find{|muf_login| muf_login.login == login }
     end
 
+    def delete_logins(logins_to_delete)
+      @muf_logins.delete_if{|muf_login| logins_to_delete.include?(muf_login.login)}
+    end
+
+
     def lookup_loaded?(attibute)
       @elements_lookup.has_key?(attibute)
     end
