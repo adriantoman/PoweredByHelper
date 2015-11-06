@@ -247,11 +247,13 @@ module PowerByHelper
       project_pids.each do |pid|
         if (!@muf_collection.nil?)
           muf_project = @muf_collection.find_muf_project_by_pid(pid)
-          user_project_data_for_one_pid = Persistent.user_project_data[pid].values
-          user_project_data_for_one_pid.delete_if{|up| users_to_ignore.include?(up.login)}
-          muf_project.delete_logins(users_to_ignore)
+          if (!muf_project.nil?)
+            user_project_data_for_one_pid = Persistent.user_project_data[pid].values
+            user_project_data_for_one_pid.delete_if{|up| users_to_ignore.include?(up.login)}
+            muf_project.delete_logins(users_to_ignore)
 
-          @threading_initial_collection << {"muf_project" => muf_project,"user_project_data" => user_project_data_for_one_pid}
+            @threading_initial_collection << {"muf_project" => muf_project,"user_project_data" => user_project_data_for_one_pid}
+          end
         end
       end
 
