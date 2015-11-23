@@ -238,7 +238,7 @@ module PowerByHelper
       project_pids = Persistent.user_project_data.keys
 
       #Create collection of users which are in status DISABLED or NEW. This user should not be handled in user_project and user_muf part
-      users_to_ignore = Persistent.user_data.find_all{|u| [UserData.DISABLED,UserData.NEW].include?(u.status)}.map{|u| u.login}
+      users_to_ignore = Persistent.user_data.find_all{|u| [UserData.NEW].include?(u.status)}.map{|u| u.login}
 
       #project_pids.uniq!
       # Let find all projects pids, which need to by changed somehow and iterate through project list
