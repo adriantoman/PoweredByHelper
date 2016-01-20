@@ -98,6 +98,7 @@ module PowerByHelper
       #Helper.retryable do
         @projects.create_projects
         @projects.handle_projects_disable
+        @projects.rename_projects
       #end
     end
 

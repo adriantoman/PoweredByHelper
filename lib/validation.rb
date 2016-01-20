@@ -7,7 +7,7 @@ module PowerByHelper
     class << self
 
       def project_definition
-         [
+        [
             { "id" => "project_name",
               "type" => "string",
               "min_size" => 1
@@ -21,31 +21,31 @@ module PowerByHelper
 
 
       def user_definition
-          [
-              {
-                  "id" => "login",
-                  "type" => "email",
-                  "min_size" => 1
-              },
-              {
-                  "id" => "first_name",
-                  "type" => "string",
-              },
-              {
-                  "id" => "last_name",
-                  "type" => "string"
-              },
-              {
-                  "id" => "password",
-                  "type" => "string"
-              },
-              {
-                  "id" => "admin",
-                  "type" => "enum",
-                  "min_size" => 0,
-                  "enum" => ["adminrole","connectorssystemrole","editorrole","dashboardonlyrole","unverifiedadminrole","readonlyuserrole","0","1"]
-              }
-          ]
+        [
+            {
+                "id" => "login",
+                "type" => "email",
+                "min_size" => 1
+            },
+            {
+                "id" => "first_name",
+                "type" => "string",
+            },
+            {
+                "id" => "last_name",
+                "type" => "string"
+            },
+            {
+                "id" => "password",
+                "type" => "string"
+            },
+            {
+                "id" => "admin",
+                "type" => "enum",
+                "min_size" => 0,
+                "enum" => ["adminrole","connectorssystemrole","editorrole","dashboardonlyrole","unverifiedadminrole","readonlyuserrole","0","1"]
+            }
+        ]
       end
 
       def user_project_definition
@@ -134,7 +134,7 @@ module PowerByHelper
         @@log.info "Project file validation:"
         error = false
         line_number = 2
-        FasterCSV.foreach(file_location, {:headers => true, :skip_blanks => true}) do |csv_obj|
+        FasterCSV.foreach(file_location, {:headers => true, :skip_blanks => true,:encoding => "ISO-8859-1:utf-8"}) do |csv_obj|
           Validation.project_definition.each do |field|
             key = field["id"]
             if (!Settings.deployment_project_data_mapping[key].nil?)
@@ -201,7 +201,7 @@ module PowerByHelper
         @@log.info "User project file validation has finished"
         error
       end
-      end
     end
+  end
 
 end

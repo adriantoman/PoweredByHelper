@@ -30,6 +30,8 @@ module PowerByHelper
       data_file_path = Settings.deployment_project_data_file_name
       data_mapping = Settings.deployment_project["data"]["mapping"]
 
+      @projects_to_rename = []
+
       #In case of remote file location, lets download file to local first
       if (Settings.deployment_project_data_type == "webdav")
         remote_filename = data_file_path.split("/").last
@@ -58,13 +60,22 @@ module PowerByHelper
 
       file_rows = []
 
-      FasterCSV.foreach(data_file_path, {:headers => true, :skip_blanks => true}) do |csv_obj|
+      FasterCSV.foreach(data_file_path, {:headers => true, :skip_blanks => true,:encoding => 'BINARY'}) do |csv_obj|
         fail "One of the project names is empty" if Helper.blank?(csv_obj[data_mapping["project_name"]]) or Helper.blank?(csv_obj[data_mapping["ident"]])
         file_rows.push(csv_obj)
       end
 
+
       file_rows.each do |csv_obj|
-        Persistent.change_project_status(csv_obj[data_mapping["ident"]],ProjectData.NEW,{"ident" => csv_obj[data_mapping["ident"]], "project_name" => csv_obj[data_mapping["project_name"]], "summary" => csv_obj[data_mapping["summary"]]})
+        source_project_name = csv_obj[data_mapping["project_name"]].encode("utf-8", :invalid => :replace,:undef => :replace,:replace => "")
+
+        project_object = Persistent.project_data.find{|p| p.ident == csv_obj[data_mapping["ident"]]}
+        if (!project_object.nil? and project_object.status == ProjectData.OK)
+          if ((project_object.project_name).strip != source_project_name.strip )
+            @projects_to_rename << {:project => project_object,:name => source_project_name.strip}
+          end
+        end
+        Persistent.change_project_status(csv_obj[data_mapping["ident"]],ProjectData.NEW,{"ident" => csv_obj[data_mapping["ident"]], "project_name" => source_project_name, "summary" => csv_obj[data_mapping["summary"]]})
 
         #key value mapping
         param_values = []
@@ -85,6 +96,7 @@ module PowerByHelper
 
       @@log.info "Persistent storage for project provisioning initialized"
     end
+
 
 
     def load_data_structure_maintenance()
@@ -248,6 +260,15 @@ module PowerByHelper
     end
 
 
+    def rename_projects()
+      @projects_to_rename.each do |hash|
+        @@log.info "Renaming project #{hash[:project].project_pid} (#{hash[:project].project_name}) to #{hash[:name]}"
+        Helper.rename_project(hash[:project].project_pid,hash[:name])
+        Persistent.change_project_name(hash[:project].ident,hash[:name])
+        Persistent.store_project
+      end
+    end
+
 
 
 
@@ -286,6 +307,10 @@ module PowerByHelper
 
     def self.OK
       "OK"
+    end
+
+    def self.CHANGED
+      "CHANGED"
     end
 
     def self.TO_DISABLE

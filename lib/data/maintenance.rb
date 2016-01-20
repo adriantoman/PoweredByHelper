@@ -105,7 +105,7 @@ module PowerByHelper
       fail "Token reference is empty" if export_token == "" or export_token.nil?
 
       Persistent.maintenance_data.each do |m|
-        fail "I have found out, that there is unfinished task from different maintanence task" if MaintenanceData.PARTIAL_TASKS.find{|t| t == m.status}.nil? or MaintenanceData.STORAGE_TASKS.find{|t| t == m.status}.nil?
+        fail "I have found out, that there is unfinished task from different maintanence task" if MaintenanceData.PARTIAL_TASKS.find{|t| t == m.status}.nil?
       end
       #Test if some maintenance tasks are unfinished
       unfinished_tasks = Persistent.get_maintenance_by_status_not(MaintenanceData.OK)
@@ -180,16 +180,16 @@ module PowerByHelper
 
       maintenance = Persistent.maintenance_data
       maintenance.each do |m|
-          result = MaintenanceHelper.create_update_value(m,key,value)
-          if (!result.nil?)
-            Persistent.change_maintenance_status(m.project_pid,MaintenanceData.OK,nil)
-            Persistent.store_maintenance
-            @@log.info "Value successfully changed for pid #{m.project_pid}"
-          else
-            Persistent.change_maintenance_status(m.project_pid,MaintenanceData.ERROR,nil)
-            Persistent.store_maintenance
-            @@log.info "Value change for #{m.project_pid} has failed on error"
-          end
+        result = MaintenanceHelper.create_update_value(m,key,value)
+        if (!result.nil?)
+          Persistent.change_maintenance_status(m.project_pid,MaintenanceData.OK,nil)
+          Persistent.store_maintenance
+          @@log.info "Value successfully changed for pid #{m.project_pid}"
+        else
+          Persistent.change_maintenance_status(m.project_pid,MaintenanceData.ERROR,nil)
+          Persistent.store_maintenance
+          @@log.info "Value change for #{m.project_pid} has failed on error"
+        end
       end
     end
 

@@ -12,9 +12,3 @@ gem 'yard', '~> 0.8.7.3'
 gem 'yard-rspec', '~> 0.1'
 gem "state_machine"
 gem 'pony'
-
-group :test do
-  gem 'coveralls', '~> 0.7.0'
-  gem 'rspec', '~> 2.14.1'
-  gem 'simplecov', '~> 0.8.2'
-end

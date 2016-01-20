@@ -57,9 +57,9 @@ module PowerByHelper
           schedule_settings.each do |schedule_settings|
             schedule_ident = schedule_settings["ident"].nil? ? "1" : schedule_settings["ident"]
             data = {
-                  "project_pid" => project_pid,
-                  "ident" => schedule_ident,
-                  "status" => ScheduleData.NEW
+                "project_pid" => project_pid,
+                "ident" => schedule_ident,
+                "status" => ScheduleData.NEW
             }
             Persistent.change_schedule_status(project_pid,schedule_ident,ScheduleData.NEW,data)
           end
@@ -141,45 +141,47 @@ module PowerByHelper
           process = Persistent.get_etl_by_project_pid(schedule.project_pid)
           settings = schedule_settings.find{|s| s["ident"] == schedule.ident or (s["ident"].nil? and schedule_settings.count == 1 and schedule.ident == "1")}
 
-          if (settings.nil?)
-            # The setting for this schedule was remove from config file, schedule should be disabled
-            begin
-              @@log.info "Disabling schedule #{schedule.schedule_id} ident:#{schedule.ident} for project #{schedule.project_pid}"
-              disable_schedule(schedule.project_pid,schedule.schedule_id)
-              Persistent.schedule_data.delete_if{|d| d.schedule_id == schedule.schedule_id}
-              @@log.info "Disable successful"
-            rescue RestClient::BadRequest => e
-              response = JSON.load(e.response)
-              @@log.warn "Schedule #{schedule.project_pid} disable failed. Reason: #{response["error"]["message"]}"
-            rescue RestClient::InternalServerError => e
-              response = JSON.load(e.response)
-              @@log.warn "Schedule #{schedule.project_pid} disable failed. Reason: #{response["error"]["message"]}"
-            end
-          else
-            # The setting for this schedule is in config file, schedule should be updated
-            begin
-              @@log.info "Updating schedule: #{schedule.schedule_id} ident:#{schedule.ident} for project #{schedule.project_pid}"
-              response = create_update_schedule(settings,schedule.project_pid,process.process_id,"#{project.ident}",schedule.schedule_id)
-              schedule_id = response["schedule"]["links"]["self"].split("/").last
-              Persistent.change_schedule_status(schedule.project_pid,schedule.ident,ScheduleData.SCHEDULE_CREATED,{"schedule_id" => schedule_id,"is_updated_schedule" => true})
-              @@log.info "Update successful"
+          unless process.nil?
+            if (settings.nil?)
+              # The setting for this schedule was remove from config file, schedule should be disabled
+              begin
+                @@log.info "Disabling schedule #{schedule.schedule_id} ident:#{schedule.ident} for project #{schedule.project_pid}"
+                disable_schedule(schedule.project_pid,schedule.schedule_id)
+                Persistent.schedule_data.delete_if{|d| d.schedule_id == schedule.schedule_id}
+                @@log.info "Disable successful"
+              rescue RestClient::BadRequest => e
+                response = JSON.load(e.response)
+                @@log.warn "Schedule #{schedule.project_pid} disable failed. Reason: #{response["error"]["message"]}"
+              rescue RestClient::InternalServerError => e
+                response = JSON.load(e.response)
+                @@log.warn "Schedule #{schedule.project_pid} disable failed. Reason: #{response["error"]["message"]}"
+              end
+            else
+              # The setting for this schedule is in config file, schedule should be updated
+              begin
+                @@log.info "Updating schedule: #{schedule.schedule_id} ident:#{schedule.ident} for project #{schedule.project_pid}"
+                response = create_update_schedule(settings,schedule.project_pid,process.process_id,"#{project.ident}",schedule.schedule_id)
+                schedule_id = response["schedule"]["links"]["self"].split("/").last
+                Persistent.change_schedule_status(schedule.project_pid,schedule.ident,ScheduleData.SCHEDULE_CREATED,{"schedule_id" => schedule_id,"is_updated_schedule" => true})
+                @@log.info "Update successful"
 
-              # We will execute the schedule right after it has been scheduled
-              if (!settings["force_execute"].nil? and settings["force_execute"])
-                restart(schedule.project_pid,schedule_id)
+                # We will execute the schedule right after it has been scheduled
+                if (!settings["force_execute"].nil? and settings["force_execute"])
+                  restart(schedule.project_pid,schedule_id)
+                end
+
+              rescue RestClient::BadRequest => e
+                response = JSON.load(e.response)
+                @@log.warn "Schedule #{schedule.project_pid} could not be updated. Reason: #{response["error"]["message"]}"
+              rescue RestClient::InternalServerError => e
+                response = JSON.load(e.response)
+                @@log.warn "Schedule #{schedule.project_pid} could not be updated. Reason: #{response["error"]["message"]}"
               end
 
-            rescue RestClient::BadRequest => e
-              response = JSON.load(e.response)
-              @@log.warn "Schedule #{schedule.project_pid} could not be updated. Reason: #{response["error"]["message"]}"
-            rescue RestClient::InternalServerError => e
-              response = JSON.load(e.response)
-              @@log.warn "Schedule #{schedule.project_pid} could not be updated. Reason: #{response["error"]["message"]}"
+
+
+
             end
-
-
-
-
           end
           Persistent.store_schedules
         end
@@ -224,18 +226,18 @@ module PowerByHelper
 
     def create_notifications
       if (!Settings.deployment_etl_notifications.nil? && Settings.deployment_etl_notifications.count > 0)
-          Persistent.etl_data.each do |etl|
-            if ( etl.status == EtlData.PROCESS_CREATED)
-              count = 1
-              Settings.deployment_etl_notifications.each do |notification_settings|
-                @@log.info "Creating notification number #{count} for #{etl.project_pid}"
-                response = create_notification(notification_settings,etl.project_pid,etl.process_id)
-                @@log.info "Notification number #{count} created #{etl.project_pid}"
-                count += 1
-              end
-              Persistent.change_etl_status(etl.project_pid,EtlData.NOTIFICATION_CREATED,{})
-              Persistent.store_etl
+        Persistent.etl_data.each do |etl|
+          if ( etl.status == EtlData.PROCESS_CREATED)
+            count = 1
+            Settings.deployment_etl_notifications.each do |notification_settings|
+              @@log.info "Creating notification number #{count} for #{etl.project_pid}"
+              response = create_notification(notification_settings,etl.project_pid,etl.process_id)
+              @@log.info "Notification number #{count} created #{etl.project_pid}"
+              count += 1
             end
+            Persistent.change_etl_status(etl.project_pid,EtlData.NOTIFICATION_CREATED,{})
+            Persistent.store_etl
+          end
 
         end
       end
@@ -315,16 +317,17 @@ module PowerByHelper
 
       data = {
           "schedule" => {
-            "type" => "MSETL",
-            "timezone" => "UTC",
-            "cron" => "#{cron}",
-            "params"=> {
-              "PROCESS_ID" => "#{process_id}",
-              "GRAPH" => "#{graph_name}"
-            },
-            "hiddenParams" => {
-            }
-        }
+              "type" => "MSETL",
+              "timezone" => "UTC",
+              "cron" => "#{cron}",
+              "params"=> {
+                  "PROCESS_ID" => "#{process_id}",
+                  "GRAPH" => "#{graph_name}"
+              },
+              "hiddenParams" => {
+              },
+              'state' => 'ENABLED'
+          }
       }
 
       if (!schedule_settings["reschedule"].nil? and schedule_settings["reschedule"] !=  "" )

@@ -189,15 +189,17 @@ module PowerByHelper
       user =      Settings.connection["login"]
       password =  Settings.connection["password"]
 
-      adress = Settings.connection_webdav_storage
+      if (!Settings.connection_webdav_storage.nil?)
+        adress = Settings.connection_webdav_storage
 
-      dav = Net::DAV.new(adress, :curl => false)
-      dav.verify_server = false # Ignore server verification
-      dav.credentials(user, password)
+        dav = Net::DAV.new(adress, :curl => false)
+        dav.verify_server = false # Ignore server verification
+        dav.credentials(user, password)
 
-      list_of_folders.each do |folder|
-        if (!dav.exists?(folder))
-          dav.mkdir(folder)
+        list_of_folders.each do |folder|
+          if (!dav.exists?(folder + "/"))
+            dav.mkdir(folder)
+          end
         end
       end
     end
@@ -265,6 +267,20 @@ module PowerByHelper
       GoodData.post "/gdc/md/#{pid}/userfilters", user_filter
     end
 
+
+    def self.rename_project(pid,name)
+      json = {
+          "project" =>
+              {
+                 "content" => {"guidedNavigation" => 1},
+                 "meta"=>
+                     {
+                      "title"=> name
+                     }
+          }
+      }
+      GoodData.post "/gdc/projects/#{pid}", json
+    end
 
 
 

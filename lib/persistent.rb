@@ -278,6 +278,11 @@ module PowerByHelper
       end
 
 
+      def change_project_name(id,name)
+        project = @project_data.find{|p| p.ident == id}
+        project.project_name = name
+      end
+
 
       def change_project_status(id, status, data)
         if (@project_data.find{|p| p.ident == id }.nil?)
@@ -287,6 +292,7 @@ module PowerByHelper
             if (d.ident == id )
               # Project was loaded from persistent storage and now it is in source file - nothing to do
               if (d.status == status)
+                d.project_name = data["project_name"] if data.include?("project_name")
                 @@log.debug "Same status - do nothing"
               elsif (d.status == ProjectData.DISABLED and status == ProjectData.TO_DISABLE)
                 @@log.debug "Project - setting status was DISABLED and we will leave him DISABLED"
@@ -324,7 +330,6 @@ module PowerByHelper
                 d.status = ProjectData.CREATED
               elsif (d.status == ProjectData.OK and status == ProjectData.NEW)
                 @@log.debug "Project - project was OK and now is OK"
-                # This could happned when the application will fail and some project will be in CREATED status
                 d.status = ProjectData.OK
               else
                 fail "Non-supported transition from #{d.status} to #{status}"
